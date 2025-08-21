@@ -6,74 +6,136 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ExerciseSetView: View {
-    let workout: Workout
-    let exercise: Exercise
-    let setNumber: Int
-    @State var weight: Double = 0.0
-    @State var reps: Int = 0
-    @State var isCompleted: Bool = false
+    let exerciseSet: ExerciseSet
+    @Environment(\.modelContext) private var modelContext
+    
+    @State private var weight: String = ""
+    @State private var reps: String = ""
+    @State private var isCompleted: Bool = false
+    @FocusState private var isWeightFocused: Bool
+    @FocusState private var isRepsFocused: Bool
 
     var body: some View {
         GridRow {
             // Column 1: Set number
-            Text("\(setNumber)")
-                .frame(width: 30, height: 30)
-                .background(Color.gray.opacity(0.3))
-                .cornerRadius(5)
+            Text("\(exerciseSet.order + 1)")
+                .font(.system(size: 14, weight: .medium))
+                .frame(width: 30, height: 32)
+                .background(isCompleted ? Color.orange.opacity(0.3) : Color.gray.opacity(0.3))
+                .cornerRadius(6)
 
-            // Column 2 & 3: Previous summary
-            Text("6 x 135lbs")
+            // Column 2 & 3: Previous summary (placeholder for now)
+            Text("- -")
                 .gridCellColumns(2)
+                .font(.system(size: 14))
                 .frame(maxWidth: .infinity, alignment: .center)
+                .foregroundColor(Color.secondary)
 
-            // Column 4: lbs
-            TextField(
-                "135",
-                text: Binding(
-                    get: { String(weight) },
-                    set: { newValue in
-                        if let value = Double(newValue) {
-                            weight = value
-                        }
-                    }
-                )
-            )
-            .frame(width: 50, height: 30)
-            .background(Color.gray.opacity(0.3))
-            .cornerRadius(5)
-            .keyboardType(.decimalPad)
-            .multilineTextAlignment(.center)
+            // Column 4: weight
+            TextField("0", text: $weight)
+                .font(.system(size: 14, weight: .medium))
+                .frame(width: 50, height: 32)
+                .background(isCompleted ? Color.orange.opacity(0.2) : Color.gray.opacity(0.3))
+                .cornerRadius(6)
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.center)
+                .disabled(isCompleted)
+                .focused($isWeightFocused)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .onChange(of: weight) { _, newValue in
+                    updateExerciseSet()
+                }
+                .onSubmit {
+                    isRepsFocused = true
+                }
 
             // Column 5: reps
-            TextField(
-                "6",
-                text: Binding(
-                    get: { String(reps) },
-                    set: { newValue in
-                        if let value = Int(newValue) {
-                            reps = value
-                        }
-                    }
-                )
-            )
-            .frame(width: 50, height: 30)
-            .background(Color.gray.opacity(0.3))
-            .cornerRadius(5)
-            .keyboardType(.numberPad)
-            .multilineTextAlignment(.center)
+            TextField("0", text: $reps)
+                .font(.system(size: 14, weight: .medium))
+                .frame(width: 50, height: 32)
+                .background(isCompleted ? Color.orange.opacity(0.2) : Color.gray.opacity(0.3))
+                .cornerRadius(6)
+                .keyboardType(.numberPad)
+                .multilineTextAlignment(.center)
+                .disabled(isCompleted)
+                .focused($isRepsFocused)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .onChange(of: reps) { _, newValue in
+                    updateExerciseSet()
+                }
+                .onSubmit {
+                    isRepsFocused = false
+                    isWeightFocused = false
+                }
 
             // Column 6: checkmark
             Button {
-                print("Set completed!")
+                toggleCompletion()
             } label: {
-                Image(systemName: "checkmark")
-                    .frame(width: 20, height: 20)
+                Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 20))
+                    .frame(width: 30, height: 32)
+                    .foregroundColor(isCompleted ? .orange : Color.secondary)
             }
-            .padding(6)
-            .background(Color.gray.opacity(0.3))
-            .cornerRadius(5)
+            .buttonStyle(PlainButtonStyle())
+        }
+        .onAppear {
+            loadExerciseSetData()
+        }
+    }
+    
+    private func loadExerciseSetData() {
+        weight = exerciseSet.weight > 0 ? String(exerciseSet.weight) : ""
+        reps = exerciseSet.reps > 0 ? String(exerciseSet.reps) : ""
+        isCompleted = exerciseSet.isCompleted
+    }
+    
+    private func updateExerciseSet() {
+        if let weightValue = Double(weight) {
+            exerciseSet.weight = weightValue
+        } else {
+            exerciseSet.weight = 0
+        }
+        
+        if let repsValue = Int(reps) {
+            exerciseSet.reps = repsValue
+        } else {
+            exerciseSet.reps = 0
+        }
+        
+        exerciseSet.updatedAt = .now
+        
+        do {
+            try modelContext.save()
+        } catch {
+            print("Failed to update exercise set: \(error)")
+        }
+    }
+    
+    private func toggleCompletion() {
+        // Only allow completion if weight and reps are entered
+        guard let weightValue = Double(weight), weightValue > 0,
+              let repsValue = Int(reps), repsValue > 0 else {
+            return
+        }
+        
+        isCompleted.toggle()
+        exerciseSet.isCompleted = isCompleted
+        exerciseSet.updatedAt = .now
+        
+        // Update the exercise set with current values
+        exerciseSet.weight = weightValue
+        exerciseSet.reps = repsValue
+        
+        do {
+            try modelContext.save()
+        } catch {
+            print("Failed to toggle completion: \(error)")
         }
     }
 }
@@ -81,5 +143,7 @@ struct ExerciseSetView: View {
 #Preview {
     let workout = Workout(title: "New Workout", date: .now)
     let exercise = Exercise(name: "Bench Press")
-    ExerciseSetView(workout: workout, exercise: exercise, setNumber: 10)
+    let exerciseSet = ExerciseSet(weight: 135, reps: 8, order: 0, exercise: exercise, workout: workout)
+    ExerciseSetView(exerciseSet: exerciseSet)
+        .modelContainer(for: [Workout.self, Exercise.self, ExerciseSet.self])
 }

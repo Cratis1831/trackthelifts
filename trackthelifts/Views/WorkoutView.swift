@@ -16,8 +16,16 @@ struct WorkoutTemplate: Identifiable {
 
 struct WorkoutView: View {
     @Query(sort: \Workout.updatedAt, order: .reverse) private var workouts: [Workout]
+    @Environment(\.modelContext) private var modelContext
     @State private var isCreateWorkoutPresented: Bool = false
     @State private var sortBy: SortOption = .name
+    @State private var resumingWorkout: Workout? = nil
+    
+    private let sessionManager = WorkoutSessionManager.shared
+    
+    private var activeWorkout: Workout? {
+        sessionManager.getActiveWorkout(from: modelContext)
+    }
     
     enum SortOption: String, CaseIterable {
         case name = "Name"
@@ -60,7 +68,17 @@ struct WorkoutView: View {
                 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
-
+                        
+                        // Resume Workout Banner
+                        if let activeWorkout = activeWorkout, sessionManager.isWorkoutMinimized {
+                            ResumeWorkoutBanner(workout: activeWorkout) {
+                                resumingWorkout = activeWorkout
+                                sessionManager.resumeWorkout()
+                                isCreateWorkoutPresented = true
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.bottom, 20)
+                        }
                         
                         // Templates Section
                         VStack(alignment: .leading, spacing: 20) {
@@ -152,13 +170,19 @@ struct WorkoutView: View {
                     HStack {
                         Spacer()
                         Button(action: {
+                            if sessionManager.isWorkoutMinimized {
+                                resumingWorkout = activeWorkout
+                                sessionManager.resumeWorkout()
+                            } else {
+                                resumingWorkout = nil
+                            }
                             isCreateWorkoutPresented = true
                         }) {
-                            Image(systemName: "plus")
+                            Image(systemName: sessionManager.isWorkoutMinimized ? "play.fill" : "plus")
                                 .font(.system(size: 24, weight: .medium))
                                 .foregroundColor(.white)
                                 .frame(width: 56, height: 56)
-                                .background(Color.orange)
+                                .background(sessionManager.isWorkoutMinimized ? Color.green : Color.orange)
                                 .clipShape(Circle())
                                 .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
                         }
@@ -169,8 +193,10 @@ struct WorkoutView: View {
             }
             .navigationTitle("Workouts")
         }
-        .sheet(isPresented: $isCreateWorkoutPresented) {
-            CreateWorkoutView()
+        .fullScreenCover(isPresented: $isCreateWorkoutPresented, onDismiss: {
+            resumingWorkout = nil
+        }) {
+            CreateWorkoutView(existingWorkout: resumingWorkout)
         }
     }
 }
@@ -226,6 +252,65 @@ struct TemplateCard: View {
     }
 }
 
+struct ResumeWorkoutBanner: View {
+    let workout: Workout
+    let onResume: () -> Void
+    
+    private var completedSets: Int {
+        workout.exerciseSets.filter { $0.isCompleted }.count
+    }
+    
+    private var totalSets: Int {
+        workout.exerciseSets.count
+    }
+    
+    private var uniqueExercises: Int {
+        Set(workout.exerciseSets.map { $0.exercise.name }).count
+    }
+    
+    var body: some View {
+        Button(action: onResume) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Image(systemName: "play.fill")
+                            .foregroundColor(.green)
+                            .font(.system(size: 16))
+                        
+                        Text("Resume Workout")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                    
+                    Text(workout.title)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                    
+                    Text("\(completedSets)/\(totalSets) sets • \(uniqueExercises) exercises")
+                        .font(.system(size: 12))
+                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                    .font(.system(size: 14))
+            }
+            .padding(16)
+            .background(Color(red: 0.11, green: 0.11, blue: 0.12))
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.green.opacity(0.3), lineWidth: 1)
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
 #Preview {
     WorkoutView()
+        .modelContainer(for: [Workout.self, Exercise.self, ExerciseSet.self])
 }

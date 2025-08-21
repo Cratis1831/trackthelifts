@@ -14,6 +14,7 @@ class ExerciseSet {
     var weight: Double
     var reps: Int
     var order: Int
+    var isCompleted: Bool
     
     // CloudKit sync properties
     var createdAt: Date
@@ -32,6 +33,7 @@ class ExerciseSet {
         order: Int, 
         exercise: Exercise, 
         workout: Workout,
+        isCompleted: Bool = false,
         createdAt: Date = .now,
         updatedAt: Date = .now,
         isDeleted: Bool = false,
@@ -44,6 +46,7 @@ class ExerciseSet {
         self.order = order
         self.exercise = exercise
         self.workout = workout
+        self.isCompleted = isCompleted
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.isDeleted = isDeleted

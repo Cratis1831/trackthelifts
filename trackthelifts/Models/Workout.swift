@@ -7,6 +7,8 @@ class Workout {
     var title: String
     var date: Date
     var notes: String?
+    var isActive: Bool
+    var completedAt: Date?
     
     // CloudKit sync properties
     var createdAt: Date
@@ -23,6 +25,8 @@ class Workout {
         title: String,
         date: Date,
         notes: String? = nil,
+        isActive: Bool = true,
+        completedAt: Date? = nil,
         createdAt: Date = .now,
         updatedAt: Date = .now,
         isDeleted: Bool = false,
@@ -33,6 +37,8 @@ class Workout {
         self.title = title
         self.date = date
         self.notes = notes
+        self.isActive = isActive
+        self.completedAt = completedAt
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.isDeleted = isDeleted
