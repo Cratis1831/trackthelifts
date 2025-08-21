@@ -151,7 +151,7 @@ struct SettingsView: View {
             }
             .navigationTitle("Settings")
         }
-        .sheet(isPresented: $isPaywallPresented) {
+        .fullScreenCover(isPresented: $isPaywallPresented) {
             PaywallView()
         }
     }

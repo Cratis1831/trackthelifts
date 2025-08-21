@@ -63,11 +63,11 @@
   },
   "subscriptionGroups" : [
     {
-      "id" : "21547231",
+      "id" : "21760682",
       "localizations" : [
 
       ],
-      "name" : "Premium",
+      "name" : "Pro",
       "subscriptions" : [
         {
           "adHocOffers" : [
@@ -88,10 +88,10 @@
               "locale" : "en_US"
             }
           ],
-          "productID" : "com.ashkansdev.trackthelifts.Monthly",
+          "productID" : "com.ashkansdev.track_the_lifts.Monthly",
           "recurringSubscriptionPeriod" : "P1M",
           "referenceName" : "Premium Monthly",
-          "subscriptionGroupID" : "21547231",
+          "subscriptionGroupID" : "21760682",
           "type" : "RecurringSubscription"
         },
         {
@@ -113,10 +113,10 @@
               "locale" : "en_US"
             }
           ],
-          "productID" : "com.ashkansdev.trackthelifts.Annual",
+          "productID" : "com.ashkansdev.track_the_lifts.Annual",
           "recurringSubscriptionPeriod" : "P1Y",
           "referenceName" : "Premium Yearly",
-          "subscriptionGroupID" : "21547231",
+          "subscriptionGroupID" : "21760682",
           "type" : "RecurringSubscription"
         }
       ]

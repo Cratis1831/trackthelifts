@@ -14,7 +14,7 @@ This is an Xcode project that can be built using:
 - **Device**: Connect iOS device and run directly
 - **Command Line**: From the project root directory (`/Users/ashkan/Development/swift-projects/TrackTheLifts`), use:
   ```bash
-  xcodebuild -scheme TrackTheLifts -destination 'platform=iOS Simulator,name=iPhone 16' build
+  xcodebuild -scheme trackthelifts -destination 'platform=iOS Simulator,name=iPhone 16' build
   ```
 
 No external package managers (CocoaPods, SPM dependencies) are currently used.

@@ -23,33 +23,33 @@ struct PaywallView: View {
                     .ignoresSafeArea()
                 
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 30) {
+                    VStack(alignment: .leading, spacing: 20) {
                         
                         // Header Section
-                        VStack(alignment: .center, spacing: 16) {
+                        VStack(alignment: .center, spacing: 12) {
                             Image(systemName: "icloud")
-                                .font(.system(size: 60))
+                                .font(.system(size: 50))
                                 .foregroundColor(.orange)
                             
                             Text("Upgrade to Premium")
-                                .font(.system(size: 28, weight: .bold))
+                                .font(.system(size: 22, weight: .bold))
                                 .foregroundColor(.white)
                                 .multilineTextAlignment(.center)
                             
                             Text("Sync your workouts across all your devices with iCloud")
-                                .font(.system(size: 18))
+                                .font(.system(size: 16))
                                 .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
                                 .multilineTextAlignment(.center)
                         }
                         .frame(maxWidth: .infinity)
                         
                         // Features Section
-                        VStack(alignment: .leading, spacing: 20) {
+                        VStack(alignment: .leading, spacing: 16) {
                             Text("Premium Features")
-                                .font(.system(size: 24, weight: .semibold))
+                                .font(.system(size: 20, weight: .semibold))
                                 .foregroundColor(.white)
                             
-                            VStack(alignment: .leading, spacing: 16) {
+                            VStack(alignment: .leading, spacing: 12) {
                                 FeatureRow(
                                     icon: "icloud.and.arrow.up",
                                     title: "iCloud Sync",
@@ -79,7 +79,7 @@ struct PaywallView: View {
                         // Pricing Plans
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Choose Your Plan")
-                                .font(.system(size: 24, weight: .semibold))
+                                .font(.system(size: 20, weight: .semibold))
                                 .foregroundColor(.white)
                             
                             if revenueCatService.availablePackages.isEmpty {
@@ -87,7 +87,7 @@ struct PaywallView: View {
                                     ProgressView()
                                         .tint(.orange)
                                     Text("Loading subscription plans...")
-                                        .font(.system(size: 16))
+                                        .font(.system(size: 14))
                                         .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
                                 }
                                 .frame(maxWidth: .infinity)
@@ -127,7 +127,7 @@ struct PaywallView: View {
                                         .tint(.white)
                                 } else {
                                     Text(purchaseButtonText)
-                                        .font(.system(size: 18, weight: .semibold))
+                                        .font(.system(size: 16, weight: .semibold))
                                         .foregroundColor(.white)
                                 }
                             }
@@ -194,11 +194,11 @@ struct FeatureRow: View {
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white)
                 
                 Text(description)
-                    .font(.system(size: 15))
+                    .font(.system(size: 13))
                     .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
                     .lineLimit(nil)
             }
@@ -250,7 +250,7 @@ struct PackageCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text(planType)
-                            .font(.system(size: 18, weight: .semibold))
+                            .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(.white)
                         
                         if let savings = savings {
@@ -265,7 +265,7 @@ struct PackageCard: View {
                     }
                     
                     Text(description)
-                        .font(.system(size: 14))
+                        .font(.system(size: 12))
                         .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
                 }
                 
@@ -273,7 +273,7 @@ struct PackageCard: View {
                 
                 VStack(alignment: .trailing) {
                     Text(package.storeProduct.localizedPriceString)
-                        .font(.system(size: 18, weight: .bold))
+                        .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.white)
                 }
                 

@@ -14,7 +14,7 @@ struct TrackTheLiftsApp: App {
     init() {
         // Configure RevenueCat on app launch
         Task {
-            await RevenueCatService.shared.configure(apiKey: "appl_ukShgzLDbWDksXuhDhRcjuxghgR")
+            await RevenueCatService.shared.configure(apiKey: "appl_ZGXYqMVdOsnpcpehmvbnAmriXcW")
         }
     }
     
