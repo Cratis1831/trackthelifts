@@ -6,8 +6,17 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		41E8F9B52E57805500D8D36F /* IAP.md in Resources */ = {isa = PBXBuildFile; fileRef = 41E8F9B32E57805500D8D36F /* IAP.md */; };
+		41E8F9B62E57805500D8D36F /* TrackTheLifts.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 41E8F9B42E57805500D8D36F /* TrackTheLifts.storekit */; };
+		41E8F9E62E5780B200D8D36F /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 41E8F9E52E5780B200D8D36F /* RevenueCat */; };
+		41E8F9E82E5780B200D8D36F /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 41E8F9E72E5780B200D8D36F /* RevenueCatUI */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		41E8F9A52E57804200D8D36F /* trackthelifts.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = trackthelifts.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		41E8F9B32E57805500D8D36F /* IAP.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = IAP.md; sourceTree = "<group>"; };
+		41E8F9B42E57805500D8D36F /* TrackTheLifts.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = TrackTheLifts.storekit; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -23,6 +32,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				41E8F9E82E5780B200D8D36F /* RevenueCatUI in Frameworks */,
+				41E8F9E62E5780B200D8D36F /* RevenueCat in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -34,6 +45,8 @@
 			children = (
 				41E8F9A72E57804200D8D36F /* trackthelifts */,
 				41E8F9A62E57804200D8D36F /* Products */,
+				41E8F9B32E57805500D8D36F /* IAP.md */,
+				41E8F9B42E57805500D8D36F /* TrackTheLifts.storekit */,
 			);
 			sourceTree = "<group>";
 		};
@@ -65,6 +78,8 @@
 			);
 			name = trackthelifts;
 			packageProductDependencies = (
+				41E8F9E52E5780B200D8D36F /* RevenueCat */,
+				41E8F9E72E5780B200D8D36F /* RevenueCatUI */,
 			);
 			productName = trackthelifts;
 			productReference = 41E8F9A52E57804200D8D36F /* trackthelifts.app */;
@@ -94,6 +109,9 @@
 			);
 			mainGroup = 41E8F99C2E57804200D8D36F;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				41E8F9E42E5780B200D8D36F /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 41E8F9A62E57804200D8D36F /* Products */;
 			projectDirPath = "";
@@ -109,6 +127,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				41E8F9B52E57805500D8D36F /* IAP.md in Resources */,
+				41E8F9B62E57805500D8D36F /* TrackTheLifts.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -324,6 +344,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		41E8F9E42E5780B200D8D36F /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		41E8F9E52E5780B200D8D36F /* RevenueCat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 41E8F9E42E5780B200D8D36F /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCat;
+		};
+		41E8F9E72E5780B200D8D36F /* RevenueCatUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 41E8F9E42E5780B200D8D36F /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCatUI;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 41E8F99D2E57804200D8D36F /* Project object */;
 }

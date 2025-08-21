@@ -207,47 +207,7 @@ class RevenueCatService: ObservableObject {
             print("❌ Failed to load offerings: \(error)")
             print("💡 Trying StoreKit direct access as fallback...")
             
-            // Fallback: Try to load products directly from StoreKit for testing
-            await loadStoreKitProductsDirectly()
         }
-    }
-    
-    // MARK: - StoreKit Fallback for Testing
-    
-    private func loadStoreKitProductsDirectly() async {
-        print("🔄 Loading StoreKit products directly for testing...")
-        
-        // Create mock packages for testing when RevenueCat validation fails
-        // This simulates what would happen with working RevenueCat offerings
-        let mockProducts = [
-            MockStoreProduct(
-                id: "com.ashkansdev.trackthelifts.Monthly",
-                displayName: "Track The Lifts Premium Monthly",
-                description: "Monthly subscription to Track The Lifts Premium",
-                price: 4.99,
-                priceString: "$4.99"
-            ),
-            MockStoreProduct(
-                id: "com.ashkansdev.trackthelifts.Annual", 
-                displayName: "Track The Lifts Premium Annual",
-                description: "Annual subscription to Track The Lifts Premium",
-                price: 39.99,
-                priceString: "$39.99"
-            )
-        ]
-        
-        // Create mock packages from the products
-        var mockPackages: [MockPackage] = []
-        for product in mockProducts {
-            let package = MockPackage(storeProduct: product, identifier: product.id)
-            mockPackages.append(package)
-        }
-        
-        // For testing purposes, we'll use this mock data
-        print("✅ Created \(mockPackages.count) mock packages for testing")
-        print("📦 Mock packages: \(mockPackages.map { $0.identifier })")
-        
-        // Note: In production, remove this and ensure proper RevenueCat setup
     }
     
     // MARK: - Feature Access Methods
