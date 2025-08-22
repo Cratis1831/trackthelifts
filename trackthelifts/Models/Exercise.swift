@@ -19,10 +19,13 @@ class Exercise {
     var isDeleted: Bool
     var cloudKitRecordID: String?
     var lastSyncDate: Date?
+    
+    @Relationship var bodypart: Bodypart?
 
     init(
         id: UUID = UUID(), 
         name: String,
+        bodypart: Bodypart? = nil,
         createdAt: Date = .now,
         updatedAt: Date = .now,
         isDeleted: Bool = false,
@@ -31,6 +34,7 @@ class Exercise {
     ) {
         self.id = id
         self.name = name
+        self.bodypart = bodypart
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.isDeleted = isDeleted
