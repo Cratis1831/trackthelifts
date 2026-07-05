@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct ContentView: View {
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+
     var body: some View {
         TabView {
             Tab("Profile", systemImage: "person") {
@@ -32,6 +34,12 @@ struct ContentView: View {
         }
         .tint(.orange)
         .toolbarColorScheme(.dark, for: .tabBar)
+        .fullScreenCover(isPresented: Binding(
+            get: { !hasCompletedOnboarding },
+            set: { isPresented in hasCompletedOnboarding = !isPresented }
+        )) {
+            OnboardingView()
+        }
     }
 
 }

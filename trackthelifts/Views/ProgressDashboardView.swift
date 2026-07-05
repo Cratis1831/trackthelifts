@@ -52,21 +52,11 @@ struct ProgressDashboardView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "chart.line.uptrend.xyaxis")
-                .font(.system(size: 60))
-                .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
-
-            Text("No Progress Yet")
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.white)
-
-            Text("Complete your first workout to start seeing trends here.")
-                .font(.system(size: 16))
-                .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
-        }
+        EmptyStateView(
+            systemImage: "chart.line.uptrend.xyaxis",
+            title: "No Progress Yet",
+            message: "Complete your first workout to start seeing trends here."
+        )
     }
 
     private var consistencySection: some View {

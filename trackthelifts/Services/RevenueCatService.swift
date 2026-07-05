@@ -171,6 +171,7 @@ class RevenueCatService: ObservableObject {
     // MARK: - Offerings
     
     func loadOfferings() async {
+        lastError = nil
         do {
             let offerings: Offerings = try await withCheckedThrowingContinuation { continuation in
                 Purchases.shared.getOfferings { offerings, error in
@@ -201,12 +202,12 @@ class RevenueCatService: ObservableObject {
                 
                 if availablePackages.isEmpty {
                     print("❌ No packages found in any offerings")
+                    lastError = .noOfferingsAvailable
                 }
             }
         } catch {
             print("❌ Failed to load offerings: \(error)")
-            print("💡 Trying StoreKit direct access as fallback...")
-            
+            lastError = .offeringsLoadFailed(error)
         }
     }
     

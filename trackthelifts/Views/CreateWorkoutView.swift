@@ -17,6 +17,7 @@ struct CreateWorkoutView: View {
     @State private var showNoCompletedSetsAlert: Bool = false
     @State private var showMarkSetsCompleteConfirmation: Bool = false
     @State private var showMissingNameAlert: Bool = false
+    @State private var saveErrorMessage: String?
     @State private var prAnnouncement: String?
     @State private var sessionStartDate = Date()
     private let sessionManager = WorkoutSessionManager.shared
@@ -287,6 +288,14 @@ struct CreateWorkoutView: View {
             } message: {
                 Text("You've logged weight and reps but haven't checked any sets off yet. Completed sets are required to finish — mark your logged sets as complete and finish the workout?")
             }
+            .alert("Couldn't Save", isPresented: Binding(
+                get: { saveErrorMessage != nil },
+                set: { if !$0 { saveErrorMessage = nil } }
+            )) {
+                Button("OK") { }
+            } message: {
+                Text(saveErrorMessage ?? "Something went wrong. Please try again.")
+            }
         }
         .overlay(alignment: .top) {
             if let prAnnouncement {
@@ -326,10 +335,11 @@ struct CreateWorkoutView: View {
                 try modelContext.save()
             } catch {
                 print("Failed to update workout: \(error.localizedDescription)")
+                saveErrorMessage = "Your workout couldn't be saved. Please try again."
             }
             return
         }
-        
+
         // Create new workout
         let newWorkout = Workout(
             title: workoutName,
@@ -337,7 +347,7 @@ struct CreateWorkoutView: View {
             notes: workoutNotes
         )
         modelContext.insert(newWorkout)
-        
+
         do {
             try modelContext.save()
             savedWorkout = newWorkout
@@ -345,6 +355,7 @@ struct CreateWorkoutView: View {
             sessionManager.startWorkout(workoutID: newWorkout.id)
         } catch {
             print("Failed to save workout: \(error.localizedDescription)")
+            saveErrorMessage = "Your workout couldn't be saved. Please try again."
         }
     }
     
@@ -360,6 +371,7 @@ struct CreateWorkoutView: View {
             try modelContext.save()
         } catch {
             print("Failed to persist workout name/notes: \(error)")
+            saveErrorMessage = "Your workout name/notes couldn't be saved. Please try again."
         }
     }
 
@@ -428,6 +440,8 @@ struct CreateWorkoutView: View {
             try modelContext.save()
         } catch {
             print("Failed to mark sets complete: \(error)")
+            saveErrorMessage = "Some sets couldn't be marked complete. Please try again."
+            return
         }
 
         finishWorkout()
@@ -447,6 +461,7 @@ struct CreateWorkoutView: View {
             dismiss()
         } catch {
             print("Failed to complete workout: \(error)")
+            saveErrorMessage = "Your workout couldn't be finished. Please try again."
         }
     }
     

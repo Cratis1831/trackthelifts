@@ -118,10 +118,19 @@ struct WorkoutView: View {
                             }
 
                             // Template Cards
-                            LazyVStack(spacing: 15) {
-                                ForEach(sortedTemplates) { template in
-                                    TemplateCard(template: template) {
-                                        startWorkout(from: template)
+                            if templates.isEmpty {
+                                EmptyStateView(
+                                    systemImage: "list.bullet.rectangle",
+                                    title: "No Routines Yet",
+                                    message: "Save a completed workout as a routine, or add a new one, to see it here."
+                                )
+                                .padding(.top, 20)
+                            } else {
+                                LazyVStack(spacing: 15) {
+                                    ForEach(sortedTemplates) { template in
+                                        TemplateCard(template: template) {
+                                            startWorkout(from: template)
+                                        }
                                     }
                                 }
                             }

@@ -35,22 +35,11 @@ struct HistoryView: View {
                     .ignoresSafeArea()
 
                 if completedWorkouts.isEmpty {
-                    // Empty State
-                    VStack(spacing: 16) {
-                        Image(systemName: "clock.badge.checkmark")
-                            .font(.system(size: 60))
-                            .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
-
-                        Text("No Completed Workouts")
-                            .font(.system(size: 20, weight: .semibold))
-                            .foregroundColor(.white)
-
-                        Text("Your workout history will appear here once you complete your first workout.")
-                            .font(.system(size: 16))
-                            .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 40)
-                    }
+                    EmptyStateView(
+                        systemImage: "clock.badge.checkmark",
+                        title: "No Completed Workouts",
+                        message: "Your workout history will appear here once you complete your first workout."
+                    )
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 16) {

@@ -52,7 +52,9 @@ enum RevenueCatError: Error, LocalizedError {
     case restoreFailed(Error)
     case invalidProduct
     case userCancelled
-    
+    case offeringsLoadFailed(Error)
+    case noOfferingsAvailable
+
     var errorDescription: String? {
         switch self {
         case .notConfigured:
@@ -65,6 +67,10 @@ enum RevenueCatError: Error, LocalizedError {
             return "Invalid product"
         case .userCancelled:
             return "User cancelled the purchase"
+        case .offeringsLoadFailed(let error):
+            return "Couldn't load subscription plans: \(error.localizedDescription)"
+        case .noOfferingsAvailable:
+            return "No subscription plans are available right now."
         }
     }
 }

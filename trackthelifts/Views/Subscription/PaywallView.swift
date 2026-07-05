@@ -83,15 +83,30 @@ struct PaywallView: View {
                                 .foregroundColor(.white)
                             
                             if revenueCatService.availablePackages.isEmpty {
-                                VStack(spacing: 12) {
-                                    ProgressView()
-                                        .tint(.orange)
-                                    Text("Loading subscription plans...")
-                                        .font(.system(size: 14))
-                                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                                if let lastError = revenueCatService.lastError {
+                                    EmptyStateView(
+                                        systemImage: "exclamationmark.triangle",
+                                        title: "Couldn't Load Plans",
+                                        message: lastError.localizedDescription,
+                                        actionTitle: "Retry",
+                                        action: {
+                                            Task {
+                                                await revenueCatService.loadOfferings()
+                                            }
+                                        }
+                                    )
+                                    .padding(.vertical, 20)
+                                } else {
+                                    VStack(spacing: 12) {
+                                        ProgressView()
+                                            .tint(.orange)
+                                        Text("Loading subscription plans...")
+                                            .font(.system(size: 14))
+                                            .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(40)
                                 }
-                                .frame(maxWidth: .infinity)
-                                .padding(40)
                             } else {
                                 VStack(spacing: 12) {
                                     ForEach(revenueCatService.availablePackages, id: \.identifier) { package in

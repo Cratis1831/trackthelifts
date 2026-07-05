@@ -112,44 +112,19 @@ struct ExerciseListView: View {
                     .ignoresSafeArea()
                 
                 if filteredExercises.isEmpty && exercises.isEmpty {
-                    VStack(spacing: 16) {
-                        Image(systemName: "dumbbell")
-                            .font(.system(size: 60))
-                            .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
-                        
-                        Text("No Exercises Found")
-                            .font(.system(size: 20, weight: .semibold))
-                            .foregroundColor(.white)
-                        
-                        Text("Tap 'Seed Exercises' to add default exercises")
-                            .font(.system(size: 14))
-                            .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 40)
-                        
-                        Button("Seed Exercises") {
-                            forceSeedExercises()
-                        }
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 10)
-                        .background(Color.orange)
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
-                    }
+                    EmptyStateView(
+                        systemImage: "dumbbell",
+                        title: "No Exercises Found",
+                        message: "Tap 'Seed Exercises' to add default exercises",
+                        actionTitle: "Seed Exercises",
+                        action: { forceSeedExercises() }
+                    )
                 } else if filteredExercises.isEmpty && !searchText.isEmpty {
-                    VStack(spacing: 16) {
-                        Image(systemName: "magnifyingglass")
-                            .font(.system(size: 60))
-                            .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
-                        
-                        Text("No Results")
-                            .font(.system(size: 20, weight: .semibold))
-                            .foregroundColor(.white)
-                        
-                        Text("Try a different search term")
-                            .font(.system(size: 16))
-                            .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
-                    }
+                    EmptyStateView(
+                        systemImage: "magnifyingglass",
+                        title: "No Results",
+                        message: "Try a different search term"
+                    )
                 } else {
                     VStack(spacing: 0) {
                         List {

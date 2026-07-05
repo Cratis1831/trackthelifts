@@ -122,21 +122,11 @@ struct ExerciseProgressView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "chart.line.uptrend.xyaxis")
-                .font(.system(size: 60))
-                .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
-
-            Text("No History Yet")
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.white)
-
-            Text("Complete a set of \(exercise.name) to start tracking progress.")
-                .font(.system(size: 16))
-                .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
-        }
+        EmptyStateView(
+            systemImage: "chart.line.uptrend.xyaxis",
+            title: "No History Yet",
+            message: "Complete a set of \(exercise.name) to start tracking progress."
+        )
         .navigationTitle(exercise.name)
         .navigationBarTitleDisplayMode(.inline)
     }

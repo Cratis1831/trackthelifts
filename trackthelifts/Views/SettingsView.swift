@@ -10,7 +10,46 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject var revenueCatService: RevenueCatService
     @State private var isPaywallPresented = false
-    
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = true
+    private let notificationService = NotificationService.shared
+    @State private var showNotificationDeniedAlert = false
+    @State private var showRestoreErrorAlert = false
+
+    private var remindersToggleBinding: Binding<Bool> {
+        Binding(
+            get: { notificationService.remindersEnabled },
+            set: { newValue in
+                if newValue {
+                    Task {
+                        let granted = await notificationService.requestAuthorizationIfNeeded()
+                        await MainActor.run {
+                            if granted {
+                                notificationService.remindersEnabled = true
+                                notificationService.scheduleDailyReminder()
+                            } else {
+                                notificationService.remindersEnabled = false
+                                showNotificationDeniedAlert = true
+                            }
+                        }
+                    }
+                } else {
+                    notificationService.remindersEnabled = false
+                    notificationService.cancelReminder()
+                }
+            }
+        )
+    }
+
+    private var reminderTimeBinding: Binding<Date> {
+        Binding(
+            get: { notificationService.reminderTime },
+            set: { newDate in
+                let components = Calendar.current.dateComponents([.hour, .minute], from: newDate)
+                notificationService.setReminderTime(hour: components.hour ?? 18, minute: components.minute ?? 0)
+            }
+        )
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -95,6 +134,9 @@ struct SettingsView: View {
                             Button {
                                 Task {
                                     await revenueCatService.restorePurchases()
+                                    if revenueCatService.lastError != nil {
+                                        showRestoreErrorAlert = true
+                                    }
                                 }
                             } label: {
                                 HStack {
@@ -113,16 +155,55 @@ struct SettingsView: View {
                             .disabled(revenueCatService.isLoading)
                         }
                         
-                        // App Settings Section (placeholder for future settings)
+                        // App Settings Section
                         VStack(alignment: .leading, spacing: 16) {
                             Text("App Settings")
                                 .font(.system(size: 24, weight: .semibold))
                                 .foregroundColor(.white)
-                            
+
+                            // Reminders Card
                             VStack(alignment: .leading, spacing: 12) {
-                                Text("Additional settings will be added here")
-                                    .font(.system(size: 16))
-                                    .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                                Toggle(isOn: remindersToggleBinding) {
+                                    Text("Daily Workout Reminder")
+                                        .font(.system(size: 16))
+                                        .foregroundColor(.white)
+                                }
+                                .tint(.orange)
+
+                                if notificationService.remindersEnabled {
+                                    DatePicker(
+                                        "Reminder Time",
+                                        selection: reminderTimeBinding,
+                                        displayedComponents: .hourAndMinute
+                                    )
+                                    .tint(.orange)
+                                    .foregroundColor(.white)
+                                }
+                            }
+                            .padding(16)
+                            .background(Color(red: 0.11, green: 0.11, blue: 0.12))
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color(red: 0.17, green: 0.17, blue: 0.18), lineWidth: 1)
+                            )
+
+                            VStack(alignment: .leading, spacing: 12) {
+                                Button {
+                                    hasCompletedOnboarding = false
+                                } label: {
+                                    HStack {
+                                        Text("Reset Onboarding")
+                                            .font(.system(size: 16))
+                                            .foregroundColor(.white)
+
+                                        Spacer()
+
+                                        Image(systemName: "arrow.counterclockwise")
+                                            .font(.system(size: 14, weight: .medium))
+                                            .foregroundColor(.orange)
+                                    }
+                                }
                             }
                             .padding(16)
                             .background(Color(red: 0.11, green: 0.11, blue: 0.12))
@@ -141,6 +222,16 @@ struct SettingsView: View {
         }
         .fullScreenCover(isPresented: $isPaywallPresented) {
             PaywallView()
+        }
+        .alert("Notifications Disabled", isPresented: $showNotificationDeniedAlert) {
+            Button("OK") { }
+        } message: {
+            Text("Enable notifications for Track The Lifts in iOS Settings to turn on workout reminders.")
+        }
+        .alert("Restore Failed", isPresented: $showRestoreErrorAlert) {
+            Button("OK") { }
+        } message: {
+            Text(revenueCatService.lastError?.localizedDescription ?? "Couldn't restore your purchases. Please try again.")
         }
     }
 }
