@@ -262,6 +262,7 @@ struct TemplateCard: View {
                         Button("Delete Template", role: .destructive) {
                             modelContext.delete(template)
                             try? modelContext.save()
+                            Haptics.impact(.medium)
                         }
                     } label: {
                         Image(systemName: "ellipsis")

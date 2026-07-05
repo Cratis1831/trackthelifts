@@ -51,6 +51,7 @@ struct WorkoutDetailView: View {
         }
 
         persistWorkoutEdit()
+        Haptics.impact(.light)
     }
 
     /// Exercise name row: long-press it (or tap its grip icon) to enter reorder mode.
@@ -64,6 +65,7 @@ struct WorkoutDetailView: View {
 
             if groupedExerciseNames.count > 1 {
                 Button {
+                    Haptics.selection()
                     withAnimation {
                         isReorderingExercises = true
                     }
@@ -90,6 +92,7 @@ struct WorkoutDetailView: View {
         .contentShape(Rectangle())
         .onLongPressGesture {
             if groupedExerciseNames.count > 1 {
+                Haptics.selection()
                 withAnimation {
                     isReorderingExercises = true
                 }
@@ -217,6 +220,7 @@ struct WorkoutDetailView: View {
             if isReorderingExercises {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
+                        Haptics.selection()
                         withAnimation {
                             isReorderingExercises = false
                         }
@@ -272,6 +276,7 @@ struct WorkoutDetailView: View {
             modelContext.delete(set)
         }
         persistWorkoutEdit()
+        Haptics.impact(.medium)
     }
 
     /// Removes a set and renumbers the remaining sets for that exercise so "Set N" stays sequential.
@@ -288,6 +293,7 @@ struct WorkoutDetailView: View {
         }
 
         persistWorkoutEdit()
+        Haptics.impact(.medium)
     }
 
     private func addSet(for exerciseName: String) {

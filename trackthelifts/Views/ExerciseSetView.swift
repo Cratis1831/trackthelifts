@@ -169,10 +169,13 @@ struct ExerciseSetView: View {
         }
 
         if !wasCompleted && isCompleted {
+            Haptics.impact(.light)
             RestTimerManager.shared.startTimer()
             if let prKind = PersonalRecordService.personalRecord(for: exerciseSet, in: modelContext) {
                 onPersonalRecord?(exerciseSet, prKind)
             }
+        } else if wasCompleted && !isCompleted {
+            Haptics.selection()
         }
     }
 }

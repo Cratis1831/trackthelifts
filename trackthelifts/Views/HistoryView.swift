@@ -104,6 +104,7 @@ struct HistoryView: View {
                 if let workout = workoutToDelete {
                     modelContext.delete(workout)
                     try? modelContext.save()
+                    Haptics.impact(.medium)
                 }
                 workoutToDelete = nil
             }
