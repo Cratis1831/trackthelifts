@@ -27,7 +27,7 @@ struct TrackTheLiftsApp: App {
         }
         .modelContainer(for: [
             Workout.self, Exercise.self, Bodypart.self,
-            ExerciseSet.self,
+            ExerciseSet.self, WorkoutTemplate.self, WorkoutTemplateExercise.self,
         ])
     }
 }

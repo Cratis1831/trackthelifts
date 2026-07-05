@@ -16,24 +16,35 @@ struct HistoryView: View {
         sort: \Workout.completedAt,
         order: .reverse
     ) private var completedWorkouts: [Workout]
-    
+
+    @Environment(\.modelContext) private var modelContext
+    private let sessionManager = WorkoutSessionManager.shared
+
+    @State private var resumingWorkout: Workout?
+    @State private var isCreateWorkoutPresented = false
+    @State private var showActiveWorkoutAlert = false
+    @State private var workoutToNameTemplate: Workout?
+    @State private var templateName: String = ""
+    @State private var workoutToDelete: Workout?
+    @State private var showingDeleteConfirmation = false
+
     var body: some View {
         NavigationStack {
             ZStack {
                 Color.black
                     .ignoresSafeArea()
-                
+
                 if completedWorkouts.isEmpty {
                     // Empty State
                     VStack(spacing: 16) {
                         Image(systemName: "clock.badge.checkmark")
                             .font(.system(size: 60))
                             .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
-                        
+
                         Text("No Completed Workouts")
                             .font(.system(size: 20, weight: .semibold))
                             .foregroundColor(.white)
-                        
+
                         Text("Your workout history will appear here once you complete your first workout.")
                             .font(.system(size: 16))
                             .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
@@ -44,7 +55,18 @@ struct HistoryView: View {
                     ScrollView {
                         LazyVStack(spacing: 16) {
                             ForEach(completedWorkouts) { workout in
-                                WorkoutHistoryCard(workout: workout)
+                                WorkoutHistoryCard(
+                                    workout: workout,
+                                    onSaveAsTemplate: {
+                                        templateName = workout.title
+                                        workoutToNameTemplate = workout
+                                    },
+                                    onDuplicate: { duplicateWorkout(workout) },
+                                    onDelete: {
+                                        workoutToDelete = workout
+                                        showingDeleteConfirmation = true
+                                    }
+                                )
                             }
                         }
                         .padding(.horizontal, 20)
@@ -55,12 +77,67 @@ struct HistoryView: View {
             }
             .navigationTitle("History")
         }
+        .fullScreenCover(isPresented: $isCreateWorkoutPresented, onDismiss: {
+            resumingWorkout = nil
+        }) {
+            CreateWorkoutView(existingWorkout: resumingWorkout)
+        }
+        .alert("Workout In Progress", isPresented: $showActiveWorkoutAlert) {
+            Button("OK") { }
+        } message: {
+            Text("Finish or discard your current workout before starting another one.")
+        }
+        .alert("Save as Template", isPresented: Binding(
+            get: { workoutToNameTemplate != nil },
+            set: { if !$0 { workoutToNameTemplate = nil } }
+        )) {
+            TextField("Template Name", text: $templateName)
+            Button("Save") {
+                if let workout = workoutToNameTemplate {
+                    _ = TemplateService.makeTemplate(from: workout, name: templateName, in: modelContext)
+                }
+                workoutToNameTemplate = nil
+            }
+            Button("Cancel", role: .cancel) {
+                workoutToNameTemplate = nil
+            }
+        } message: {
+            Text("This will create a routine you can start again later.")
+        }
+        .alert("Delete Workout", isPresented: $showingDeleteConfirmation) {
+            Button("Delete", role: .destructive) {
+                if let workout = workoutToDelete {
+                    modelContext.delete(workout)
+                    try? modelContext.save()
+                }
+                workoutToDelete = nil
+            }
+            Button("Cancel", role: .cancel) {
+                workoutToDelete = nil
+            }
+        } message: {
+            Text("Are you sure you want to delete this workout? This cannot be undone.")
+        }
+    }
+
+    private func duplicateWorkout(_ workout: Workout) {
+        guard !sessionManager.hasActiveWorkout() else {
+            showActiveWorkoutAlert = true
+            return
+        }
+        let newWorkout = workout.duplicate(in: modelContext)
+        resumingWorkout = newWorkout
+        sessionManager.startWorkout(workoutID: newWorkout.id)
+        isCreateWorkoutPresented = true
     }
 }
 
 struct WorkoutHistoryCard: View {
     let workout: Workout
-    
+    var onSaveAsTemplate: () -> Void
+    var onDuplicate: () -> Void
+    var onDelete: () -> Void
+
     private var exerciseGroups: [(String, [ExerciseSet])] {
         let grouped = Dictionary(grouping: workout.exerciseSets, by: \.exercise.name)
         return grouped.sorted { $0.key < $1.key }
@@ -92,15 +169,24 @@ struct WorkoutHistoryCard: View {
                 }
                 
                 Spacer()
-                
+
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("\(completedSets)/\(totalSets) sets")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.orange)
-                    
+
                     Text("\(exerciseGroups.count) exercises")
                         .font(.system(size: 12))
                         .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                }
+
+                Menu {
+                    cardMenuActions
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .foregroundColor(.orange)
+                        .font(.system(size: 16))
+                        .padding(.leading, 8)
                 }
             }
             
@@ -147,10 +233,35 @@ struct WorkoutHistoryCard: View {
             RoundedRectangle(cornerRadius: 12)
                 .stroke(Color(red: 0.17, green: 0.17, blue: 0.18), lineWidth: 1)
         )
+        .contextMenu {
+            cardMenuActions
+        }
+    }
+
+    @ViewBuilder
+    private var cardMenuActions: some View {
+        Button {
+            onSaveAsTemplate()
+        } label: {
+            Label("Save as Template", systemImage: "square.and.arrow.down.on.square")
+        }
+        Button {
+            onDuplicate()
+        } label: {
+            Label("Duplicate Workout", systemImage: "repeat")
+        }
+        Button(role: .destructive) {
+            onDelete()
+        } label: {
+            Label("Delete Workout", systemImage: "trash")
+        }
     }
 }
 
 #Preview {
     HistoryView()
-        .modelContainer(for: [Workout.self, Exercise.self, ExerciseSet.self])
+        .modelContainer(for: [
+            Workout.self, Exercise.self, ExerciseSet.self,
+            WorkoutTemplate.self, WorkoutTemplateExercise.self,
+        ])
 }

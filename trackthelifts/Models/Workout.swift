@@ -52,4 +52,40 @@ extension Workout {
         let newExercise = ExerciseSet(weight: 0, reps: 0, order: order, exercise: exercise, workout: workout)
         exerciseSets.append(newExercise)
     }
+
+    /// Creates a new in-progress `Workout` that repeats this (typically completed) workout's
+    /// exercises and set count, carrying over the previous weight/reps as a starting point
+    /// but resetting completion so the user logs each set fresh.
+    func duplicate(in context: ModelContext) -> Workout {
+        let newWorkout = Workout(title: title, date: .now)
+        context.insert(newWorkout)
+
+        let grouped = Dictionary(grouping: exerciseSets, by: \.exercise.name)
+        let sortedGroups = grouped.sorted { $0.key < $1.key }
+
+        for group in sortedGroups {
+            let sets = group.value.sorted { $0.order < $1.order }
+            guard let exercise = sets.first?.exercise else { continue }
+
+            for (index, previousSet) in sets.enumerated() {
+                let newSet = ExerciseSet(
+                    weight: previousSet.weight,
+                    reps: previousSet.reps,
+                    order: index,
+                    exercise: exercise,
+                    workout: newWorkout
+                )
+                context.insert(newSet)
+                newWorkout.exerciseSets.append(newSet)
+            }
+        }
+
+        do {
+            try context.save()
+        } catch {
+            print("Failed to duplicate workout: \(error)")
+        }
+
+        return newWorkout
+    }
 }

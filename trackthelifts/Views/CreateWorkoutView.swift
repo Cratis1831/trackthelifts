@@ -14,6 +14,7 @@ struct CreateWorkoutView: View {
     @State private var showExerciseList: Bool = false
     @State private var savedWorkout: Workout?
     @State private var showCancelConfirmation: Bool = false
+    @State private var prAnnouncement: String?
     private let sessionManager = WorkoutSessionManager.shared
     @FocusState private var focusWorkoutName: Bool
     
@@ -62,7 +63,9 @@ struct CreateWorkoutView: View {
                                 .foregroundColor(Color(.secondaryLabel))
                             TimerView()
                         }
-                        .padding(.bottom)
+
+                        RestTimerBanner()
+                            .padding(.bottom)
 
                         if let workout = savedWorkout, !workout.exerciseSets.isEmpty {
                             VStack(alignment: .leading, spacing: 10) {
@@ -107,7 +110,9 @@ struct CreateWorkoutView: View {
                                         
                                         // Exercise sets
                                         ForEach(exerciseSets.sorted(by: { $0.order < $1.order })) { exerciseSet in
-                                            ExerciseSetView(exerciseSet: exerciseSet)
+                                            ExerciseSetView(exerciseSet: exerciseSet) { set, kind in
+                                                showPersonalRecord(for: set, kind: kind)
+                                            }
                                         }
                                     }
                                     
@@ -235,6 +240,31 @@ struct CreateWorkoutView: View {
                 Text("Are you sure you want to cancel this workout? Any unsaved changes will be lost.")
             }
         }
+        .overlay(alignment: .top) {
+            if let prAnnouncement {
+                Text(prAnnouncement)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.black)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(Color.yellow)
+                    .cornerRadius(20)
+                    .padding(.top, 8)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+    }
+
+    private func showPersonalRecord(for set: ExerciseSet, kind: PRKind) {
+        let label = kind == .weight ? "New weight PR!" : "New estimated 1RM PR!"
+        withAnimation {
+            prAnnouncement = "🏆 \(set.exercise.name): \(label)"
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            withAnimation {
+                prAnnouncement = nil
+            }
+        }
     }
 
     func saveWorkout() {
@@ -297,19 +327,21 @@ struct CreateWorkoutView: View {
             try? modelContext.save()
             sessionManager.completeWorkout()
         }
+        RestTimerManager.shared.cancel()
         dismiss()
     }
-    
+
     func finishWorkout() {
         guard let workout = savedWorkout else { return }
-        
+
         workout.isActive = false
         workout.completedAt = .now
         workout.updatedAt = .now
-        
+
         do {
             try modelContext.save()
             sessionManager.completeWorkout()
+            RestTimerManager.shared.cancel()
             dismiss()
         } catch {
             print("Failed to complete workout: \(error)")
@@ -320,11 +352,12 @@ struct CreateWorkoutView: View {
         guard let exercise = exercise else { return }
         
         let existingSetsForExercise = workout.exerciseSets.filter { $0.exercise == exercise }
-        let newOrder = existingSetsForExercise.map { $0.order }.max() ?? -1
-        
+        let lastSet = existingSetsForExercise.max { $0.order < $1.order }
+        let newOrder = lastSet?.order ?? -1
+
         let newExerciseSet = ExerciseSet(
-            weight: 0,
-            reps: 0,
+            weight: lastSet?.weight ?? 0,
+            reps: lastSet?.reps ?? 0,
             order: newOrder + 1,
             exercise: exercise,
             workout: workout
@@ -340,6 +373,48 @@ struct CreateWorkoutView: View {
         }
     }
 }
+
+struct RestTimerBanner: View {
+    @State private var now = Date()
+    private let manager = RestTimerManager.shared
+    private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+
+    private var remainingSeconds: Int {
+        guard let endDate = manager.endDate else { return 0 }
+        return max(0, Int(endDate.timeIntervalSince(now).rounded()))
+    }
+
+    var body: some View {
+        if manager.isRunning {
+            HStack {
+                Image(systemName: "timer")
+                    .foregroundColor(.orange)
+                Text("Rest: \(formattedTime(remainingSeconds))")
+                    .font(.system(size: 14, weight: .semibold))
+                Spacer()
+                Button("+15s") {
+                    manager.addTime(15)
+                }
+                .font(.system(size: 13, weight: .medium))
+                Button("Skip") {
+                    manager.cancel()
+                }
+                .font(.system(size: 13, weight: .medium))
+            }
+            .padding(10)
+            .background(Color(red: 0.11, green: 0.11, blue: 0.12))
+            .cornerRadius(10)
+            .onReceive(ticker) { value in
+                now = value
+            }
+        }
+    }
+
+    private func formattedTime(_ seconds: Int) -> String {
+        String(format: "%d:%02d", seconds / 60, seconds % 60)
+    }
+}
+
 #Preview {
     CreateWorkoutView()
         .modelContainer(for: [Workout.self, Exercise.self, ExerciseSet.self])

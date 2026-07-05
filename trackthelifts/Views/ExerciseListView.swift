@@ -46,6 +46,11 @@ struct ExerciseListView: View {
         return grouped.sorted { $0.key < $1.key }
     }
 
+    private var recentExercises: [Exercise] {
+        guard chooseExercise, searchText.isEmpty else { return [] }
+        return RecentExercisesService.recentExercises(in: modelContext)
+    }
+
     var body: some View {
         content
             .onAppear {
@@ -144,6 +149,22 @@ struct ExerciseListView: View {
                 } else {
                     VStack(spacing: 0) {
                         List {
+                            if !recentExercises.isEmpty {
+                                Section {
+                                    ForEach(Array(recentExercises.enumerated()), id: \.element.id) { index, exercise in
+                                        exerciseRow(exercise,
+                                                  isFirst: index == 0,
+                                                  isLast: index == recentExercises.count - 1)
+                                            .listRowSeparator(index == recentExercises.count - 1 ? .hidden : .visible)
+                                    }
+                                } header: {
+                                    Text("Recent")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundColor(.orange)
+                                        .textCase(nil)
+                                }
+                                .listSectionSeparator(.hidden)
+                            }
                             ForEach(groupedExercises, id: \.0) { bodypartName, bodypartExercises in
                                 Section {
                                     ForEach(Array(bodypartExercises.enumerated()), id: \.element.id) { index, exercise in

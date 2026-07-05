@@ -1,0 +1,44 @@
+//
+//  TemplateService.swift
+//  TrackTheLifts
+//
+
+import Foundation
+import SwiftData
+
+enum TemplateService {
+    /// Builds a `WorkoutTemplate` from a completed workout, grouping its sets by exercise
+    /// (same alphabetical-by-exercise-name convention used throughout the app) and using
+    /// the last set performed for each exercise as the target weight/reps.
+    static func makeTemplate(from workout: Workout, name: String, in context: ModelContext) -> WorkoutTemplate {
+        let template = WorkoutTemplate(name: name)
+        context.insert(template)
+
+        let grouped = Dictionary(grouping: workout.exerciseSets, by: \.exercise.name)
+        let sortedGroups = grouped.sorted { $0.key < $1.key }
+
+        for (index, group) in sortedGroups.enumerated() {
+            let sets = group.value.sorted { $0.order < $1.order }
+            guard let exercise = sets.first?.exercise, let lastSet = sets.last else { continue }
+
+            let templateExercise = WorkoutTemplateExercise(
+                order: index,
+                targetSets: sets.count,
+                targetReps: lastSet.reps,
+                targetWeight: lastSet.weight,
+                template: template,
+                exercise: exercise
+            )
+            context.insert(templateExercise)
+            template.templateExercises.append(templateExercise)
+        }
+
+        do {
+            try context.save()
+        } catch {
+            print("Failed to save template: \(error)")
+        }
+
+        return template
+    }
+}

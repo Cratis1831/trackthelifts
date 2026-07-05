@@ -10,8 +10,9 @@ import SwiftData
 
 struct ExerciseSetView: View {
     let exerciseSet: ExerciseSet
+    var onPersonalRecord: ((ExerciseSet, PRKind) -> Void)? = nil
     @Environment(\.modelContext) private var modelContext
-    
+
     @State private var weight: String = ""
     @State private var reps: String = ""
     @State private var isCompleted: Bool = false
@@ -24,11 +25,11 @@ struct ExerciseSetView: View {
             Text("\(exerciseSet.order + 1)")
                 .font(.system(size: 14, weight: .medium))
                 .frame(width: 30, height: 32)
-                .background(isCompleted ? Color.orange.opacity(0.3) : Color.gray.opacity(0.3))
+                .background(isPersonalRecord ? Color.yellow.opacity(0.4) : (isCompleted ? Color.orange.opacity(0.3) : Color.gray.opacity(0.3)))
                 .cornerRadius(6)
 
-            // Column 2 & 3: Previous summary (placeholder for now)
-            Text("- -")
+            // Column 2 & 3: Previous summary (last time this exercise/set-number was logged)
+            Text(previousSetSummary)
                 .gridCellColumns(2)
                 .font(.system(size: 14))
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -87,6 +88,33 @@ struct ExerciseSetView: View {
         }
     }
     
+    private var isPersonalRecord: Bool {
+        guard isCompleted else { return false }
+        return PersonalRecordService.personalRecord(for: exerciseSet, in: modelContext) != nil
+    }
+
+    private var previousSetSummary: String {
+        guard let previous = fetchPreviousSet() else { return "- -" }
+        return "\(formattedWeight(previous.weight)) x \(previous.reps)"
+    }
+
+    private func fetchPreviousSet() -> ExerciseSet? {
+        let exerciseID = exerciseSet.exercise.id
+        let workoutID = exerciseSet.workout.id
+        let order = exerciseSet.order
+        let descriptor = FetchDescriptor<ExerciseSet>(
+            predicate: #Predicate<ExerciseSet> { set in
+                set.exercise.id == exerciseID && set.workout.id != workoutID && set.order == order
+            },
+            sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
+        )
+        return try? modelContext.fetch(descriptor).first
+    }
+
+    private func formattedWeight(_ weight: Double) -> String {
+        weight.truncatingRemainder(dividingBy: 1) == 0 ? String(Int(weight)) : String(weight)
+    }
+
     private func loadExerciseSetData() {
         weight = exerciseSet.weight > 0 ? String(exerciseSet.weight) : ""
         reps = exerciseSet.reps > 0 ? String(exerciseSet.reps) : ""
@@ -121,19 +149,27 @@ struct ExerciseSetView: View {
               let repsValue = Int(reps), repsValue > 0 else {
             return
         }
-        
+
+        let wasCompleted = isCompleted
         isCompleted.toggle()
         exerciseSet.isCompleted = isCompleted
         exerciseSet.updatedAt = .now
-        
+
         // Update the exercise set with current values
         exerciseSet.weight = weightValue
         exerciseSet.reps = repsValue
-        
+
         do {
             try modelContext.save()
         } catch {
             print("Failed to toggle completion: \(error)")
+        }
+
+        if !wasCompleted && isCompleted {
+            RestTimerManager.shared.startTimer()
+            if let prKind = PersonalRecordService.personalRecord(for: exerciseSet, in: modelContext) {
+                onPersonalRecord?(exerciseSet, prKind)
+            }
         }
     }
 }

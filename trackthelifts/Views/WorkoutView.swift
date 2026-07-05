@@ -8,58 +8,35 @@
 import SwiftUI
 import SwiftData
 
-struct WorkoutTemplate: Identifiable {
-    let id = UUID()
-    let name: String
-    let exercises: String
-}
-
 struct WorkoutView: View {
     @Query(sort: \Workout.updatedAt, order: .reverse) private var workouts: [Workout]
+    @Query private var templates: [WorkoutTemplate]
     @Environment(\.modelContext) private var modelContext
     @State private var isCreateWorkoutPresented: Bool = false
+    @State private var isAddRoutineInfoPresented: Bool = false
     @State private var sortBy: SortOption = .name
     @State private var resumingWorkout: Workout? = nil
-    
+
     private let sessionManager = WorkoutSessionManager.shared
-    
+
     private var activeWorkout: Workout? {
         sessionManager.getActiveWorkout(from: modelContext)
     }
-    
+
+    private var sortedTemplates: [WorkoutTemplate] {
+        switch sortBy {
+        case .name:
+            return templates.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        case .recent:
+            return templates.sorted { $0.updatedAt > $1.updatedAt }
+        }
+    }
+
     enum SortOption: String, CaseIterable {
         case name = "Name"
         case recent = "Recent"
     }
-    
-    // Sample workout templates - replace with actual data source
-    private let workoutTemplates: [WorkoutTemplate] = [
-        WorkoutTemplate(
-            name: "Push 2025",
-            exercises: "Bench Press (Barbell), Incline Bench Press (Dumbbell), Seated Overhead Press (Dumbbell), Lateral..."
-        ),
-        WorkoutTemplate(
-            name: "Upper A - 2025",
-            exercises: "Bench Press (Barbell), Pull Up (Band), Bent Over Row (Barbell), Seated Overhead Pr..."
-        ),
-        WorkoutTemplate(
-            name: "Lower A - 2025",
-            exercises: "Goblet Squat (Kettlebell) and Romanian Deadlift (Dumbbell)"
-        ),
-        WorkoutTemplate(
-            name: "Lower A 2025 Machines",
-            exercises: "Leg Extension (Machine), Seated Leg Curl (Machine), Seated Leg Press (M..."
-        ),
-        WorkoutTemplate(
-            name: "Early Morning Workout",
-            exercises: "Bench Press (Barbell), Bent Over Row"
-        ),
-        WorkoutTemplate(
-            name: "Upper A",
-            exercises: "Lat Pulldown (Cable), Incline Bench Press (Barbell), Seated Row"
-        )
-    ]
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -91,7 +68,7 @@ struct WorkoutView: View {
                                 Spacer()
                                 
                                 Button(action: {
-                                    // Add template action
+                                    isAddRoutineInfoPresented = true
                                 }) {
                                     HStack(spacing: 4) {
                                         Image(systemName: "plus")
@@ -106,41 +83,19 @@ struct WorkoutView: View {
 
                             // My Templates Header
                             HStack {
-                                Text("My Routines (\(workoutTemplates.count))")
+                                Text("My Routines (\(templates.count))")
                                     .font(.system(size: 20, weight: .semibold))
                                     .foregroundColor(.white)
-                                
+
                                 Spacer()
-                                
+
                                 Menu {
                                     Button(action: { sortBy = .name }) {
                                         Label("Sort by Name", systemImage: "textformat")
                                     }
-                                    
+
                                     Button(action: { sortBy = .recent }) {
                                         Label("Sort by Recent", systemImage: "clock")
-                                    }
-                                    
-                                    Divider()
-                                    
-                                    Button(action: {
-                                        // Create folder action
-                                    }) {
-                                        Label("Create Folder", systemImage: "folder.badge.plus")
-                                    }
-                                    
-                                    Button(action: {
-                                        // Import template action
-                                    }) {
-                                        Label("Import Template", systemImage: "square.and.arrow.down")
-                                    }
-                                    
-                                    Divider()
-                                    
-                                    Button(role: .destructive, action: {
-                                        // Export all templates action
-                                    }) {
-                                        Label("Export All Templates", systemImage: "square.and.arrow.up")
                                     }
                                 } label: {
                                     Image(systemName: "ellipsis")
@@ -148,11 +103,13 @@ struct WorkoutView: View {
                                         .font(.system(size: 20))
                                 }
                             }
-                            
+
                             // Template Cards
                             LazyVStack(spacing: 15) {
-                                ForEach(workoutTemplates) { template in
-                                    TemplateCard(template: template)
+                                ForEach(sortedTemplates) { template in
+                                    TemplateCard(template: template) {
+                                        startWorkout(from: template)
+                                    }
                                 }
                             }
                         }
@@ -195,57 +152,77 @@ struct WorkoutView: View {
         }) {
             CreateWorkoutView(existingWorkout: resumingWorkout)
         }
+        .alert("Add Routine", isPresented: $isAddRoutineInfoPresented) {
+            Button("OK") { }
+        } message: {
+            Text("Routines are created from a completed workout. Finish a workout, then save it as a routine from History.")
+        }
+    }
+
+    private func startWorkout(from template: WorkoutTemplate) {
+        let workout = template.instantiateWorkout(in: modelContext)
+        resumingWorkout = workout
+        sessionManager.startWorkout(workoutID: workout.id)
+        isCreateWorkoutPresented = true
     }
 }
 
 struct TemplateCard: View {
     let template: WorkoutTemplate
-    
+    let onTap: () -> Void
+
+    @Environment(\.modelContext) private var modelContext
+
+    private var exercisesSummary: String {
+        template.templateExercises
+            .sorted { $0.order < $1.order }
+            .map { $0.exercise.name }
+            .joined(separator: ", ")
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(template.name)
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white)
-                    .lineLimit(1)
-                
-                Spacer()
-                
-                Menu {
-                    Button("Edit Template") {
-                        // Edit action
+        Button(action: onTap) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text(template.name)
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+
+                    Spacer()
+
+                    Menu {
+                        Button("Duplicate Template") {
+                            _ = template.duplicateTemplate(in: modelContext)
+                        }
+                        Divider()
+                        Button("Delete Template", role: .destructive) {
+                            modelContext.delete(template)
+                            try? modelContext.save()
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .foregroundColor(.orange)
+                            .font(.system(size: 16))
                     }
-                    Button("Duplicate Template") {
-                        // Duplicate action
-                    }
-                    Button("Share Template") {
-                        // Share action
-                    }
-                    Divider()
-                    Button("Delete Template", role: .destructive) {
-                        // Delete action
-                    }
-                } label: {
-                    Image(systemName: "ellipsis")
-                        .foregroundColor(.orange)
-                        .font(.system(size: 16))
                 }
+
+                Text(exercisesSummary)
+                    .font(.system(size: 14))
+                    .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
             }
-            
-            Text(template.exercises)
-                .font(.system(size: 14))
-                .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
-                .lineLimit(2)
-                .multilineTextAlignment(.leading)
+            .padding(16)
+            .frame(maxWidth: .infinity, minHeight: 100, alignment: .topLeading)
+            .background(Color(red: 0.11, green: 0.11, blue: 0.12))
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color(red: 0.17, green: 0.17, blue: 0.18), lineWidth: 1)
+            )
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, minHeight: 100, alignment: .topLeading)
-         .background(Color(red: 0.11, green: 0.11, blue: 0.12))
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color(red: 0.17, green: 0.17, blue: 0.18), lineWidth: 1)
-        )
+        .buttonStyle(.plain)
     }
 }
 
@@ -304,5 +281,8 @@ struct ResumeWorkoutBanner: View {
 
 #Preview {
     WorkoutView()
-        .modelContainer(for: [Workout.self, Exercise.self, ExerciseSet.self])
+        .modelContainer(for: [
+            Workout.self, Exercise.self, ExerciseSet.self,
+            WorkoutTemplate.self, WorkoutTemplateExercise.self,
+        ])
 }

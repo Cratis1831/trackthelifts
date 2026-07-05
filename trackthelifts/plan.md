@@ -1,8 +1,8 @@
-# Fitness Tracker App Plan - Expo SDK 57
+# Fitness Tracker App Plan - SwiftUI and SwiftData
 
 ## Goal
 
-Build an iterative fitness tracker app using Expo SDK 57. Start with a strong local-first workout tracker, then add templates, progress analytics, sync, health integrations, and coaching features.
+Build an iterative iOS fitness tracker app using SwiftUI and SwiftData. Start with a strong local-first workout tracker, then add templates, progress analytics, iCloud sync, HealthKit integrations, and coaching features.
 
 ## Product Scope
 
@@ -13,7 +13,7 @@ Build an iterative fitness tracker app using Expo SDK 57. Start with a strong lo
 - Workout history
 - Exercise progress tracking
 - Local-first data storage
-- Optional account/sync added later
+- Optional iCloud sync added later
 
 ### MVP User Outcomes
 
@@ -27,71 +27,89 @@ Build an iterative fitness tracker app using Expo SDK 57. Start with a strong lo
 
 ### Core
 
-- Expo SDK 57
-- React Native
-- TypeScript
-- Expo Router
+- Swift
+- SwiftUI
+- SwiftData
+- iOS native app
 
 ### State and Data
 
-- Zustand for lightweight UI/application state
-- `expo-sqlite` for local structured storage
-- Optional Drizzle ORM or a typed repository layer
-- Zod for schema validation
+- SwiftData for local persistence
+- `@Model` types for app entities
+- `@Query` for view-level data fetching
+- `@Environment(\.modelContext)` for writes
+- `@Observable` or `@State` for view state
+- `@AppStorage` for small settings
 
-### Forms
+### Navigation
 
-- React Hook Form
-- Zod validation
+- `TabView` for primary navigation
+- `NavigationStack` for screen flows
+- `NavigationPath` if deep navigation becomes complex
+- `.sheet` and `.confirmationDialog` for modal actions
 
 ### UI
 
-- React Native components
-- Expo Router tabs/stacks
-- `lucide-react-native` for icons
-- `react-native-svg` for chart dependencies if needed
+- Native SwiftUI components
+- SF Symbols for icons
+- Dynamic Type support
+- Light and dark mode support
+- Haptics for key actions where useful
 
 ### Charts
 
-- Confirm Expo SDK 57 compatibility before installing
-- Preferred options:
-  - `victory-native`
-  - `react-native-gifted-charts`
-  - Custom SVG charts for simple progress views
+- Swift Charts
+- Use simple chart views first:
+  - Workout count by week
+  - Volume over time
+  - Exercise progress
+  - Body weight trend
 
-### Future Backend
+### Future Sync
 
-- Supabase preferred for auth, Postgres, and sync
-- Firebase acceptable for faster simple auth/cloud storage
-- Custom backend only if product requirements justify it
+- SwiftData with CloudKit or a custom CloudKit sync approach
+- Keep sync optional until local tracking is stable
 
 ### Future Health Integrations
 
-- Apple Health
-- Google Health Connect
+- HealthKit
 - Add only after local workout tracking is stable
 
 ## App Structure
 
-### Primary Navigation
+### Primary Tabs
 
 - `Today`
 - `Workouts`
 - `Progress`
 - `Profile`
 
-### Suggested Routes
+### Suggested Screens
 
-- `/`
-- `/today`
-- `/workouts`
-- `/workouts/new`
-- `/workouts/[id]`
-- `/exercises`
-- `/exercises/[id]`
-- `/progress`
-- `/profile`
-- `/settings`
+- `TodayView`
+- `WorkoutListView`
+- `WorkoutDetailView`
+- `NewWorkoutView`
+- `ExerciseListView`
+- `ExerciseDetailView`
+- `ProgressDashboardView`
+- `ProfileView`
+- `SettingsView`
+
+### Suggested Folders
+
+- `App`
+- `Models`
+- `Views`
+- `Views/Today`
+- `Views/Workouts`
+- `Views/Exercises`
+- `Views/Progress`
+- `Views/Profile`
+- `Components`
+- `Services`
+- `Utilities`
+- `Resources`
 
 ## Core Data Models
 
@@ -117,19 +135,21 @@ Build an iterative fitness tracker app using Expo SDK 57. Start with a strong lo
 - `source`
 - `createdAt`
 - `updatedAt`
+- Relationship to workout exercises
 
 ### WorkoutExercise
 
 - `id`
-- `workoutId`
-- `exerciseId`
+- Relationship to workout
+- Relationship to exercise
 - `order`
 - `notes`
+- Relationship to sets
 
-### Set
+### WorkoutSet
 
 - `id`
-- `workoutExerciseId`
+- Relationship to workout exercise
 - `order`
 - `type`
 - `reps`
@@ -143,15 +163,16 @@ Build an iterative fitness tracker app using Expo SDK 57. Start with a strong lo
 
 - `id`
 - `name`
-- `description`
+- `templateDescription`
 - `createdAt`
 - `updatedAt`
+- Relationship to template exercises
 
 ### WorkoutTemplateExercise
 
 - `id`
-- `templateId`
-- `exerciseId`
+- Relationship to template
+- Relationship to exercise
 - `order`
 - `targetSets`
 - `targetReps`
@@ -180,35 +201,37 @@ Build an iterative fitness tracker app using Expo SDK 57. Start with a strong lo
 
 ### Objective
 
-Create the app shell, navigation, data layer, and design foundation.
+Create the app shell, navigation, SwiftData model layer, and design foundation.
 
 ### Tasks
 
-- Initialize Expo SDK 57 app with TypeScript.
-- Add Expo Router.
-- Create tab navigation:
+- Create iOS SwiftUI project.
+- Configure SwiftData model container.
+- Add `TabView` navigation:
   - `Today`
   - `Workouts`
   - `Progress`
   - `Profile`
-- Add base screen layouts.
-- Add shared UI primitives:
-  - Button
-  - Text input
-  - Screen container
-  - List row
+- Add `NavigationStack` inside each tab.
+- Create base screen layouts.
+- Add shared UI components:
+  - Primary button
+  - Secondary button
+  - Text field row
   - Empty state
-  - Modal/sheet pattern
-- Add local database setup using `expo-sqlite`.
-- Add initial database schema/migrations.
-- Seed common exercises.
-- Add repository functions for exercises and workouts.
+  - List row
+  - Metric card
+  - Section header
+- Create SwiftData models.
+- Add preview/mock data helpers.
+- Seed common exercises on first launch.
+- Add basic repository/service functions if needed.
 
 ### Acceptance Criteria
 
 - App launches successfully.
 - Tabs navigate correctly.
-- Local database initializes on first launch.
+- SwiftData model container initializes.
 - Seed exercises are available.
 - No login required.
 
@@ -232,7 +255,7 @@ Build the first usable workout tracking experience.
   - Notes
 - Mark sets completed.
 - Complete workout.
-- Save workout locally.
+- Save workout with SwiftData.
 - View workout detail.
 - View workout history.
 - Edit/delete existing workout.
@@ -260,7 +283,8 @@ Reduce workout logging friction.
 - Add rest timer.
 - Add personal record detection.
 - Add quick-add set behavior.
-- Add swipe or contextual actions where useful.
+- Add swipe actions for common list actions.
+- Add contextual menus where useful.
 
 ### Acceptance Criteria
 
@@ -277,7 +301,7 @@ Make user progress visible and motivating.
 
 ### Tasks
 
-- Add `Progress` dashboard.
+- Add `ProgressDashboardView`.
 - Add weekly workout count.
 - Add workout volume over time.
 - Add exercise-specific history.
@@ -286,66 +310,65 @@ Make user progress visible and motivating.
 - Add body metric tracking.
 - Add body weight trend chart.
 - Add calendar or weekly consistency view.
+- Use Swift Charts for visualizations.
 
 ### Acceptance Criteria
 
 - User can see recent training consistency.
 - User can view progress for a specific exercise.
 - User can see personal records.
-- Charts render correctly on iOS and Android.
+- Charts render correctly in light and dark mode.
 
-## Phase 5 - Account and Cloud Sync
+## Phase 5 - iCloud Sync
 
 ### Objective
 
-Add optional account creation, backup, and multi-device sync.
+Add optional backup and multi-device sync.
 
 ### Tasks
 
-- Choose backend provider.
-- Add auth:
-  - Apple
-  - Google
-  - Email
-- Add cloud schema matching local data model.
-- Add sync queue for local changes.
+- Confirm SwiftData and CloudKit sync approach.
+- Configure iCloud capability.
+- Configure CloudKit container.
+- Update models for sync compatibility.
+- Add sync status UI.
 - Add conflict handling strategy.
-- Add backup/restore.
-- Add account deletion.
-- Add data export.
+- Add backup/restore expectations.
+- Add account/data deletion guidance if cloud data is used.
 
 ### Acceptance Criteria
 
-- App remains usable without login.
-- Logged-in user data syncs across devices.
+- App remains usable without explicit account setup.
+- User data syncs across devices signed into the same Apple ID.
 - Offline workout logging still works.
-- User can export and delete their data.
+- Sync failures are handled gracefully.
 
-## Phase 6 - Health Integrations
+## Phase 6 - HealthKit Integration
 
 ### Objective
 
-Connect with platform health data after core tracking is stable.
+Connect with Apple Health after core tracking is stable.
 
 ### Tasks
 
-- Add permission screens.
-- Integrate Apple Health.
-- Integrate Google Health Connect.
+- Add HealthKit capability.
+- Add HealthKit permission screen.
+- Request only needed permissions.
 - Read supported data:
-  - Body weight
+  - Body mass
   - Steps
   - Active energy
   - Workouts
 - Write supported completed workouts.
 - Add manual fallback when permissions are denied.
+- Add privacy text explaining HealthKit usage.
 
 ### Acceptance Criteria
 
 - Health permissions are optional.
 - App handles denied permissions cleanly.
 - Supported health data imports correctly.
-- Completed workouts can be written where supported.
+- Completed workouts can be written to Apple Health where supported.
 
 ## Phase 7 - Coaching and Intelligence
 
@@ -360,7 +383,7 @@ Add helpful recommendations based on user history.
 - Add suggested next workout.
 - Add missed-workout recovery suggestions.
 - Add deload suggestions.
-- Add natural-language workout entry.
+- Add natural-language workout entry if desired.
 - Add exercise coaching notes.
 
 ### Acceptance Criteria
@@ -373,67 +396,72 @@ Add helpful recommendations based on user history.
 
 ### Objective
 
-Prepare the app for public testing and release.
+Prepare the app for public testing and App Store release.
 
 ### Tasks
 
 - Add onboarding.
 - Add app icon.
-- Add splash screen.
+- Add launch screen.
 - Add notification reminders.
 - Add empty states.
 - Add loading states.
 - Add error states.
 - Add accessibility labels.
+- Add Dynamic Type pass.
+- Add VoiceOver pass.
 - Add performance pass for long workout histories.
 - Add privacy policy.
-- Add app store screenshots.
+- Add App Store screenshots.
 - Prepare TestFlight build.
-- Prepare internal Android test build.
 
 ### Acceptance Criteria
 
-- App is stable on physical iOS and Android devices.
+- App is stable on physical iPhone devices.
 - Main flows work offline.
 - App has clear onboarding.
+- App passes basic accessibility checks.
 - App is ready for external testers.
 
 ## Implementation Order
 
-1. Expo SDK 57 project setup
-2. Navigation and base UI
-3. Local SQLite schema
+1. SwiftUI project setup
+2. SwiftData model container
+3. Navigation and base UI
 4. Exercise seed data
 5. Create workout flow
 6. Workout detail/history
 7. Templates
 8. Progress dashboard
-9. Optional auth/sync
-10. Health integrations
+9. Optional iCloud sync
+10. HealthKit integration
 11. Coaching features
 12. Release polish
 
 ## Development Rules
 
 - Keep the app local-first until the workout tracker is useful.
-- Do not require login for MVP.
+- Do not require sign-in for MVP.
 - Build one usable phase at a time.
-- Keep data models stable before adding sync.
+- Keep data models stable before adding iCloud sync.
 - Test frequently on physical devices.
-- Avoid AI/coaching features until workout data is reliable.
+- Avoid coaching features until workout data is reliable.
 - Keep manual logging fast and available at all times.
+- Prefer native SwiftUI patterns over custom UI complexity.
+- Use SwiftData relationships carefully and test persistence after app relaunch.
 
 ## First Sprint Scope
 
 ### Build
 
-- Expo SDK 57 TypeScript app
-- Expo Router tabs
-- Local SQLite setup
+- SwiftUI iOS app
+- `TabView` navigation
+- `NavigationStack` per tab
+- SwiftData setup
 - Exercise seed data
-- `Today` screen
-- `Workouts` screen
-- New workout flow
+- `TodayView`
+- `WorkoutListView`
+- `NewWorkoutView`
 - Add exercises to workout
 - Add sets to exercises
 - Complete workout
@@ -441,13 +469,13 @@ Prepare the app for public testing and release.
 
 ### Do Not Build Yet
 
-- Auth
-- Cloud sync
-- Health integrations
+- iCloud sync
+- HealthKit
 - AI coaching
 - Complex charts
 - Social features
 - Payments
+- Apple Watch app
 
 ### First Sprint Acceptance Criteria
 
