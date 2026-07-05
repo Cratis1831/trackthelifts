@@ -21,6 +21,7 @@ struct CreateWorkoutView: View {
     @State private var prAnnouncement: String?
     @State private var pendingAutoFocusSetID: UUID?
     @State private var sessionStartDate = Date()
+    @State private var isReorderingExercises = false
     private let sessionManager = WorkoutSessionManager.shared
     @FocusState private var focusWorkoutName: Bool
     
@@ -53,9 +54,13 @@ struct CreateWorkoutView: View {
     }
 
     /// Reassigns sequential `exerciseOrder` values to every set after a drag-reorder, so the new
-    /// order persists.
+    /// order persists. Only called from reorder mode, where the ForEach is a flat one-row-per-
+    /// exercise list — the sole `.onMove` configuration List supports reliably (moving multi-row
+    /// Sections crashes the List's index mapping, which is why reordering collapses to compact
+    /// rows first).
     private func moveExercises(from source: IndexSet, to destination: Int) {
         var names = groupedExerciseNames
+        guard source.allSatisfy({ $0 < names.count }), destination <= names.count else { return }
         names.move(fromOffsets: source, toOffset: destination)
 
         for (index, name) in names.enumerated() {
@@ -89,6 +94,71 @@ struct CreateWorkoutView: View {
         .id(exerciseSet.id)
     }
 
+    /// Exercise name row: long-press it (or tap its grip icon) to enter reorder mode.
+    private func exerciseTitleRow(_ exerciseName: String) -> some View {
+        HStack {
+            Text(exerciseName)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.primary)
+
+            Spacer()
+
+            if groupedExerciseNames.count > 1 {
+                Button {
+                    enterReorderMode()
+                } label: {
+                    Image(systemName: "line.3.horizontal")
+                        .font(.system(size: 14))
+                        .foregroundColor(Color(.secondaryLabel))
+                        .frame(width: 32, height: 32)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .contentShape(Rectangle())
+        .onLongPressGesture {
+            if groupedExerciseNames.count > 1 {
+                enterReorderMode()
+            }
+        }
+    }
+
+    private func enterReorderMode() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        withAnimation {
+            isReorderingExercises = true
+        }
+    }
+
+    /// Compact reorder mode: the workout collapses to one draggable row per exercise — the only
+    /// `.onMove` configuration List supports reliably (dragging multi-row Sections crashes the
+    /// List's internal index mapping). Edit mode is forced active so drag handles show instantly.
+    @ViewBuilder
+    private var reorderModeContent: some View {
+        Section {
+            ForEach(groupedExerciseNames, id: \.self) { exerciseName in
+                HStack(spacing: 12) {
+                    Text(exerciseName)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.primary)
+                    Spacer()
+                    Text("\(sets(for: exerciseName).count) set\(sets(for: exerciseName).count == 1 ? "" : "s")")
+                        .font(.system(size: 14))
+                        .foregroundColor(Color(.secondaryLabel))
+                }
+                .padding(.vertical, 4)
+            }
+            .onMove(perform: moveExercises)
+        } header: {
+            Text("Drag to reorder exercises")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(.orange)
+                .textCase(nil)
+        }
+        .listRowBackground(Color(red: 0.11, green: 0.11, blue: 0.12))
+    }
+
     private var columnHeader: some View {
         HStack {
             Text("Set")
@@ -118,6 +188,9 @@ struct CreateWorkoutView: View {
                 VStack(spacing: 0) {
                     ScrollViewReader { scrollProxy in
                     List {
+                        if isReorderingExercises {
+                            reorderModeContent
+                        } else {
                         Section {
                             TextField("Workout Name", text: $workoutName)
                                 .font(.title.bold())
@@ -158,6 +231,8 @@ struct CreateWorkoutView: View {
                         if let workout = savedWorkout, !workout.exerciseSets.isEmpty {
                             ForEach(groupedExerciseNames, id: \.self) { exerciseName in
                                 Section {
+                                    exerciseTitleRow(exerciseName)
+
                                     columnHeader
 
                                     ForEach(sets(for: exerciseName)) { exerciseSet in
@@ -180,15 +255,10 @@ struct CreateWorkoutView: View {
                                         }
                                     }
                                     .buttonStyle(WorkoutActionButtonStyle(tint: .orange, prominence: .plain))
-                                } header: {
-                                    Text(exerciseName)
-                                        .font(.system(size: 16, weight: .semibold))
-                                        .foregroundColor(.primary)
                                 }
                                 .listRowBackground(Color.black)
                                 .listRowSeparator(.hidden)
                             }
-                            .onMove(perform: moveExercises)
                         } else {
                             Section {
                                 Text("Tap the + button to add your first exercise.")
@@ -209,9 +279,11 @@ struct CreateWorkoutView: View {
                         }
                         .listRowBackground(Color.black)
                         .listRowSeparator(.hidden)
+                        }
                     }
                     .listStyle(.plain)
                     .scrollContentBackground(.hidden)
+                    .environment(\.editMode, .constant(isReorderingExercises ? .active : .inactive))
                     .onChange(of: pendingAutoFocusSetID) { _, newValue in
                         guard let newValue else { return }
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
@@ -224,19 +296,21 @@ struct CreateWorkoutView: View {
                 }
             }
             .overlay(alignment: .bottomTrailing) {
-                Button {
-                    showExerciseList.toggle()
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.system(size: 24, weight: .medium))
-                        .foregroundColor(.white)
-                        .frame(width: 56, height: 56)
-                        .background(Color.orange)
-                        .clipShape(Circle())
-                        .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
+                if !isReorderingExercises {
+                    Button {
+                        showExerciseList.toggle()
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.system(size: 24, weight: .medium))
+                            .foregroundColor(.white)
+                            .frame(width: 56, height: 56)
+                            .background(Color.orange)
+                            .clipShape(Circle())
+                            .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
+                    }
+                    .padding(.trailing, 20)
+                    .padding(.bottom, 70)
                 }
-                .padding(.trailing, 20)
-                .padding(.bottom, 70)
             }
             .onAppear {
                 // Load existing workout data if resuming
@@ -282,33 +356,39 @@ struct CreateWorkoutView: View {
             }
 
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        minimizeWorkout()
-                    } label: {
-                        Image(systemName: "chevron.down")
-                            .foregroundColor(.primary)
-                            .font(.headline)
-                            .frame(width: 36, height: 36)
+                if isReorderingExercises {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Done") {
+                            withAnimation {
+                                isReorderingExercises = false
+                            }
+                        }
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.orange)
                     }
-                }
-
-                if groupedExerciseNames.count > 1 {
+                } else {
                     ToolbarItem(placement: .topBarLeading) {
-                        EditButton()
+                        Button {
+                            minimizeWorkout()
+                        } label: {
+                            Image(systemName: "chevron.down")
+                                .foregroundColor(.primary)
+                                .font(.headline)
+                                .frame(width: 36, height: 36)
+                        }
                     }
-                }
 
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        attemptFinishWorkout()
-                    } label: {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.white)
-                            .frame(width: 36, height: 36)
-                            .background(Color.green)
-                            .clipShape(Circle())
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            attemptFinishWorkout()
+                        } label: {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(width: 36, height: 36)
+                                .background(Color.green)
+                                .clipShape(Circle())
+                        }
                     }
                 }
             }

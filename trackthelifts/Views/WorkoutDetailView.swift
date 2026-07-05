@@ -13,6 +13,7 @@ struct WorkoutDetailView: View {
     @Bindable var workout: Workout
 
     @Environment(\.modelContext) private var modelContext
+    @State private var isReorderingExercises = false
 
     /// Exercise names in their persisted `exerciseOrder` (drag-reorderable by the user), falling
     /// back to earliest-created-set order for older data that predates `exerciseOrder`.
@@ -34,9 +35,13 @@ struct WorkoutDetailView: View {
             .sorted { $0.order < $1.order }
     }
 
-    /// Reassigns sequential `exerciseOrder` values to every set after a drag-reorder.
+    /// Reassigns sequential `exerciseOrder` values to every set after a drag-reorder. Only called
+    /// from reorder mode, where the ForEach is a flat one-row-per-exercise list — the sole
+    /// `.onMove` configuration List supports reliably (moving multi-row Sections crashes the
+    /// List's index mapping).
     private func moveExercises(from source: IndexSet, to destination: Int) {
         var names = groupedExerciseNames
+        guard source.allSatisfy({ $0 < names.count }), destination <= names.count else { return }
         names.move(fromOffsets: source, toOffset: destination)
 
         for (index, name) in names.enumerated() {
@@ -46,6 +51,76 @@ struct WorkoutDetailView: View {
         }
 
         persistWorkoutEdit()
+    }
+
+    /// Exercise name row: long-press it (or tap its grip icon) to enter reorder mode.
+    private func exerciseTitleRow(_ name: String) -> some View {
+        HStack {
+            Text(name)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.primary)
+
+            Spacer()
+
+            if groupedExerciseNames.count > 1 {
+                Button {
+                    withAnimation {
+                        isReorderingExercises = true
+                    }
+                } label: {
+                    Image(systemName: "line.3.horizontal")
+                        .font(.system(size: 14))
+                        .foregroundColor(Color(.secondaryLabel))
+                        .frame(width: 32, height: 32)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+
+            Button(role: .destructive) {
+                deleteExercise(named: name)
+            } label: {
+                Image(systemName: "trash")
+                    .font(.system(size: 13))
+                    .frame(width: 32, height: 32)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
+        .contentShape(Rectangle())
+        .onLongPressGesture {
+            if groupedExerciseNames.count > 1 {
+                withAnimation {
+                    isReorderingExercises = true
+                }
+            }
+        }
+    }
+
+    /// Compact reorder mode: the workout collapses to one draggable row per exercise.
+    @ViewBuilder
+    private var reorderModeContent: some View {
+        Section {
+            ForEach(groupedExerciseNames, id: \.self) { name in
+                HStack(spacing: 12) {
+                    Text(name)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.primary)
+                    Spacer()
+                    Text("\(sets(for: name).count) set\(sets(for: name).count == 1 ? "" : "s")")
+                        .font(.system(size: 14))
+                        .foregroundColor(Color(.secondaryLabel))
+                }
+                .padding(.vertical, 4)
+            }
+            .onMove(perform: moveExercises)
+        } header: {
+            Text("Drag to reorder exercises")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(.orange)
+                .textCase(nil)
+        }
+        .listRowBackground(Color(red: 0.11, green: 0.11, blue: 0.12))
     }
 
     var body: some View {
@@ -97,58 +172,57 @@ struct WorkoutDetailView: View {
                 .listRowBackground(Color.black)
                 .listRowSeparator(.hidden)
 
-                ForEach(groupedExerciseNames, id: \.self) { name in
-                    Section {
-                        columnHeader
+                if isReorderingExercises {
+                    reorderModeContent
+                } else {
+                    ForEach(groupedExerciseNames, id: \.self) { name in
+                        Section {
+                            exerciseTitleRow(name)
 
-                        ForEach(sets(for: name)) { set in
-                            ExerciseSetView(exerciseSet: set)
-                                .swipeActions(edge: .trailing) {
-                                    Button(role: .destructive) {
-                                        deleteSet(set)
-                                    } label: {
-                                        Image(systemName: "trash")
+                            columnHeader
+
+                            ForEach(sets(for: name)) { set in
+                                ExerciseSetView(exerciseSet: set)
+                                    .swipeActions(edge: .trailing) {
+                                        Button(role: .destructive) {
+                                            deleteSet(set)
+                                        } label: {
+                                            Image(systemName: "trash")
+                                        }
                                     }
-                                }
-                        }
+                            }
 
-                        Button {
-                            addSet(for: name)
-                        } label: {
-                            HStack(spacing: 6) {
-                                Image(systemName: "plus")
-                                Text("Add Set")
-                            }
-                        }
-                        .buttonStyle(WorkoutActionButtonStyle(tint: .orange, prominence: .plain))
-                    } header: {
-                        HStack {
-                            Text(name)
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.primary)
-                            Spacer()
-                            Button(role: .destructive) {
-                                deleteExercise(named: name)
+                            Button {
+                                addSet(for: name)
                             } label: {
-                                Image(systemName: "trash")
-                                    .font(.system(size: 13))
+                                HStack(spacing: 6) {
+                                    Image(systemName: "plus")
+                                    Text("Add Set")
+                                }
                             }
+                            .buttonStyle(WorkoutActionButtonStyle(tint: .orange, prominence: .plain))
                         }
+                        .listRowBackground(Color.black)
+                        .listRowSeparator(.hidden)
                     }
-                    .listRowBackground(Color.black)
-                    .listRowSeparator(.hidden)
                 }
-                .onMove(perform: moveExercises)
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
+            .environment(\.editMode, .constant(isReorderingExercises ? .active : .inactive))
         }
         .navigationTitle("Edit Workout")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            if groupedExerciseNames.count > 1 {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
+            if isReorderingExercises {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
+                        withAnimation {
+                            isReorderingExercises = false
+                        }
+                    }
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.orange)
                 }
             }
         }
