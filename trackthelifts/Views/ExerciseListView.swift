@@ -272,6 +272,7 @@ struct ExerciseListView: View {
                 modelContext.delete(exercise)
                 try modelContext.save()
                 exerciseToDelete = nil
+                Haptics.impact(.medium)
             } catch {
                 deleteErrorMessage = "Failed to delete exercise: \(error.localizedDescription)"
                 showingDeleteError = true
@@ -281,6 +282,7 @@ struct ExerciseListView: View {
                 modelContext.delete(exercise)
                 try modelContext.save()
                 exerciseToDelete = nil
+                Haptics.impact(.medium)
             } catch {
                 deleteErrorMessage = "Failed to delete exercise: \(error.localizedDescription)"
                 showingDeleteError = true

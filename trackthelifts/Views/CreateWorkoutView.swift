@@ -71,6 +71,7 @@ struct CreateWorkoutView: View {
 
         do {
             try modelContext.save()
+            Haptics.impact(.light)
         } catch {
             print("Failed to reorder exercises: \(error)")
         }
@@ -126,6 +127,7 @@ struct CreateWorkoutView: View {
 
     private func enterReorderMode() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        Haptics.selection()
         withAnimation {
             isReorderingExercises = true
         }
@@ -359,6 +361,7 @@ struct CreateWorkoutView: View {
                 if isReorderingExercises {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button("Done") {
+                            Haptics.selection()
                             withAnimation {
                                 isReorderingExercises = false
                             }
@@ -444,6 +447,7 @@ struct CreateWorkoutView: View {
 
     private func showPersonalRecord(for set: ExerciseSet, kind: PRKind) {
         let label = kind == .weight ? "New weight PR!" : "New estimated 1RM PR!"
+        Haptics.success()
         withAnimation {
             prAnnouncement = "🏆 \(set.exercise.name): \(label)"
         }
@@ -588,6 +592,7 @@ struct CreateWorkoutView: View {
             try modelContext.save()
             sessionManager.completeWorkout()
             RestTimerManager.shared.cancel()
+            Haptics.success()
             dismiss()
         } catch {
             print("Failed to complete workout: \(error)")
@@ -636,6 +641,7 @@ struct CreateWorkoutView: View {
 
         do {
             try modelContext.save()
+            Haptics.impact(.medium)
         } catch {
             print("Failed to delete set: \(error)")
         }
@@ -713,7 +719,13 @@ struct RestTimerBanner: View {
             .background(Color(red: 0.11, green: 0.11, blue: 0.12))
             .cornerRadius(10)
             .onReceive(ticker) { value in
+                // Fire the rest-over haptic exactly on the tick where the countdown crosses zero.
+                // A manual Skip nils endDate first, making wasPositive false, so skips stay silent.
+                let wasPositive = remainingSeconds > 0
                 now = value
+                if wasPositive && remainingSeconds <= 0 {
+                    Haptics.success()
+                }
             }
         }
     }
