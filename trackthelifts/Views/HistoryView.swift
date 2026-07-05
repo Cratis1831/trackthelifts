@@ -116,7 +116,7 @@ struct HistoryView: View {
     }
 
     private func duplicateWorkout(_ workout: Workout) {
-        guard !sessionManager.hasActiveWorkout() else {
+        guard !sessionManager.hasActiveWorkout(in: modelContext) else {
             showActiveWorkoutAlert = true
             return
         }

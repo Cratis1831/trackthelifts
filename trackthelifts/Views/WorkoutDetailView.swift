@@ -90,7 +90,7 @@ struct WorkoutDetailView: View {
                                     Button(role: .destructive) {
                                         deleteSet(set)
                                     } label: {
-                                        Label("Delete", systemImage: "trash")
+                                        Image(systemName: "trash")
                                     }
                                 }
                         }

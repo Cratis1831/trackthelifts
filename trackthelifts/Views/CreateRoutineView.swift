@@ -39,8 +39,8 @@ struct CreateRoutineView: View {
 
                 VStack(alignment: .leading, spacing: 0) {
                     TextField("Routine Name", text: $name)
-                        .font(.system(size: 18, weight: .semibold))
-                        .textFieldStyle(.roundedBorder)
+                        .font(.title.bold())
+                        .textFieldStyle(.plain)
                         .padding(.horizontal, 20)
                         .padding(.top, 16)
                         .padding(.bottom, 12)
@@ -57,6 +57,7 @@ struct CreateRoutineView: View {
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal, 40)
                         }
+                        .frame(maxWidth: .infinity)
                         Spacer()
                     } else {
                         List {
@@ -77,10 +78,18 @@ struct CreateRoutineView: View {
                                     .foregroundColor(Color(red: 0.76, green: 0.76, blue: 0.78))
                                 }
                                 .padding(.vertical, 4)
-                                .listRowBackground(Color(red: 0.11, green: 0.11, blue: 0.12))
+                                .listRowBackground(Color.clear)
+                                .listRowSeparator(.hidden)
+                                .swipeActions(edge: .trailing) {
+                                    Button(role: .destructive) {
+                                        entries.removeAll { $0.id == entry.id }
+                                    } label: {
+                                        Image(systemName: "trash")
+                                    }
+                                }
                             }
-                            .onDelete { indexSet in
-                                entries.remove(atOffsets: indexSet)
+                            .onMove { source, destination in
+                                entries.move(fromOffsets: source, toOffset: destination)
                             }
                         }
                         .listStyle(.plain)
@@ -106,6 +115,11 @@ struct CreateRoutineView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
+                }
+                if !entries.isEmpty {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        EditButton()
+                    }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") { saveRoutine() }

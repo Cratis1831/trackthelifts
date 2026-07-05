@@ -16,6 +16,7 @@ struct WorkoutView: View {
     @State private var isCreateRoutinePresented: Bool = false
     @State private var isChooseWorkoutForRoutinePresented: Bool = false
     @State private var templateToEdit: WorkoutTemplate?
+    @State private var showActiveWorkoutAlert = false
     @State private var workoutToNameAsTemplate: Workout?
     @State private var newTemplateName: String = ""
     @State private var sortBy: SortOption = .name
@@ -206,9 +207,18 @@ struct WorkoutView: View {
         } message: {
             Text("This will create a routine you can start again later.")
         }
+        .alert("Workout In Progress", isPresented: $showActiveWorkoutAlert) {
+            Button("OK") { }
+        } message: {
+            Text("Finish or discard your current workout before starting another one.")
+        }
     }
 
     private func startWorkout(from template: WorkoutTemplate) {
+        guard !sessionManager.hasActiveWorkout(in: modelContext) else {
+            showActiveWorkoutAlert = true
+            return
+        }
         let workout = template.instantiateWorkout(in: modelContext)
         resumingWorkout = workout
         sessionManager.startWorkout(workoutID: workout.id)

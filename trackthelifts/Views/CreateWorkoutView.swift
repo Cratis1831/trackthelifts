@@ -144,7 +144,7 @@ struct CreateWorkoutView: View {
                                             Button(role: .destructive) {
                                                 deleteSet(exerciseSet, from: workout)
                                             } label: {
-                                                Label("Delete", systemImage: "trash")
+                                                Image(systemName: "trash")
                                             }
                                         }
                                     }
