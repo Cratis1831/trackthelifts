@@ -120,20 +120,12 @@ struct CreateWorkoutView: View {
                                     Button {
                                         addNewSet(for: exerciseSets.first?.exercise, to: workout)
                                     } label: {
-                                        Text("Add Set")
-                                            .foregroundColor(.orange)
-                                            .frame(maxWidth: .infinity, minHeight: 38)
-                                            .background(
-                                                RoundedRectangle(cornerRadius: 8)
-                                                    .fill(Color.orange.opacity(0.15))
-                                            )
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 8)
-                                                    .stroke(Color.orange.opacity(0.5), lineWidth: 1)
-                                            )
+                                        HStack(spacing: 6) {
+                                            Image(systemName: "plus")
+                                            Text("Add Set")
+                                        }
                                     }
-                                    .buttonStyle(.plain)
-                                    .padding(.horizontal, -6)
+                                    .buttonStyle(WorkoutActionButtonStyle(tint: .orange, prominence: .plain))
                                     .padding(.top, 8)
                                 }
                                 .padding(.bottom, 16)
@@ -141,46 +133,57 @@ struct CreateWorkoutView: View {
                         }
                         
                         // Add Exercise Button (moved after exercises)
-                        Button("Add Exercise") {
+                        Button {
                             showExerciseList.toggle()
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "plus.circle.fill")
+                                Text("Add Exercise")
+                            }
                         }
-                        .buttonStyle(.borderedProminent)
-                        .buttonBorderShape(.roundedRectangle(radius: 8))
-                        .tint(.orange)
-                        .frame(maxWidth: .infinity, minHeight: 38)
-                        .padding(.horizontal, -6)
+                        .buttonStyle(WorkoutActionButtonStyle(tint: .orange, prominence: .filled))
                         .padding(.top, 16)
                     } else {
                         // Add Exercise Button when no exercises exist
-                        Button("Add Exercise") {
+                        Button {
                             showExerciseList.toggle()
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "plus.circle.fill")
+                                Text("Add Exercise")
+                            }
                         }
-                        .buttonStyle(.borderedProminent)
-                        .buttonBorderShape(.roundedRectangle(radius: 8))
-                        .tint(.orange)
-                        .frame(maxWidth: .infinity, minHeight: 38)
-                        .padding(.horizontal, -6)
+                        .buttonStyle(WorkoutActionButtonStyle(tint: .orange, prominence: .filled))
                         .padding(.top, 16)
                     }
                     }
                 }
-                .padding()
-                
+                .padding(.horizontal, 10)
+                .padding(.vertical, 16)
+
                 Spacer()
                 
                 // Finish Workout Button at bottom (only show if workout exists and has exercises)
                 if let workout = savedWorkout, !workout.exerciseSets.isEmpty {
-                    VStack {
-                        Button("Finish Workout") {
+                    VStack(spacing: 0) {
+                        Rectangle()
+                            .fill(Color(red: 0.17, green: 0.17, blue: 0.18))
+                            .frame(height: 0.5)
+
+                        Button {
                             finishWorkout()
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "checkmark.circle.fill")
+                                Text("Finish Workout")
+                            }
                         }
-                        .buttonStyle(.borderedProminent)
-                        .buttonBorderShape(.roundedRectangle(radius: 8))
-                        .tint(.green)
-                        .frame(maxWidth: .infinity, minHeight: 38)
+                        .buttonStyle(WorkoutActionButtonStyle(tint: .green, prominence: .filled))
                         .padding(.horizontal, 10)
+                        .padding(.top, 12)
                         .padding(.bottom, 30)
                     }
+                    .background(Color.black)
                 }
             }
             .onAppear {
@@ -387,6 +390,44 @@ struct CreateWorkoutView: View {
         } catch {
             print("Failed to add new set: \(error)")
         }
+    }
+}
+
+/// Shared visual style for the primary workout-flow actions (Add Set, Add Exercise, Finish Workout).
+/// `.filled` is for the main calls to action, `.tinted` is a bordered secondary style, and `.plain`
+/// is bare icon+text with no background/border at all (for frequent, low-stakes repeated actions).
+struct WorkoutActionButtonStyle: ButtonStyle {
+    enum Prominence {
+        case filled
+        case tinted
+        case plain
+    }
+
+    let tint: Color
+    var prominence: Prominence = .filled
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 16, weight: .semibold))
+            .foregroundStyle(prominence == .filled ? Color.white : tint)
+            .frame(maxWidth: .infinity, minHeight: prominence == .plain ? 44 : 50)
+            .background {
+                if prominence == .filled {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous).fill(tint)
+                } else if prominence == .tinted {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous).fill(tint.opacity(0.15))
+                }
+            }
+            .overlay {
+                if prominence == .tinted {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(tint.opacity(0.4), lineWidth: 1)
+                }
+            }
+            .shadow(color: prominence == .filled ? tint.opacity(0.35) : .clear, radius: 10, y: 4)
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .opacity(configuration.isPressed ? 0.85 : 1)
+            .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
     }
 }
 

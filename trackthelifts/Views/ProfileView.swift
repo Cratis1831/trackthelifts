@@ -9,10 +9,14 @@ import SwiftUI
 
 struct ProfileView: View {
     var body: some View {
-        Text("Profile")
+        ProgressDashboardView()
     }
 }
 
 #Preview {
     ProfileView()
+        .modelContainer(for: [
+            Workout.self, Exercise.self, Bodypart.self,
+            ExerciseSet.self, WorkoutTemplate.self, WorkoutTemplateExercise.self,
+        ])
 }
