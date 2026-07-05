@@ -98,7 +98,8 @@ class RevenueCatService: ObservableObject {
             lastError = .notConfigured
             return false
         }
-        
+
+        lastError = nil
         isLoading = true
         defer { isLoading = false }
         
@@ -140,7 +141,8 @@ class RevenueCatService: ObservableObject {
             lastError = .notConfigured
             return false
         }
-        
+
+        lastError = nil
         isLoading = true
         defer { isLoading = false }
         

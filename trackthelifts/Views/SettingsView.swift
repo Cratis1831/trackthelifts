@@ -141,8 +141,8 @@ struct SettingsView: View {
                             // Restore Purchases Button
                             Button {
                                 Task {
-                                    await revenueCatService.restorePurchases()
-                                    if revenueCatService.lastError != nil {
+                                    let success = await revenueCatService.restorePurchases()
+                                    if !success {
                                         showRestoreErrorAlert = true
                                     }
                                 }
