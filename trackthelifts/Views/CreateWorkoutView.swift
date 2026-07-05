@@ -17,6 +17,7 @@ struct CreateWorkoutView: View {
     @State private var showNoCompletedSetsAlert: Bool = false
     @State private var showMarkSetsCompleteConfirmation: Bool = false
     @State private var prAnnouncement: String?
+    @State private var sessionStartDate = Date()
     private let sessionManager = WorkoutSessionManager.shared
     @FocusState private var focusWorkoutName: Bool
     
@@ -41,11 +42,11 @@ struct CreateWorkoutView: View {
                         
                         TextField("Workout Name", text: $workoutName)
                             .font(.title.bold())
-                            .textFieldStyle(.roundedBorder)
+                            .textFieldStyle(.plain)
                             .focused($focusWorkoutName)
                         TextField("Workout Notes", text: $workoutNotes)
                             .font(.subheadline.bold())
-                            .textFieldStyle(.roundedBorder)
+                            .textFieldStyle(.plain)
 
                         //align leading
                         HStack {
@@ -63,7 +64,7 @@ struct CreateWorkoutView: View {
                         HStack {
                             Image(systemName: "clock")
                                 .foregroundColor(Color(.secondaryLabel))
-                            TimerView()
+                            TimerView(startDate: savedWorkout?.createdAt ?? sessionStartDate)
                         }
 
                         RestTimerBanner()
@@ -238,7 +239,6 @@ struct CreateWorkoutView: View {
                             .font(.headline)
                             .frame(width: 36, height: 36)
                     }
-                    .glassEffect(.regular.interactive(), in: .circle)
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
@@ -249,7 +249,6 @@ struct CreateWorkoutView: View {
                             .foregroundColor(.primary)
                             .font(.system(size: 16, weight: .medium))
                     }
-                    .buttonStyle(.glass)
                 }
             }
             .alert("Cancel Workout", isPresented: $showCancelConfirmation) {

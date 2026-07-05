@@ -116,7 +116,7 @@ struct ExerciseSetView: View {
     }
 
     private func loadExerciseSetData() {
-        weight = exerciseSet.weight > 0 ? String(exerciseSet.weight) : ""
+        weight = exerciseSet.weight > 0 ? formattedWeight(exerciseSet.weight) : ""
         reps = exerciseSet.reps > 0 ? String(exerciseSet.reps) : ""
         isCompleted = exerciseSet.isCompleted
     }

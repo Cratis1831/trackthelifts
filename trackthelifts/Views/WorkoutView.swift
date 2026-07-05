@@ -13,7 +13,10 @@ struct WorkoutView: View {
     @Query private var templates: [WorkoutTemplate]
     @Environment(\.modelContext) private var modelContext
     @State private var isCreateWorkoutPresented: Bool = false
-    @State private var isAddRoutineInfoPresented: Bool = false
+    @State private var isCreateRoutinePresented: Bool = false
+    @State private var isChooseWorkoutForRoutinePresented: Bool = false
+    @State private var workoutToNameAsTemplate: Workout?
+    @State private var newTemplateName: String = ""
     @State private var sortBy: SortOption = .name
     @State private var resumingWorkout: Workout? = nil
 
@@ -67,9 +70,18 @@ struct WorkoutView: View {
                                 
                                 Spacer()
                                 
-                                Button(action: {
-                                    isAddRoutineInfoPresented = true
-                                }) {
+                                Menu {
+                                    Button {
+                                        isCreateRoutinePresented = true
+                                    } label: {
+                                        Label("New Blank Routine", systemImage: "square.and.pencil")
+                                    }
+                                    Button {
+                                        isChooseWorkoutForRoutinePresented = true
+                                    } label: {
+                                        Label("From a Past Workout", systemImage: "clock.arrow.circlepath")
+                                    }
+                                } label: {
                                     HStack(spacing: 4) {
                                         Image(systemName: "plus")
                                             .font(.system(size: 16))
@@ -153,10 +165,31 @@ struct WorkoutView: View {
         }) {
             CreateWorkoutView(existingWorkout: resumingWorkout)
         }
-        .alert("Add Routine", isPresented: $isAddRoutineInfoPresented) {
-            Button("OK") { }
+        .sheet(isPresented: $isCreateRoutinePresented) {
+            CreateRoutineView()
+        }
+        .sheet(isPresented: $isChooseWorkoutForRoutinePresented) {
+            ChooseWorkoutForTemplateView { workout in
+                newTemplateName = workout.title
+                workoutToNameAsTemplate = workout
+            }
+        }
+        .alert("Save as Routine", isPresented: Binding(
+            get: { workoutToNameAsTemplate != nil },
+            set: { if !$0 { workoutToNameAsTemplate = nil } }
+        )) {
+            TextField("Routine Name", text: $newTemplateName)
+            Button("Save") {
+                if let workout = workoutToNameAsTemplate {
+                    _ = TemplateService.makeTemplate(from: workout, name: newTemplateName, in: modelContext)
+                }
+                workoutToNameAsTemplate = nil
+            }
+            Button("Cancel", role: .cancel) {
+                workoutToNameAsTemplate = nil
+            }
         } message: {
-            Text("Routines are created from a completed workout. Finish a workout, then save it as a routine from History.")
+            Text("This will create a routine you can start again later.")
         }
     }
 

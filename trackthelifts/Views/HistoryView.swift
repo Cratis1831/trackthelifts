@@ -55,18 +55,21 @@ struct HistoryView: View {
                     ScrollView {
                         LazyVStack(spacing: 16) {
                             ForEach(completedWorkouts) { workout in
-                                WorkoutHistoryCard(
-                                    workout: workout,
-                                    onSaveAsTemplate: {
-                                        templateName = workout.title
-                                        workoutToNameTemplate = workout
-                                    },
-                                    onDuplicate: { duplicateWorkout(workout) },
-                                    onDelete: {
-                                        workoutToDelete = workout
-                                        showingDeleteConfirmation = true
-                                    }
-                                )
+                                NavigationLink(value: workout) {
+                                    WorkoutHistoryCard(
+                                        workout: workout,
+                                        onSaveAsTemplate: {
+                                            templateName = workout.title
+                                            workoutToNameTemplate = workout
+                                        },
+                                        onDuplicate: { duplicateWorkout(workout) },
+                                        onDelete: {
+                                            workoutToDelete = workout
+                                            showingDeleteConfirmation = true
+                                        }
+                                    )
+                                }
+                                .buttonStyle(.plain)
                             }
                         }
                         .padding(.horizontal, 20)
@@ -76,6 +79,9 @@ struct HistoryView: View {
                 }
             }
             .navigationTitle("History")
+            .navigationDestination(for: Workout.self) { workout in
+                WorkoutDetailView(workout: workout)
+            }
         }
         .fullScreenCover(isPresented: $isCreateWorkoutPresented, onDismiss: {
             resumingWorkout = nil

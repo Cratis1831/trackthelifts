@@ -7,9 +7,12 @@
 
 import SwiftUI
 
+/// Elapsed-time stopwatch anchored to a fixed `startDate` rather than view-mount time, so it
+/// keeps counting correctly across minimizing/resuming a workout (which recreates this view).
 struct TimerView: View {
-    @State private var startDate = Date()
-    @State private var elapsedTime: TimeInterval = 0
+    let startDate: Date
+
+    @State private var now = Date()
 
     // Timer that updates every second
     private let timer = Timer
@@ -17,18 +20,16 @@ struct TimerView: View {
         .autoconnect()
 
     var body: some View {
-        HStack {
-            Text(formattedElapsedTime)
-                .monospacedDigit()
-                .foregroundColor(Color(.secondaryLabel))
-        }
-        .onReceive(timer) { _ in
-            elapsedTime = Date().timeIntervalSince(startDate)
-        }
+        Text(formattedElapsedTime)
+            .monospacedDigit()
+            .foregroundColor(Color(.secondaryLabel))
+            .onReceive(timer) { value in
+                now = value
+            }
     }
 
     private var formattedElapsedTime: String {
-        let totalSeconds = Int(elapsedTime)
+        let totalSeconds = max(0, Int(now.timeIntervalSince(startDate)))
         let hours = totalSeconds / 3600
         let minutes = (totalSeconds % 3600) / 60
         let seconds = totalSeconds % 60
