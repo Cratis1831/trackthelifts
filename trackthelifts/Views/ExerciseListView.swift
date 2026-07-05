@@ -92,7 +92,11 @@ struct ExerciseListView: View {
 
     private var content: some View {
         navigationContent
-            .searchable(text: $searchText, prompt: "Search exercises...")
+            .searchable(
+                text: $searchText,
+                placement: .navigationBarDrawer(displayMode: .always),
+                prompt: "Search exercises..."
+            )
             .searchToolbarBehavior(.minimize)
     }
 
@@ -188,6 +192,7 @@ struct ExerciseListView: View {
                 }
             }
             .navigationTitle("Exercises")
+            .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 if chooseExercise {
                     ToolbarItem(placement: .navigationBarTrailing) {

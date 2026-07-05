@@ -16,6 +16,7 @@ struct CreateWorkoutView: View {
     @State private var showCancelConfirmation: Bool = false
     @State private var showNoCompletedSetsAlert: Bool = false
     @State private var showMarkSetsCompleteConfirmation: Bool = false
+    @State private var showMissingNameAlert: Bool = false
     @State private var prAnnouncement: String?
     @State private var sessionStartDate = Date()
     private let sessionManager = WorkoutSessionManager.shared
@@ -34,94 +35,103 @@ struct CreateWorkoutView: View {
     var dataFilled: Bool {
         !workoutName.isEmpty
     }
+    private var groupedExerciseNames: [String] {
+        guard let workout = savedWorkout else { return [] }
+        return Dictionary(grouping: workout.exerciseSets, by: \.exercise.name).keys.sorted()
+    }
+
+    private func sets(for exerciseName: String) -> [ExerciseSet] {
+        guard let workout = savedWorkout else { return [] }
+        return workout.exerciseSets
+            .filter { $0.exercise.name == exerciseName }
+            .sorted { $0.order < $1.order }
+    }
+
+    private var columnHeader: some View {
+        HStack {
+            Text("Set")
+                .frame(width: 30, alignment: .center)
+
+            Text("Previous")
+                .frame(maxWidth: .infinity, alignment: .center)
+
+            Text("lbs")
+                .frame(width: 50, alignment: .center)
+
+            Text("Reps")
+                .frame(width: 50, alignment: .center)
+
+            Image(systemName: "checkmark")
+                .frame(width: 30, alignment: .center)
+        }
+        .font(.subheadline)
+        .foregroundColor(.secondary)
+    }
+
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 10) {
-                        
-                        TextField("Workout Name", text: $workoutName)
-                            .font(.title.bold())
-                            .textFieldStyle(.plain)
-                            .focused($focusWorkoutName)
-                        TextField("Workout Notes", text: $workoutNotes)
-                            .font(.subheadline.bold())
-                            .textFieldStyle(.plain)
+            ZStack {
+                Color.black.ignoresSafeArea()
 
-                        //align leading
-                        HStack {
-                            Image(systemName: "calendar")
-                                .foregroundColor(Color(.secondaryLabel))
-                            //                        Display the date in this format "Saturday, July 5th, 2025
-                            Text(
-                                Date().formatted(
-                                    .dateTime.weekday(.wide).month(.wide).day()
-                                        .year()
+                VStack(spacing: 0) {
+                    List {
+                        Section {
+                            TextField("Workout Name", text: $workoutName)
+                                .font(.title.bold())
+                                .textFieldStyle(.plain)
+                                .focused($focusWorkoutName)
+                                .onChange(of: workoutName) { _, newValue in
+                                    persistNameAndNotes(name: newValue, notes: workoutNotes)
+                                }
+                            TextField("Workout Notes", text: $workoutNotes)
+                                .font(.subheadline.bold())
+                                .textFieldStyle(.plain)
+                                .onChange(of: workoutNotes) { _, newValue in
+                                    persistNameAndNotes(name: workoutName, notes: newValue)
+                                }
+
+                            HStack {
+                                Image(systemName: "calendar")
+                                    .foregroundColor(Color(.secondaryLabel))
+                                Text(
+                                    Date().formatted(
+                                        .dateTime.weekday(.wide).month(.wide).day()
+                                            .year()
+                                    )
                                 )
-                            )
-                            .foregroundColor(Color(.secondaryLabel))
-                        }
-                        HStack {
-                            Image(systemName: "clock")
                                 .foregroundColor(Color(.secondaryLabel))
-                            TimerView(startDate: savedWorkout?.createdAt ?? sessionStartDate)
-                        }
+                            }
+                            HStack {
+                                Image(systemName: "clock")
+                                    .foregroundColor(Color(.secondaryLabel))
+                                TimerView(startDate: savedWorkout?.createdAt ?? sessionStartDate)
+                            }
 
-                        RestTimerBanner()
-                            .padding(.bottom)
+                            RestTimerBanner()
+                        }
+                        .listRowBackground(Color.black)
+                        .listRowSeparator(.hidden)
 
                         if let workout = savedWorkout, !workout.exerciseSets.isEmpty {
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text("Exercises")
-                                    .font(.headline)
-                                    .padding(.top)
-                                
-                                ForEach(Array(Dictionary(grouping: workout.exerciseSets, by: \.exercise.name).sorted(by: { $0.key < $1.key })), id: \.key) { exerciseName, exerciseSets in
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        // Exercise name header
-                                        HStack {
-                                            Text(exerciseName)
-                                                .font(.system(size: 16, weight: .semibold))
-                                                .foregroundColor(.primary)
-                                            
-                                            Spacer()
+                            ForEach(groupedExerciseNames, id: \.self) { exerciseName in
+                                Section {
+                                    columnHeader
+
+                                    ForEach(sets(for: exerciseName)) { exerciseSet in
+                                        ExerciseSetView(exerciseSet: exerciseSet) { set, kind in
+                                            showPersonalRecord(for: set, kind: kind)
                                         }
-                                        .padding(.vertical, 4)
-                                        
-                                        // Grid for this exercise
-                                        Grid(horizontalSpacing: 12, verticalSpacing: 8) {
-                                        // Header
-                                        GridRow {
-                                            Text("Set")
-                                                .frame(width: 30, alignment: .center)
-                                            
-                                            Text("Previous")
-                                                .gridCellColumns(2)
-                                                .frame(maxWidth: .infinity, alignment: .center)
-                                            
-                                            Text("lbs")
-                                                .frame(width: 50, alignment: .center)
-                                            
-                                            Text("Reps")
-                                                .frame(width: 50, alignment: .center)
-                                            
-                                            Image(systemName: "checkmark")
-                                                .frame(width: 30, alignment: .center)
-                                        }
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                        
-                                        // Exercise sets
-                                        ForEach(exerciseSets.sorted(by: { $0.order < $1.order })) { exerciseSet in
-                                            ExerciseSetView(exerciseSet: exerciseSet) { set, kind in
-                                                showPersonalRecord(for: set, kind: kind)
+                                        .swipeActions(edge: .trailing) {
+                                            Button(role: .destructive) {
+                                                deleteSet(exerciseSet, from: workout)
+                                            } label: {
+                                                Label("Delete", systemImage: "trash")
                                             }
                                         }
                                     }
-                                    
-                                    // Add Set button
+
                                     Button {
-                                        addNewSet(for: exerciseSets.first?.exercise, to: workout)
+                                        addNewSet(for: sets(for: exerciseName).first?.exercise, to: workout)
                                     } label: {
                                         HStack(spacing: 6) {
                                             Image(systemName: "plus")
@@ -129,65 +139,65 @@ struct CreateWorkoutView: View {
                                         }
                                     }
                                     .buttonStyle(WorkoutActionButtonStyle(tint: .orange, prominence: .plain))
-                                    .padding(.top, 8)
+                                } header: {
+                                    Text(exerciseName)
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundColor(.primary)
                                 }
-                                .padding(.bottom, 16)
+                                .listRowBackground(Color.black)
+                                .listRowSeparator(.hidden)
                             }
-                        }
-                        
-                        // Add Exercise Button (moved after exercises)
-                        Button {
-                            showExerciseList.toggle()
-                        } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: "plus.circle.fill")
-                                Text("Add Exercise")
+                        } else {
+                            Section {
+                                Text("Tap the + button to add your first exercise.")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(Color(.secondaryLabel))
                             }
+                            .listRowBackground(Color.black)
+                            .listRowSeparator(.hidden)
                         }
-                        .buttonStyle(WorkoutActionButtonStyle(tint: .orange, prominence: .filled))
-                        .padding(.top, 16)
-                    } else {
-                        // Add Exercise Button when no exercises exist
-                        Button {
-                            showExerciseList.toggle()
-                        } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: "plus.circle.fill")
-                                Text("Add Exercise")
-                            }
-                        }
-                        .buttonStyle(WorkoutActionButtonStyle(tint: .orange, prominence: .filled))
-                        .padding(.top, 16)
                     }
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
+
+                    // Finish Workout Button at bottom (only show if workout exists and has exercises)
+                    if let workout = savedWorkout, !workout.exerciseSets.isEmpty {
+                        VStack(spacing: 0) {
+                            Rectangle()
+                                .fill(Color(red: 0.17, green: 0.17, blue: 0.18))
+                                .frame(height: 0.5)
+
+                            Button {
+                                attemptFinishWorkout()
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "checkmark.circle.fill")
+                                    Text("Finish Workout")
+                                }
+                            }
+                            .buttonStyle(WorkoutActionButtonStyle(tint: .green, prominence: .filled))
+                            .padding(.horizontal, 10)
+                            .padding(.top, 12)
+                            .padding(.bottom, 30)
+                        }
+                        .background(Color.black)
                     }
                 }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 16)
-
-                Spacer()
-                
-                // Finish Workout Button at bottom (only show if workout exists and has exercises)
-                if let workout = savedWorkout, !workout.exerciseSets.isEmpty {
-                    VStack(spacing: 0) {
-                        Rectangle()
-                            .fill(Color(red: 0.17, green: 0.17, blue: 0.18))
-                            .frame(height: 0.5)
-
-                        Button {
-                            attemptFinishWorkout()
-                        } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: "checkmark.circle.fill")
-                                Text("Finish Workout")
-                            }
-                        }
-                        .buttonStyle(WorkoutActionButtonStyle(tint: .green, prominence: .filled))
-                        .padding(.horizontal, 10)
-                        .padding(.top, 12)
-                        .padding(.bottom, 30)
-                    }
-                    .background(Color.black)
+            }
+            .overlay(alignment: .bottomTrailing) {
+                Button {
+                    showExerciseList.toggle()
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 24, weight: .medium))
+                        .foregroundColor(.white)
+                        .frame(width: 56, height: 56)
+                        .background(Color.orange)
+                        .clipShape(Circle())
+                        .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
                 }
+                .padding(.trailing, 20)
+                .padding(.bottom, 110)
             }
             .onAppear {
                 // Load existing workout data if resuming
@@ -258,6 +268,11 @@ struct CreateWorkoutView: View {
                 }
             } message: {
                 Text("Are you sure you want to cancel this workout? Any unsaved changes will be lost.")
+            }
+            .alert("Workout Name Required", isPresented: $showMissingNameAlert) {
+                Button("OK") { }
+            } message: {
+                Text("Give this workout a name before finishing it.")
             }
             .alert("No Sets Completed", isPresented: $showNoCompletedSetsAlert) {
                 Button("OK") { }
@@ -333,6 +348,21 @@ struct CreateWorkoutView: View {
         }
     }
     
+    /// Keeps the persisted workout's title/notes in sync with the text fields as the user types,
+    /// so edits made after the first exercise is added aren't lost if the user finishes the
+    /// workout without minimizing it first.
+    private func persistNameAndNotes(name: String, notes: String) {
+        guard let workout = savedWorkout else { return }
+        workout.title = name
+        workout.notes = notes
+        workout.updatedAt = .now
+        do {
+            try modelContext.save()
+        } catch {
+            print("Failed to persist workout name/notes: \(error)")
+        }
+    }
+
     func minimizeWorkout() {
         // Save any changes to workout name/notes first if we have a workout
         if let workout = savedWorkout {
@@ -366,6 +396,11 @@ struct CreateWorkoutView: View {
 
     private func attemptFinishWorkout() {
         guard let workout = savedWorkout else { return }
+
+        if workoutName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            showMissingNameAlert = true
+            return
+        }
 
         let hasCompletedSet = workout.exerciseSets.contains { $0.isCompleted }
         if hasCompletedSet {
@@ -432,11 +467,31 @@ struct CreateWorkoutView: View {
         
         workout.exerciseSets.append(newExerciseSet)
         modelContext.insert(newExerciseSet)
-        
+
         do {
             try modelContext.save()
         } catch {
             print("Failed to add new set: \(error)")
+        }
+    }
+
+    /// Removes a set and renumbers the remaining sets for that exercise so "Set N" stays sequential.
+    private func deleteSet(_ set: ExerciseSet, from workout: Workout) {
+        let exercise = set.exercise
+        workout.exerciseSets.removeAll { $0.id == set.id }
+        modelContext.delete(set)
+
+        let remaining = workout.exerciseSets
+            .filter { $0.exercise.id == exercise.id }
+            .sorted { $0.order < $1.order }
+        for (index, remainingSet) in remaining.enumerated() {
+            remainingSet.order = index
+        }
+
+        do {
+            try modelContext.save()
+        } catch {
+            print("Failed to delete set: \(error)")
         }
     }
 }
@@ -497,14 +552,16 @@ struct RestTimerBanner: View {
                 Text("Rest: \(formattedTime(remainingSeconds))")
                     .font(.system(size: 14, weight: .semibold))
                 Spacer()
-                Button("+15s") {
-                    manager.addTime(15)
+                HStack(spacing: 20) {
+                    Button("+15s") {
+                        manager.addTime(15)
+                    }
+                    .font(.system(size: 13, weight: .medium))
+                    Button("Skip") {
+                        manager.cancel()
+                    }
+                    .font(.system(size: 13, weight: .medium))
                 }
-                .font(.system(size: 13, weight: .medium))
-                Button("Skip") {
-                    manager.cancel()
-                }
-                .font(.system(size: 13, weight: .medium))
             }
             .padding(10)
             .background(Color(red: 0.11, green: 0.11, blue: 0.12))

@@ -192,7 +192,8 @@ struct WorkoutHistoryCard: View {
                     Image(systemName: "ellipsis")
                         .foregroundColor(.orange)
                         .font(.system(size: 16))
-                        .padding(.leading, 8)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
                 }
             }
             

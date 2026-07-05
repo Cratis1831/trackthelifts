@@ -57,16 +57,45 @@ struct WorkoutDetailView: View {
                 .listRowBackground(Color(red: 0.11, green: 0.11, blue: 0.12))
 
                 ForEach(groupedExerciseNames, id: \.self) { name in
-                    exerciseBlock(name)
-                        .listRowBackground(Color.black)
-                        .listRowSeparator(.hidden)
-                        .swipeActions(edge: .trailing) {
+                    Section {
+                        columnHeader
+
+                        ForEach(sets(for: name)) { set in
+                            ExerciseSetView(exerciseSet: set)
+                                .swipeActions(edge: .trailing) {
+                                    Button(role: .destructive) {
+                                        deleteSet(set)
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+                                }
+                        }
+
+                        Button {
+                            addSet(for: name)
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "plus")
+                                Text("Add Set")
+                            }
+                        }
+                        .buttonStyle(WorkoutActionButtonStyle(tint: .orange, prominence: .plain))
+                    } header: {
+                        HStack {
+                            Text(name)
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.primary)
+                            Spacer()
                             Button(role: .destructive) {
                                 deleteExercise(named: name)
                             } label: {
-                                Label("Delete", systemImage: "trash")
+                                Image(systemName: "trash")
+                                    .font(.system(size: 13))
                             }
                         }
+                    }
+                    .listRowBackground(Color.black)
+                    .listRowSeparator(.hidden)
                 }
             }
             .listStyle(.plain)
@@ -76,49 +105,25 @@ struct WorkoutDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    private func exerciseBlock(_ name: String) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(name)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.white)
+    private var columnHeader: some View {
+        HStack {
+            Text("Set")
+                .frame(width: 30, alignment: .center)
 
-            Grid(horizontalSpacing: 12, verticalSpacing: 8) {
-                GridRow {
-                    Text("Set")
-                        .frame(width: 30, alignment: .center)
+            Text("Previous")
+                .frame(maxWidth: .infinity, alignment: .center)
 
-                    Text("Previous")
-                        .gridCellColumns(2)
-                        .frame(maxWidth: .infinity, alignment: .center)
+            Text("lbs")
+                .frame(width: 50, alignment: .center)
 
-                    Text("lbs")
-                        .frame(width: 50, alignment: .center)
+            Text("Reps")
+                .frame(width: 50, alignment: .center)
 
-                    Text("Reps")
-                        .frame(width: 50, alignment: .center)
-
-                    Image(systemName: "checkmark")
-                        .frame(width: 30, alignment: .center)
-                }
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-
-                ForEach(sets(for: name)) { set in
-                    ExerciseSetView(exerciseSet: set)
-                }
-            }
-
-            Button {
-                addSet(for: name)
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "plus")
-                    Text("Add Set")
-                }
-            }
-            .buttonStyle(WorkoutActionButtonStyle(tint: .orange, prominence: .plain))
+            Image(systemName: "checkmark")
+                .frame(width: 30, alignment: .center)
         }
-        .padding(.vertical, 8)
+        .font(.subheadline)
+        .foregroundColor(.secondary)
     }
 
     private func persistWorkoutEdit() {
@@ -135,6 +140,22 @@ struct WorkoutDetailView: View {
             workout.exerciseSets.removeAll { $0.id == set.id }
             modelContext.delete(set)
         }
+        persistWorkoutEdit()
+    }
+
+    /// Removes a set and renumbers the remaining sets for that exercise so "Set N" stays sequential.
+    private func deleteSet(_ set: ExerciseSet) {
+        let exercise = set.exercise
+        workout.exerciseSets.removeAll { $0.id == set.id }
+        modelContext.delete(set)
+
+        let remaining = workout.exerciseSets
+            .filter { $0.exercise.id == exercise.id }
+            .sorted { $0.order < $1.order }
+        for (index, remainingSet) in remaining.enumerated() {
+            remainingSet.order = index
+        }
+
         persistWorkoutEdit()
     }
 

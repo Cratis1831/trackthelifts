@@ -20,7 +20,7 @@ struct ExerciseSetView: View {
     @FocusState private var isRepsFocused: Bool
 
     var body: some View {
-        GridRow {
+        HStack {
             // Column 1: Set number
             Text("\(exerciseSet.order + 1)")
                 .font(.system(size: 14, weight: .medium))
@@ -30,7 +30,6 @@ struct ExerciseSetView: View {
 
             // Column 2 & 3: Previous summary (last time this exercise/set-number was logged)
             Text(previousSetSummary)
-                .gridCellColumns(2)
                 .font(.system(size: 14))
                 .frame(maxWidth: .infinity, alignment: .center)
                 .foregroundColor(Color.secondary)
