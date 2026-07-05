@@ -38,13 +38,11 @@ struct CreateWorkoutView: View {
                         
                         TextField("Workout Name", text: $workoutName)
                             .font(.title.bold())
-                            .padding()
-                            .textFieldStyle(.plain)
+                            .textFieldStyle(.roundedBorder)
                             .focused($focusWorkoutName)
                         TextField("Workout Notes", text: $workoutNotes)
                             .font(.subheadline.bold())
-                            .padding()
-                            .textFieldStyle(.plain)
+                            .textFieldStyle(.roundedBorder)
 
                         //align leading
                         HStack {
@@ -114,17 +112,12 @@ struct CreateWorkoutView: View {
                                     }
                                     
                                     // Add Set button centered under each exercise
-                                    Button(action: {
+                                    Button("Add Set") {
                                         addNewSet(for: exerciseSets.first?.exercise, to: workout)
-                                    }) {
-                                        Text("Add Set")
-                                            .foregroundColor(.orange)
-                                            .font(.system(size: 14, weight: .medium))
-                                            .frame(maxWidth: .infinity)
-                                            .padding(.vertical, 8)
-                                            .background(Color.orange.opacity(0.1))
-                                            .cornerRadius(8)
                                     }
+                                    .buttonStyle(.bordered)
+                                    .tint(.orange)
+                                    .frame(maxWidth: .infinity)
                                     .padding(.top, 8)
                                 }
                                 .padding(.bottom, 16)
@@ -132,27 +125,21 @@ struct CreateWorkoutView: View {
                         }
                         
                         // Add Exercise Button (moved after exercises)
-                        Button(action: {
+                        Button("Add Exercise") {
                             showExerciseList.toggle()
-                        }) {
-                            Text("Add Exercise")
-                                .foregroundColor(Color(.label))
-                                .frame(maxWidth: .infinity, minHeight: 40)
-                                .background(Color(.tintColor))
-                                .cornerRadius(10)
                         }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.orange)
+                        .frame(maxWidth: .infinity, minHeight: 40)
                         .padding(.top, 16)
                     } else {
                         // Add Exercise Button when no exercises exist
-                        Button(action: {
+                        Button("Add Exercise") {
                             showExerciseList.toggle()
-                        }) {
-                            Text("Add Exercise")
-                                .foregroundColor(Color(.label))
-                                .frame(maxWidth: .infinity, minHeight: 40)
-                                .background(Color(.tintColor))
-                                .cornerRadius(10)
                         }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.orange)
+                        .frame(maxWidth: .infinity, minHeight: 40)
                         .padding(.top, 16)
                     }
                     }
@@ -164,19 +151,15 @@ struct CreateWorkoutView: View {
                 // Finish Workout Button at bottom (only show if workout exists and has exercises)
                 if let workout = savedWorkout, !workout.exerciseSets.isEmpty {
                     VStack {
-                        Button(action: {
+                        Button("Finish Workout") {
                             finishWorkout()
-                        }) {
-                            Text("Finish Workout")
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity, minHeight: 50)
-                                .background(Color.green)
-                                .cornerRadius(10)
                         }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.green)
+                        .frame(maxWidth: .infinity, minHeight: 50)
                         .padding(.horizontal)
                         .padding(.bottom, 30)
                     }
-                    .background(Color(.systemBackground))
                 }
             }
             .onAppear {
@@ -202,7 +185,7 @@ struct CreateWorkoutView: View {
                             weight: 0,
                             reps: 0,
                             order: workout.exerciseSets.filter { $0.exercise == selectedTemplate }.count,
-                            exercise: selectedTemplate, 
+                            exercise: selectedTemplate,
                             workout: workout
                         )
                         workout.exerciseSets.append(newExerciseSet)
@@ -228,11 +211,10 @@ struct CreateWorkoutView: View {
                             .foregroundColor(.primary)
                             .font(.headline)
                             .frame(width: 36, height: 36)
-                            .background(Color(.systemBackground).opacity(0.3))
-                            .clipShape(Circle())
                     }
+                    .glassEffect(.regular.interactive(), in: .circle)
                 }
-                
+
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         showCancelConfirmation = true
@@ -241,6 +223,7 @@ struct CreateWorkoutView: View {
                             .foregroundColor(.primary)
                             .font(.system(size: 16, weight: .medium))
                     }
+                    .buttonStyle(.glass)
                 }
             }
             .alert("Cancel Workout", isPresented: $showCancelConfirmation) {

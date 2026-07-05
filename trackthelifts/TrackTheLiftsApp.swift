@@ -23,6 +23,7 @@ struct TrackTheLiftsApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(revenueCatService)
+                .preferredColorScheme(.dark)
         }
         .modelContainer(for: [
             Workout.self, Exercise.self, Bodypart.self,

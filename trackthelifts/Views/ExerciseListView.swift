@@ -47,6 +47,56 @@ struct ExerciseListView: View {
     }
 
     var body: some View {
+        content
+            .onAppear {
+                print("🔍 ExerciseListView onAppear - Current exercise count: \(exercises.count)")
+                loadExercises()
+                if exercises.isEmpty && manualExercises.isEmpty {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        seedDefaultExercises()
+                    }
+                }
+            }
+            .id(refreshTrigger)
+            .sheet(isPresented: $showingExerciseDetail, onDismiss: {
+                exerciseToEdit = nil
+            }) {
+                ExerciseDetailView(exercise: exerciseToEdit)
+            }
+            .alert("Delete Exercise", isPresented: $showingDeleteConfirmation) {
+                Button("Delete", role: .destructive) {
+                    confirmDelete()
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                if let exercise = exerciseToDelete {
+                    let usageCount = exerciseSets.filter { $0.exercise.id == exercise.id }.count
+                    if usageCount > 0 {
+                        Text("This exercise is used in \(usageCount) workout set(s). Deleting it will affect your workout history.")
+                    } else {
+                        Text("Are you sure you want to delete '\(exercise.name)'?")
+                    }
+                }
+            }
+            .alert("Cannot Delete", isPresented: $showingDeleteError) {
+                Button("OK") { }
+            } message: {
+                Text(deleteErrorMessage ?? "An error occurred")
+            }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if chooseExercise {
+            navigationContent
+        } else {
+            navigationContent
+                .searchable(text: $searchText, prompt: "Search exercises...")
+                .searchToolbarBehavior(.minimize)
+        }
+    }
+
+    private var navigationContent: some View {
         NavigationStack {
             ZStack {
                 Color.black
@@ -93,10 +143,6 @@ struct ExerciseListView: View {
                     }
                 } else {
                     VStack(spacing: 0) {
-                        if !chooseExercise {
-                            searchBar
-                        }
-                        
                         List {
                             ForEach(groupedExercises, id: \.0) { bodypartName, bodypartExercises in
                                 Section {
@@ -144,59 +190,8 @@ struct ExerciseListView: View {
                 }
             }
         }
-        .onAppear {
-            print("🔍 ExerciseListView onAppear - Current exercise count: \(exercises.count)")
-            loadExercises()
-            if exercises.isEmpty && manualExercises.isEmpty {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    seedDefaultExercises()
-                }
-            }
-        }
-        .id(refreshTrigger)
-        .sheet(isPresented: $showingExerciseDetail, onDismiss: {
-            exerciseToEdit = nil
-        }) {
-            ExerciseDetailView(exercise: exerciseToEdit)
-        }
-        .alert("Delete Exercise", isPresented: $showingDeleteConfirmation) {
-            Button("Delete", role: .destructive) {
-                confirmDelete()
-            }
-            Button("Cancel", role: .cancel) { }
-        } message: {
-            if let exercise = exerciseToDelete {
-                let usageCount = exerciseSets.filter { $0.exercise.id == exercise.id }.count
-                if usageCount > 0 {
-                    Text("This exercise is used in \(usageCount) workout set(s). Deleting it will affect your workout history.")
-                } else {
-                    Text("Are you sure you want to delete '\(exercise.name)'?")
-                }
-            }
-        }
-        .alert("Cannot Delete", isPresented: $showingDeleteError) {
-            Button("OK") { }
-        } message: {
-            Text(deleteErrorMessage ?? "An error occurred")
-        }
     }
-    
-    private var searchBar: some View {
-        HStack {
-            Image(systemName: "magnifyingglass")
-                .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
-            
-            TextField("Search exercises...", text: $searchText)
-                .font(.system(size: 16))
-                .foregroundColor(.white)
-        }
-        .padding()
-        .background(Color(red: 0.11, green: 0.11, blue: 0.12))
-        .cornerRadius(8)
-        .padding(.horizontal, 16)
-        .padding(.bottom, 8)
-    }
-    
+
     private func exerciseRow(_ exercise: Exercise, isFirst: Bool = false, isLast: Bool = false) -> some View {
         Button {
             if chooseExercise, let onExerciseSelected = onExerciseSelected {
@@ -239,7 +234,7 @@ struct ExerciseListView: View {
             }
             .padding(.vertical, 8)
         }
-        .listRowBackground(
+            .listRowBackground(
             UnevenRoundedRectangle(
                 topLeadingRadius: isFirst ? 10 : 0,
                 bottomLeadingRadius: isLast ? 10 : 0,

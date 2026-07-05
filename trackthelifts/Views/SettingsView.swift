@@ -65,25 +65,21 @@ struct SettingsView: View {
                                 
                                 // Upgrade Button (only for free tier)
                                 if revenueCatService.currentTier == .free {
-                                    Button(action: {
+                                    Button {
                                         isPaywallPresented = true
-                                    }) {
+                                    } label: {
                                         HStack {
                                             Text("Upgrade to Premium")
                                                 .font(.system(size: 16, weight: .semibold))
-                                                .foregroundColor(.white)
                                             
                                             Spacer()
                                             
                                             Image(systemName: "arrow.right")
-                                                .foregroundColor(.white)
                                                 .font(.system(size: 14, weight: .medium))
                                         }
-                                        .padding(.horizontal, 16)
-                                        .padding(.vertical, 12)
-                                        .background(Color.orange)
-                                        .cornerRadius(8)
                                     }
+                                    .buttonStyle(.borderedProminent)
+                                    .tint(.orange)
                                     .padding(.top, 8)
                                 }
                             }
@@ -96,32 +92,24 @@ struct SettingsView: View {
                             )
                             
                             // Restore Purchases Button
-                            Button(action: {
+                            Button {
                                 Task {
                                     await revenueCatService.restorePurchases()
                                 }
-                            }) {
+                            } label: {
                                 HStack {
                                     Text("Restore Purchases")
                                         .font(.system(size: 16))
-                                        .foregroundColor(.orange)
                                     
                                     if revenueCatService.isLoading {
                                         Spacer()
                                         ProgressView()
                                             .scaleEffect(0.8)
-                                            .tint(.orange)
                                     }
                                 }
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 12)
-                                .background(Color(red: 0.11, green: 0.11, blue: 0.12))
-                                .cornerRadius(8)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(Color(red: 0.17, green: 0.17, blue: 0.18), lineWidth: 1)
-                                )
                             }
+                            .buttonStyle(.bordered)
+                            .tint(.orange)
                             .disabled(revenueCatService.isLoading)
                         }
                         

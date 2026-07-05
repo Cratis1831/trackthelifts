@@ -99,14 +99,11 @@ struct WorkoutView: View {
                                         Text("Add Routine")
                                             .font(.system(size: 16))
                                     }
-                                    .foregroundColor(.orange)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 8)
-                                    .background(Color(red: 0.11, green: 0.11, blue: 0.12))
-                                    .cornerRadius(8)
                                 }
+                                .buttonStyle(.bordered)
+                                .tint(.orange)
                             }
-                            
+
                             // My Templates Header
                             HStack {
                                 Text("My Routines (\(workoutTemplates.count))")
@@ -243,7 +240,7 @@ struct TemplateCard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, minHeight: 100, alignment: .topLeading)
-        .background(Color(red: 0.11, green: 0.11, blue: 0.12))
+         .background(Color(red: 0.11, green: 0.11, blue: 0.12))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
@@ -299,14 +296,9 @@ struct ResumeWorkoutBanner: View {
                     .font(.system(size: 14))
             }
             .padding(16)
-            .background(Color(red: 0.11, green: 0.11, blue: 0.12))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.green.opacity(0.3), lineWidth: 1)
-            )
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(.bordered)
+        .tint(.green)
     }
 }
 

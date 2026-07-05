@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 
+
 struct ExerciseDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -46,10 +47,7 @@ struct ExerciseDetailView: View {
                         
                         TextField("Enter exercise name", text: $exerciseName)
                             .font(.system(size: 16))
-                            .padding()
-                            .background(Color(red: 0.11, green: 0.11, blue: 0.12))
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
+                            .textFieldStyle(.roundedBorder)
                             .focused($isNameFieldFocused)
                     }
                     
@@ -62,28 +60,17 @@ struct ExerciseDetailView: View {
                             Button("None") {
                                 selectedBodypart = nil
                             }
-                            
+
                             ForEach(bodyparts) { bodypart in
                                 Button(bodypart.name) {
                                     selectedBodypart = bodypart
                                 }
                             }
                         } label: {
-                            HStack {
-                                Text(selectedBodypart?.name ?? "Select body part")
-                                    .font(.system(size: 16))
-                                    .foregroundColor(selectedBodypart != nil ? .white : Color(red: 0.56, green: 0.56, blue: 0.58))
-                                
-                                Spacer()
-                                
-                                Image(systemName: "chevron.down")
-                                    .font(.system(size: 12))
-                                    .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
-                            }
-                            .padding()
-                            .background(Color(red: 0.11, green: 0.11, blue: 0.12))
-                            .cornerRadius(8)
+                            Text(selectedBodypart?.name ?? "Select body part")
                         }
+                        .buttonStyle(.bordered)
+                        .tint(.orange)
                     }
                     
                     Spacer()
