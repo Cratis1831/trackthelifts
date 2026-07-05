@@ -94,7 +94,7 @@ struct CreateWorkoutView: View {
                                 Image(systemName: "calendar")
                                     .foregroundColor(Color(.secondaryLabel))
                                 Text(
-                                    Date().formatted(
+                                    (savedWorkout?.date ?? Date()).formatted(
                                         .dateTime.weekday(.wide).month(.wide).day()
                                             .year()
                                     )
@@ -402,17 +402,17 @@ struct CreateWorkoutView: View {
             return
         }
 
-        let hasCompletedSet = workout.exerciseSets.contains { $0.isCompleted }
-        if hasCompletedSet {
-            finishWorkout()
-            return
-        }
-
         let loggedSets = workout.exerciseSets.filter { $0.weight > 0 && $0.reps > 0 }
         if loggedSets.isEmpty {
             showNoCompletedSetsAlert = true
-        } else {
+            return
+        }
+
+        let hasIncompleteLoggedSet = loggedSets.contains { !$0.isCompleted }
+        if hasIncompleteLoggedSet {
             showMarkSetsCompleteConfirmation = true
+        } else {
+            finishWorkout()
         }
     }
 

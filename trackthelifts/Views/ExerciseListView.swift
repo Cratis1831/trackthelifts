@@ -66,7 +66,12 @@ struct ExerciseListView: View {
             .sheet(isPresented: $showingExerciseDetail, onDismiss: {
                 exerciseToEdit = nil
             }) {
-                ExerciseDetailView(exercise: exerciseToEdit)
+                ExerciseDetailView(exercise: exerciseToEdit, onSave: { savedExercise in
+                    if chooseExercise, let onExerciseSelected {
+                        onExerciseSelected(savedExercise)
+                        dismiss()
+                    }
+                })
             }
             .alert("Delete Exercise", isPresented: $showingDeleteConfirmation) {
                 Button("Delete", role: .destructive) {
@@ -94,7 +99,7 @@ struct ExerciseListView: View {
         navigationContent
             .searchable(
                 text: $searchText,
-                placement: .navigationBarDrawer(displayMode: .always),
+                placement: .toolbar,
                 prompt: "Search exercises..."
             )
             .searchToolbarBehavior(.minimize)
@@ -195,19 +200,18 @@ struct ExerciseListView: View {
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 if chooseExercise {
-                    ToolbarItem(placement: .navigationBarTrailing) {
+                    ToolbarItem(placement: .navigationBarLeading) {
                         Button("Cancel") {
                             dismiss()
                         }
                         .foregroundColor(.orange)
                     }
-                } else {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button("Add") {
-                            showingExerciseDetail = true
-                        }
-                        .foregroundColor(.orange)
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Add") {
+                        showingExerciseDetail = true
                     }
+                    .foregroundColor(.orange)
                 }
             }
         }

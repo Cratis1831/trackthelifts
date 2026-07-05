@@ -31,30 +31,47 @@ struct WorkoutDetailView: View {
             List {
                 Section {
                     TextField("Workout Name", text: $workout.title)
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.title.bold())
+                        .textFieldStyle(.plain)
                         .onChange(of: workout.title) { _, _ in
                             persistWorkoutEdit()
                         }
 
                     TextField(
-                        "Notes",
+                        "Workout Notes",
                         text: Binding(
                             get: { workout.notes ?? "" },
                             set: { workout.notes = $0 }
                         )
                     )
-                    .font(.system(size: 14))
+                    .font(.subheadline.bold())
+                    .textFieldStyle(.plain)
                     .onChange(of: workout.notes) { _, _ in
                         persistWorkoutEdit()
                     }
 
+                    HStack {
+                        Image(systemName: "calendar")
+                            .foregroundColor(Color(.secondaryLabel))
+                        Text(
+                            workout.date.formatted(
+                                .dateTime.weekday(.wide).month(.wide).day().year()
+                            )
+                        )
+                        .foregroundColor(Color(.secondaryLabel))
+                    }
+
                     if let completedAt = workout.completedAt {
-                        Text(completedAt.formatted(date: .abbreviated, time: .shortened))
-                            .font(.system(size: 13))
-                            .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                        HStack {
+                            Image(systemName: "clock")
+                                .foregroundColor(Color(.secondaryLabel))
+                            Text(formattedDuration(from: workout.createdAt, to: completedAt))
+                                .foregroundColor(Color(.secondaryLabel))
+                        }
                     }
                 }
-                .listRowBackground(Color(red: 0.11, green: 0.11, blue: 0.12))
+                .listRowBackground(Color.black)
+                .listRowSeparator(.hidden)
 
                 ForEach(groupedExerciseNames, id: \.self) { name in
                     Section {
@@ -103,6 +120,14 @@ struct WorkoutDetailView: View {
         }
         .navigationTitle("Edit Workout")
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func formattedDuration(from startDate: Date, to endDate: Date) -> String {
+        let totalSeconds = max(0, Int(endDate.timeIntervalSince(startDate)))
+        let hours = totalSeconds / 3600
+        let minutes = (totalSeconds % 3600) / 60
+        let seconds = totalSeconds % 60
+        return String(format: "%d:%02d:%02d", hours, minutes, seconds)
     }
 
     private var columnHeader: some View {

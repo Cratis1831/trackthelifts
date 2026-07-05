@@ -15,14 +15,16 @@ struct ExerciseDetailView: View {
     @Query(sort: \Bodypart.name) private var bodyparts: [Bodypart]
     
     let exercise: Exercise?
+    var onSave: ((Exercise) -> Void)? = nil
     @State private var exerciseName: String = ""
     @State private var selectedBodypart: Bodypart?
     @State private var showingError: Bool = false
     @State private var errorMessage: String = ""
     @FocusState private var isNameFieldFocused: Bool
-    
-    init(exercise: Exercise? = nil) {
+
+    init(exercise: Exercise? = nil, onSave: ((Exercise) -> Void)? = nil) {
         self.exercise = exercise
+        self.onSave = onSave
     }
     
     var isEditing: Bool {
@@ -125,20 +127,24 @@ struct ExerciseDetailView: View {
             return
         }
         
+        let savedExercise: Exercise
         if let existingExercise = exercise {
             existingExercise.name = trimmedName
             existingExercise.bodypart = selectedBodypart
             existingExercise.updatedAt = .now
+            savedExercise = existingExercise
         } else {
             let newExercise = Exercise(
                 name: trimmedName,
                 bodypart: selectedBodypart
             )
             modelContext.insert(newExercise)
+            savedExercise = newExercise
         }
-        
+
         do {
             try modelContext.save()
+            onSave?(savedExercise)
             dismiss()
         } catch {
             errorMessage = "Failed to save exercise: \(error.localizedDescription)"

@@ -71,7 +71,11 @@ struct ProgressDashboardView: View {
 
     private var consistencySection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionHeader("Consistency", subtitle: "Last \(weeklyCounts.count) weeks")
+            SectionHeaderView(
+                title: "Consistency",
+                subtitle: "Last \(weeklyCounts.count) weeks",
+                info: "Each box is one week. Orange means you completed at least one workout that week; gray means you didn't."
+            )
 
             HStack(spacing: 6) {
                 ForEach(weeklyCounts) { week in
@@ -85,7 +89,11 @@ struct ProgressDashboardView: View {
 
     private var weeklyCountSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionHeader("Weekly Workouts", subtitle: nil)
+            SectionHeaderView(
+                title: "Weekly Workouts",
+                subtitle: nil,
+                info: "The number of workouts you completed in each week, so you can see how your training frequency changes over time."
+            )
 
             Chart(weeklyCounts) { week in
                 BarMark(
@@ -104,7 +112,11 @@ struct ProgressDashboardView: View {
 
     private var volumeSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionHeader("Volume Over Time", subtitle: "Weight \u{00D7} reps per workout")
+            SectionHeaderView(
+                title: "Volume Over Time",
+                subtitle: "Weight \u{00D7} reps per workout",
+                info: "Total volume (weight \u{00D7} reps, added up across all your completed sets) for each workout, so you can see whether your training load is trending up over time."
+            )
 
             if volumePoints.isEmpty {
                 Text("No completed sets yet.")
@@ -135,7 +147,11 @@ struct ProgressDashboardView: View {
 
     private var personalRecordsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionHeader("Personal Records", subtitle: nil)
+            SectionHeaderView(
+                title: "Personal Records",
+                subtitle: nil,
+                info: "Your best logged weight and estimated one-rep max (1RM) for each exercise, based on your completed sets. Tap an exercise to see its full history."
+            )
 
             if records.isEmpty {
                 Text("No personal records yet.")
@@ -191,21 +207,50 @@ struct ProgressDashboardView: View {
         )
     }
 
-    private func sectionHeader(_ title: String, subtitle: String?) -> some View {
+    private func formattedWeight(_ weight: Double) -> String {
+        weight.truncatingRemainder(dividingBy: 1) == 0 ? String(Int(weight)) : String(format: "%.1f", weight)
+    }
+}
+
+/// Section title with a subtitle and a tappable info icon that explains what the section shows.
+private struct SectionHeaderView: View {
+    let title: String
+    let subtitle: String?
+    let info: String
+
+    @State private var showInfo = false
+
+    var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(title)
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.white)
+            HStack(spacing: 6) {
+                Text(title)
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(.white)
+
+                Button {
+                    showInfo = true
+                } label: {
+                    Image(systemName: "info.circle")
+                        .font(.system(size: 15))
+                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                }
+                .buttonStyle(.plain)
+                .popover(isPresented: $showInfo) {
+                    Text(info)
+                        .font(.system(size: 14))
+                        .foregroundColor(.white)
+                        .padding()
+                        .frame(minWidth: 240, idealWidth: 280)
+                        .presentationCompactAdaptation(.popover)
+                        .background(Color(red: 0.11, green: 0.11, blue: 0.12))
+                }
+            }
             if let subtitle {
                 Text(subtitle)
                     .font(.system(size: 13))
                     .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
             }
         }
-    }
-
-    private func formattedWeight(_ weight: Double) -> String {
-        weight.truncatingRemainder(dividingBy: 1) == 0 ? String(Int(weight)) : String(format: "%.1f", weight)
     }
 }
 
