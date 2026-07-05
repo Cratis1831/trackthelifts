@@ -201,15 +201,11 @@ struct ExerciseListView: View {
             }
         } label: {
             HStack(spacing: 12) {
-                // Circular avatar with initials
-                ZStack {
-                    Circle()
-                        .fill(Color.orange.opacity(0.2))
-                        .frame(width: 32, height: 32)
-
+                // Rounded-square tile with initials, colored per body part.
+                IconTile(color: BodypartPalette.color(for: exercise.bodypart?.name), size: 34) {
                     Text(exerciseInitials(exercise.name))
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.orange)
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(.white)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
@@ -241,6 +237,8 @@ struct ExerciseListView: View {
             )
             .fill(Color(red: 0.11, green: 0.11, blue: 0.12))
         )
+        // Inset the row separator so it starts at the text, not under the tile (like the reference).
+        .alignmentGuide(.listRowSeparatorLeading) { _ in 46 }
     }
     
     private func deleteExercises(from exercises: [Exercise], at indexSet: IndexSet) {
