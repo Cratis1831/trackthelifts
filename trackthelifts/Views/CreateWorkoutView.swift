@@ -14,6 +14,8 @@ struct CreateWorkoutView: View {
     @State private var showExerciseList: Bool = false
     @State private var savedWorkout: Workout?
     @State private var showCancelConfirmation: Bool = false
+    @State private var showNoCompletedSetsAlert: Bool = false
+    @State private var showMarkSetsCompleteConfirmation: Bool = false
     @State private var prAnnouncement: String?
     private let sessionManager = WorkoutSessionManager.shared
     @FocusState private var focusWorkoutName: Bool
@@ -171,7 +173,7 @@ struct CreateWorkoutView: View {
                             .frame(height: 0.5)
 
                         Button {
-                            finishWorkout()
+                            attemptFinishWorkout()
                         } label: {
                             HStack(spacing: 8) {
                                 Image(systemName: "checkmark.circle.fill")
@@ -257,6 +259,19 @@ struct CreateWorkoutView: View {
                 }
             } message: {
                 Text("Are you sure you want to cancel this workout? Any unsaved changes will be lost.")
+            }
+            .alert("No Sets Completed", isPresented: $showNoCompletedSetsAlert) {
+                Button("OK") { }
+            } message: {
+                Text("Log and check off at least one set before finishing this workout.")
+            }
+            .alert("Finish Workout?", isPresented: $showMarkSetsCompleteConfirmation) {
+                Button("Go Back", role: .cancel) { }
+                Button("Mark Complete & Finish") {
+                    markLoggedSetsCompleteAndFinish()
+                }
+            } message: {
+                Text("You've logged weight and reps but haven't checked any sets off yet. Completed sets are required to finish — mark your logged sets as complete and finish the workout?")
             }
         }
         .overlay(alignment: .top) {
@@ -348,6 +363,40 @@ struct CreateWorkoutView: View {
         }
         RestTimerManager.shared.cancel()
         dismiss()
+    }
+
+    private func attemptFinishWorkout() {
+        guard let workout = savedWorkout else { return }
+
+        let hasCompletedSet = workout.exerciseSets.contains { $0.isCompleted }
+        if hasCompletedSet {
+            finishWorkout()
+            return
+        }
+
+        let loggedSets = workout.exerciseSets.filter { $0.weight > 0 && $0.reps > 0 }
+        if loggedSets.isEmpty {
+            showNoCompletedSetsAlert = true
+        } else {
+            showMarkSetsCompleteConfirmation = true
+        }
+    }
+
+    private func markLoggedSetsCompleteAndFinish() {
+        guard let workout = savedWorkout else { return }
+
+        for set in workout.exerciseSets where set.weight > 0 && set.reps > 0 {
+            set.isCompleted = true
+            set.updatedAt = .now
+        }
+
+        do {
+            try modelContext.save()
+        } catch {
+            print("Failed to mark sets complete: \(error)")
+        }
+
+        finishWorkout()
     }
 
     func finishWorkout() {
