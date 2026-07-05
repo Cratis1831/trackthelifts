@@ -50,12 +50,13 @@ extension WorkoutTemplate {
         let workout = Workout(title: name, date: .now)
         context.insert(workout)
 
-        for templateExercise in templateExercises.sorted(by: { $0.order < $1.order }) {
+        for (exerciseIndex, templateExercise) in templateExercises.sorted(by: { $0.order < $1.order }).enumerated() {
             for setIndex in 0..<max(templateExercise.targetSets, 1) {
                 let set = ExerciseSet(
                     weight: templateExercise.targetWeight,
                     reps: templateExercise.targetReps,
                     order: setIndex,
+                    exerciseOrder: exerciseIndex,
                     exercise: templateExercise.exercise,
                     workout: workout
                 )

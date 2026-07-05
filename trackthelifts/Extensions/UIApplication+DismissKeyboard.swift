@@ -16,6 +16,20 @@ private class KeyboardDismissGestureDelegate: NSObject, UIGestureRecognizerDeleg
     ) -> Bool {
         true
     }
+
+    /// Skip taps that land on another text field/text view, so switching focus directly between
+    /// fields (e.g. Weight -> Reps) just moves focus instead of resigning it and having SwiftUI
+    /// refocus a moment later — which was causing the keyboard to visibly dismiss and reappear.
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        var view: UIView? = touch.view
+        while let current = view {
+            if current is UITextField || current is UITextView {
+                return false
+            }
+            view = current.superview
+        }
+        return true
+    }
 }
 
 extension UIApplication {

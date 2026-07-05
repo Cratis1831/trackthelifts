@@ -15,7 +15,6 @@ struct ExerciseListView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \Exercise.name) private var exercises: [Exercise]
-    @Query(sort: \Bodypart.name) private var bodyparts: [Bodypart]
     @Query private var exerciseSets: [ExerciseSet]
     @State private var refreshTrigger = false
     @State private var manualExercises: [Exercise] = []
@@ -54,12 +53,11 @@ struct ExerciseListView: View {
     var body: some View {
         content
             .onAppear {
-                print("🔍 ExerciseListView onAppear - Current exercise count: \(exercises.count)")
                 loadExercises()
                 if exercises.isEmpty && manualExercises.isEmpty {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        seedDefaultExercises()
-                    }
+                    ExerciseData.seedIfNeeded(in: modelContext)
+                    loadExercises()
+                    refreshTrigger.toggle()
                 }
             }
             .id(refreshTrigger)
@@ -114,10 +112,10 @@ struct ExerciseListView: View {
                 if filteredExercises.isEmpty && exercises.isEmpty {
                     EmptyStateView(
                         systemImage: "dumbbell",
-                        title: "No Exercises Found",
-                        message: "Tap 'Seed Exercises' to add default exercises",
-                        actionTitle: "Seed Exercises",
-                        action: { forceSeedExercises() }
+                        title: "No Exercises",
+                        message: "Your exercise library is empty. Restore the built-in exercises to get started.",
+                        actionTitle: "Restore Default Exercises",
+                        action: { restoreDefaultExercises() }
                     )
                 } else if filteredExercises.isEmpty && !searchText.isEmpty {
                     EmptyStateView(
@@ -290,66 +288,24 @@ struct ExerciseListView: View {
         }
     }
     
-    private func seedDefaultExercises() {
-        print("🌱 Starting seedDefaultExercises - Current count: \(exercises.count)")
-        
-        // First, seed bodyparts if they don't exist
-        seedBodyparts()
-        
-        // Then seed exercises with bodyparts
-        for exerciseInfo in ExerciseData.defaultExercises {
-            let bodypart = bodyparts.first { $0.name == exerciseInfo.bodypart }
-            let exercise = Exercise(name: exerciseInfo.name, bodypart: bodypart)
-            modelContext.insert(exercise)
-            print("➕ Inserted exercise: \(exerciseInfo.name) (\(exerciseInfo.bodypart))")
-        }
+    /// Manual recovery action for the empty state (e.g. if every exercise was deleted, or the
+    /// automatic launch-time seed didn't run yet). Seeding itself normally happens once,
+    /// automatically, from `ContentView`.
+    private func restoreDefaultExercises() {
+        ExerciseData.seedIfNeeded(in: modelContext)
+        loadExercises()
+        refreshTrigger.toggle()
+    }
 
-        do {
-            try modelContext.save()
-            print("✅ Successfully seeded \(ExerciseData.defaultExercises.count) default exercises")
-            
-            // Force UI refresh and reload exercises
-            DispatchQueue.main.async {
-                loadExercises()
-                refreshTrigger.toggle()
-            }
-        } catch {
-            print("❌ Failed to save default exercises: \(error)")
-        }
-    }
-    
-    private func seedBodyparts() {
-        for bodypartName in ExerciseData.defaultBodyparts {
-            if !bodyparts.contains(where: { $0.name == bodypartName }) {
-                let bodypart = Bodypart(name: bodypartName)
-                modelContext.insert(bodypart)
-                print("➕ Inserted bodypart: \(bodypartName)")
-            }
-        }
-        
-        do {
-            try modelContext.save()
-        } catch {
-            print("❌ Failed to seed bodyparts: \(error)")
-        }
-    }
-    
-    private func forceSeedExercises() {
-        print("🚀 Force seeding exercises...")
-        seedDefaultExercises()
-    }
-    
     private func loadExercises() {
         let descriptor = FetchDescriptor<Exercise>(
             sortBy: [SortDescriptor(\Exercise.name)]
         )
-        
+
         do {
-            let fetchedExercises = try modelContext.fetch(descriptor)
-            manualExercises = fetchedExercises
-            print("🔄 Loaded \(fetchedExercises.count) exercises manually")
+            manualExercises = try modelContext.fetch(descriptor)
         } catch {
-            print("❌ Failed to manually load exercises: \(error)")
+            print("Failed to manually load exercises: \(error)")
         }
     }
 

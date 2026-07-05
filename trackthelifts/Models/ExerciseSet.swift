@@ -14,8 +14,11 @@ class ExerciseSet {
     var weight: Double
     var reps: Int
     var order: Int
+    /// Position of this set's exercise within the workout (shared by every set of that
+    /// exercise), so exercises can be drag-reordered independently of when each set was logged.
+    var exerciseOrder: Int = 0
     var isCompleted: Bool
-    
+
     // CloudKit sync properties
     var createdAt: Date
     var updatedAt: Date
@@ -27,11 +30,12 @@ class ExerciseSet {
     @Relationship var workout: Workout
 
     init(
-        id: UUID = UUID(), 
-        weight: Double, 
-        reps: Int, 
-        order: Int, 
-        exercise: Exercise, 
+        id: UUID = UUID(),
+        weight: Double,
+        reps: Int,
+        order: Int,
+        exerciseOrder: Int = 0,
+        exercise: Exercise,
         workout: Workout,
         isCompleted: Bool = false,
         createdAt: Date = .now,
@@ -44,6 +48,7 @@ class ExerciseSet {
         self.weight = weight
         self.reps = reps
         self.order = order
+        self.exerciseOrder = exerciseOrder
         self.exercise = exercise
         self.workout = workout
         self.isCompleted = isCompleted

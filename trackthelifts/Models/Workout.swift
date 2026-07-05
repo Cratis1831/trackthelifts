@@ -55,16 +55,25 @@ extension Workout {
 
     /// Creates a new in-progress `Workout` that repeats this (typically completed) workout's
     /// exercises and set count, carrying over the previous weight/reps as a starting point
-    /// but resetting completion so the user logs each set fresh.
+    /// but resetting completion so the user logs each set fresh. Preserves the original
+    /// workout's exercise order rather than re-alphabetizing it.
     func duplicate(in context: ModelContext) -> Workout {
         let newWorkout = Workout(title: title, date: .now)
         context.insert(newWorkout)
 
         let grouped = Dictionary(grouping: exerciseSets, by: \.exercise.name)
-        let sortedGroups = grouped.sorted { $0.key < $1.key }
+        let sortedNames = grouped.keys.sorted { name1, name2 in
+            let order1 = grouped[name1]?.map(\.exerciseOrder).min() ?? Int.max
+            let order2 = grouped[name2]?.map(\.exerciseOrder).min() ?? Int.max
+            if order1 != order2 { return order1 < order2 }
+            let earliest1 = grouped[name1]?.map(\.createdAt).min() ?? .distantFuture
+            let earliest2 = grouped[name2]?.map(\.createdAt).min() ?? .distantFuture
+            return earliest1 < earliest2
+        }
 
-        for group in sortedGroups {
-            let sets = group.value.sorted { $0.order < $1.order }
+        for (exerciseIndex, name) in sortedNames.enumerated() {
+            guard let group = grouped[name] else { continue }
+            let sets = group.sorted { $0.order < $1.order }
             guard let exercise = sets.first?.exercise else { continue }
 
             for (index, previousSet) in sets.enumerated() {
@@ -72,6 +81,7 @@ extension Workout {
                     weight: previousSet.weight,
                     reps: previousSet.reps,
                     order: index,
+                    exerciseOrder: exerciseIndex,
                     exercise: exercise,
                     workout: newWorkout
                 )

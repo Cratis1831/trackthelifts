@@ -14,11 +14,14 @@ struct WorkoutDetailView: View {
 
     @Environment(\.modelContext) private var modelContext
 
-    /// Exercise names in the order they were added to the workout (earliest-created set first),
-    /// not alphabetically, so newly added exercises appear at the bottom of the list.
+    /// Exercise names in their persisted `exerciseOrder` (drag-reorderable by the user), falling
+    /// back to earliest-created-set order for older data that predates `exerciseOrder`.
     private var groupedExerciseNames: [String] {
         let grouped = Dictionary(grouping: workout.exerciseSets, by: \.exercise.name)
         return grouped.keys.sorted { name1, name2 in
+            let order1 = grouped[name1]?.map(\.exerciseOrder).min() ?? Int.max
+            let order2 = grouped[name2]?.map(\.exerciseOrder).min() ?? Int.max
+            if order1 != order2 { return order1 < order2 }
             let earliest1 = grouped[name1]?.map(\.createdAt).min() ?? .distantFuture
             let earliest2 = grouped[name2]?.map(\.createdAt).min() ?? .distantFuture
             return earliest1 < earliest2
@@ -29,6 +32,20 @@ struct WorkoutDetailView: View {
         workout.exerciseSets
             .filter { $0.exercise.name == exerciseName }
             .sorted { $0.order < $1.order }
+    }
+
+    /// Reassigns sequential `exerciseOrder` values to every set after a drag-reorder.
+    private func moveExercises(from source: IndexSet, to destination: Int) {
+        var names = groupedExerciseNames
+        names.move(fromOffsets: source, toOffset: destination)
+
+        for (index, name) in names.enumerated() {
+            for set in sets(for: name) {
+                set.exerciseOrder = index
+            }
+        }
+
+        persistWorkoutEdit()
     }
 
     var body: some View {
@@ -121,12 +138,20 @@ struct WorkoutDetailView: View {
                     .listRowBackground(Color.black)
                     .listRowSeparator(.hidden)
                 }
+                .onMove(perform: moveExercises)
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
         }
         .navigationTitle("Edit Workout")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if groupedExerciseNames.count > 1 {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    EditButton()
+                }
+            }
+        }
     }
 
     private func formattedDuration(from startDate: Date, to endDate: Date) -> String {
@@ -200,6 +225,7 @@ struct WorkoutDetailView: View {
             weight: lastSet?.weight ?? 0,
             reps: lastSet?.reps ?? 0,
             order: (lastSet?.order ?? -1) + 1,
+            exerciseOrder: lastSet?.exerciseOrder ?? 0,
             exercise: exercise,
             workout: workout
         )

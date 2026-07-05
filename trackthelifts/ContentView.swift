@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    @Environment(\.modelContext) private var modelContext
 
     var body: some View {
         TabView {
@@ -42,6 +43,7 @@ struct ContentView: View {
         }
         .onAppear {
             UIApplication.shared.enableTapToDismissKeyboard()
+            ExerciseData.seedIfNeeded(in: modelContext)
         }
     }
 

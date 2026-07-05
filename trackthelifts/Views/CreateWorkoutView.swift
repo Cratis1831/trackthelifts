@@ -37,15 +37,37 @@ struct CreateWorkoutView: View {
     var dataFilled: Bool {
         !workoutName.isEmpty
     }
-    /// Exercise names in the order they were added to the workout (earliest-created set first),
-    /// not alphabetically, so newly added exercises appear at the bottom of the list.
+    /// Exercise names in their persisted `exerciseOrder` (drag-reorderable by the user), falling
+    /// back to earliest-created-set order for older data that predates `exerciseOrder`.
     private var groupedExerciseNames: [String] {
         guard let workout = savedWorkout else { return [] }
         let grouped = Dictionary(grouping: workout.exerciseSets, by: \.exercise.name)
         return grouped.keys.sorted { name1, name2 in
+            let order1 = grouped[name1]?.map(\.exerciseOrder).min() ?? Int.max
+            let order2 = grouped[name2]?.map(\.exerciseOrder).min() ?? Int.max
+            if order1 != order2 { return order1 < order2 }
             let earliest1 = grouped[name1]?.map(\.createdAt).min() ?? .distantFuture
             let earliest2 = grouped[name2]?.map(\.createdAt).min() ?? .distantFuture
             return earliest1 < earliest2
+        }
+    }
+
+    /// Reassigns sequential `exerciseOrder` values to every set after a drag-reorder, so the new
+    /// order persists.
+    private func moveExercises(from source: IndexSet, to destination: Int) {
+        var names = groupedExerciseNames
+        names.move(fromOffsets: source, toOffset: destination)
+
+        for (index, name) in names.enumerated() {
+            for set in sets(for: name) {
+                set.exerciseOrder = index
+            }
+        }
+
+        do {
+            try modelContext.save()
+        } catch {
+            print("Failed to reorder exercises: \(error)")
         }
     }
 
@@ -166,6 +188,7 @@ struct CreateWorkoutView: View {
                                 .listRowBackground(Color.black)
                                 .listRowSeparator(.hidden)
                             }
+                            .onMove(perform: moveExercises)
                         } else {
                             Section {
                                 Text("Tap the + button to add your first exercise.")
@@ -234,10 +257,12 @@ struct CreateWorkoutView: View {
                     }
 
                     if let workout = savedWorkout {
+                        let nextExerciseOrder = (workout.exerciseSets.map(\.exerciseOrder).max() ?? -1) + 1
                         let newExerciseSet = ExerciseSet(
                             weight: 0,
                             reps: 0,
                             order: workout.exerciseSets.filter { $0.exercise == selectedTemplate }.count,
+                            exerciseOrder: nextExerciseOrder,
                             exercise: selectedTemplate,
                             workout: workout
                         )
@@ -265,6 +290,12 @@ struct CreateWorkoutView: View {
                             .foregroundColor(.primary)
                             .font(.headline)
                             .frame(width: 36, height: 36)
+                    }
+                }
+
+                if groupedExerciseNames.count > 1 {
+                    ToolbarItem(placement: .topBarLeading) {
+                        EditButton()
                     }
                 }
 
@@ -495,10 +526,11 @@ struct CreateWorkoutView: View {
             weight: lastSet?.weight ?? 0,
             reps: lastSet?.reps ?? 0,
             order: newOrder + 1,
+            exerciseOrder: lastSet?.exerciseOrder ?? 0,
             exercise: exercise,
             workout: workout
         )
-        
+
         workout.exerciseSets.append(newExerciseSet)
         modelContext.insert(newExerciseSet)
 

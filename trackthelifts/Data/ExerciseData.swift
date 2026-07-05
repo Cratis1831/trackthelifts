@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftData
 
 struct ExerciseData {
     
@@ -112,4 +113,33 @@ struct ExerciseData {
         ("Russian Twists", "Abs"),
         ("Machine Crunches", "Abs")
     ]
+}
+
+extension ExerciseData {
+    /// Seeds the bundled exercise library once, automatically, so the app never presents an
+    /// empty exercise list. Safe to call on every launch: does nothing once exercises exist.
+    static func seedIfNeeded(in modelContext: ModelContext) {
+        let existingExerciseCount = (try? modelContext.fetchCount(FetchDescriptor<Exercise>())) ?? 0
+        guard existingExerciseCount == 0 else { return }
+
+        let existingBodyparts = (try? modelContext.fetch(FetchDescriptor<Bodypart>())) ?? []
+        var bodypartsByName = Dictionary(uniqueKeysWithValues: existingBodyparts.map { ($0.name, $0) })
+
+        for name in defaultBodyparts where bodypartsByName[name] == nil {
+            let bodypart = Bodypart(name: name)
+            modelContext.insert(bodypart)
+            bodypartsByName[name] = bodypart
+        }
+
+        for exerciseInfo in defaultExercises {
+            let exercise = Exercise(name: exerciseInfo.name, bodypart: bodypartsByName[exerciseInfo.bodypart])
+            modelContext.insert(exercise)
+        }
+
+        do {
+            try modelContext.save()
+        } catch {
+            print("Failed to seed default exercise library: \(error)")
+        }
+    }
 }
