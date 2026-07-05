@@ -78,6 +78,7 @@ struct WorkoutView: View {
                                     }
                                 }
                                 .buttonStyle(.bordered)
+                                .buttonBorderShape(.roundedRectangle(radius: 8))
                                 .tint(.orange)
                             }
 
@@ -275,6 +276,7 @@ struct ResumeWorkoutBanner: View {
             .padding(16)
         }
         .buttonStyle(.bordered)
+        .buttonBorderShape(.roundedRectangle(radius: 8))
         .tint(.green)
     }
 }

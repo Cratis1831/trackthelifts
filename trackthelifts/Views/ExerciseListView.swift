@@ -90,15 +90,10 @@ struct ExerciseListView: View {
             }
     }
 
-    @ViewBuilder
     private var content: some View {
-        if chooseExercise {
-            navigationContent
-        } else {
-            navigationContent
-                .searchable(text: $searchText, prompt: "Search exercises...")
-                .searchToolbarBehavior(.minimize)
-        }
+        navigationContent
+            .searchable(text: $searchText, prompt: "Search exercises...")
+            .searchToolbarBehavior(.minimize)
     }
 
     private var navigationContent: some View {

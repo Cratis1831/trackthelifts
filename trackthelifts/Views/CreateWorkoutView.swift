@@ -116,13 +116,24 @@ struct CreateWorkoutView: View {
                                         }
                                     }
                                     
-                                    // Add Set button centered under each exercise
-                                    Button("Add Set") {
+                                    // Add Set button
+                                    Button {
                                         addNewSet(for: exerciseSets.first?.exercise, to: workout)
+                                    } label: {
+                                        Text("Add Set")
+                                            .foregroundColor(.orange)
+                                            .frame(maxWidth: .infinity, minHeight: 38)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 8)
+                                                    .fill(Color.orange.opacity(0.15))
+                                            )
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 8)
+                                                    .stroke(Color.orange.opacity(0.5), lineWidth: 1)
+                                            )
                                     }
-                                    .buttonStyle(.bordered)
-                                    .tint(.orange)
-                                    .frame(maxWidth: .infinity)
+                                    .buttonStyle(.plain)
+                                    .padding(.horizontal, -6)
                                     .padding(.top, 8)
                                 }
                                 .padding(.bottom, 16)
@@ -134,8 +145,10 @@ struct CreateWorkoutView: View {
                             showExerciseList.toggle()
                         }
                         .buttonStyle(.borderedProminent)
+                        .buttonBorderShape(.roundedRectangle(radius: 8))
                         .tint(.orange)
-                        .frame(maxWidth: .infinity, minHeight: 40)
+                        .frame(maxWidth: .infinity, minHeight: 38)
+                        .padding(.horizontal, -6)
                         .padding(.top, 16)
                     } else {
                         // Add Exercise Button when no exercises exist
@@ -143,8 +156,10 @@ struct CreateWorkoutView: View {
                             showExerciseList.toggle()
                         }
                         .buttonStyle(.borderedProminent)
+                        .buttonBorderShape(.roundedRectangle(radius: 8))
                         .tint(.orange)
-                        .frame(maxWidth: .infinity, minHeight: 40)
+                        .frame(maxWidth: .infinity, minHeight: 38)
+                        .padding(.horizontal, -6)
                         .padding(.top, 16)
                     }
                     }
@@ -160,9 +175,10 @@ struct CreateWorkoutView: View {
                             finishWorkout()
                         }
                         .buttonStyle(.borderedProminent)
+                        .buttonBorderShape(.roundedRectangle(radius: 8))
                         .tint(.green)
-                        .frame(maxWidth: .infinity, minHeight: 50)
-                        .padding(.horizontal)
+                        .frame(maxWidth: .infinity, minHeight: 38)
+                        .padding(.horizontal, 10)
                         .padding(.bottom, 30)
                     }
                 }
