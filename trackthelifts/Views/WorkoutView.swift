@@ -15,6 +15,7 @@ struct WorkoutView: View {
     @State private var isCreateWorkoutPresented: Bool = false
     @State private var isCreateRoutinePresented: Bool = false
     @State private var isChooseWorkoutForRoutinePresented: Bool = false
+    @State private var templateToEdit: WorkoutTemplate?
     @State private var workoutToNameAsTemplate: Workout?
     @State private var newTemplateName: String = ""
     @State private var sortBy: SortOption = .name
@@ -128,9 +129,11 @@ struct WorkoutView: View {
                             } else {
                                 LazyVStack(spacing: 15) {
                                     ForEach(sortedTemplates) { template in
-                                        TemplateCard(template: template) {
+                                        TemplateCard(template: template, onTap: {
                                             startWorkout(from: template)
-                                        }
+                                        }, onEdit: {
+                                            templateToEdit = template
+                                        })
                                     }
                                 }
                             }
@@ -177,6 +180,9 @@ struct WorkoutView: View {
         .sheet(isPresented: $isCreateRoutinePresented) {
             CreateRoutineView()
         }
+        .sheet(item: $templateToEdit) { template in
+            CreateRoutineView(existingTemplate: template)
+        }
         .sheet(isPresented: $isChooseWorkoutForRoutinePresented) {
             ChooseWorkoutForTemplateView { workout in
                 newTemplateName = workout.title
@@ -213,6 +219,7 @@ struct WorkoutView: View {
 struct TemplateCard: View {
     let template: WorkoutTemplate
     let onTap: () -> Void
+    let onEdit: () -> Void
 
     @Environment(\.modelContext) private var modelContext
 
@@ -235,6 +242,9 @@ struct TemplateCard: View {
                     Spacer()
 
                     Menu {
+                        Button("Edit Template") {
+                            onEdit()
+                        }
                         Button("Duplicate Template") {
                             _ = template.duplicateTemplate(in: modelContext)
                         }
@@ -247,6 +257,8 @@ struct TemplateCard: View {
                         Image(systemName: "ellipsis")
                             .foregroundColor(.orange)
                             .font(.system(size: 16))
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
                     }
                 }
 

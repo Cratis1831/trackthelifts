@@ -19,6 +19,7 @@ struct CreateWorkoutView: View {
     @State private var showMissingNameAlert: Bool = false
     @State private var saveErrorMessage: String?
     @State private var prAnnouncement: String?
+    @State private var pendingAutoFocusSetID: UUID?
     @State private var sessionStartDate = Date()
     private let sessionManager = WorkoutSessionManager.shared
     @FocusState private var focusWorkoutName: Bool
@@ -36,9 +37,16 @@ struct CreateWorkoutView: View {
     var dataFilled: Bool {
         !workoutName.isEmpty
     }
+    /// Exercise names in the order they were added to the workout (earliest-created set first),
+    /// not alphabetically, so newly added exercises appear at the bottom of the list.
     private var groupedExerciseNames: [String] {
         guard let workout = savedWorkout else { return [] }
-        return Dictionary(grouping: workout.exerciseSets, by: \.exercise.name).keys.sorted()
+        let grouped = Dictionary(grouping: workout.exerciseSets, by: \.exercise.name)
+        return grouped.keys.sorted { name1, name2 in
+            let earliest1 = grouped[name1]?.map(\.createdAt).min() ?? .distantFuture
+            let earliest2 = grouped[name2]?.map(\.createdAt).min() ?? .distantFuture
+            return earliest1 < earliest2
+        }
     }
 
     private func sets(for exerciseName: String) -> [ExerciseSet] {
@@ -46,6 +54,17 @@ struct CreateWorkoutView: View {
         return workout.exerciseSets
             .filter { $0.exercise.name == exerciseName }
             .sorted { $0.order < $1.order }
+    }
+
+    private func exerciseSetRow(_ exerciseSet: ExerciseSet, in workout: Workout) -> some View {
+        ExerciseSetView(
+            exerciseSet: exerciseSet,
+            onPersonalRecord: { set, kind in
+                showPersonalRecord(for: set, kind: kind)
+            },
+            autoFocusSetID: $pendingAutoFocusSetID
+        )
+        .id(exerciseSet.id)
     }
 
     private var columnHeader: some View {
@@ -56,7 +75,7 @@ struct CreateWorkoutView: View {
             Text("Previous")
                 .frame(maxWidth: .infinity, alignment: .center)
 
-            Text("lbs")
+            Text(WeightUnitPreference.shared.unit.label)
                 .frame(width: 50, alignment: .center)
 
             Text("Reps")
@@ -75,6 +94,7 @@ struct CreateWorkoutView: View {
                 Color.black.ignoresSafeArea()
 
                 VStack(spacing: 0) {
+                    ScrollViewReader { scrollProxy in
                     List {
                         Section {
                             TextField("Workout Name", text: $workoutName)
@@ -119,10 +139,8 @@ struct CreateWorkoutView: View {
                                     columnHeader
 
                                     ForEach(sets(for: exerciseName)) { exerciseSet in
-                                        ExerciseSetView(exerciseSet: exerciseSet) { set, kind in
-                                            showPersonalRecord(for: set, kind: kind)
-                                        }
-                                        .swipeActions(edge: .trailing) {
+                                        exerciseSetRow(exerciseSet, in: workout)
+                                            .swipeActions(edge: .trailing) {
                                             Button(role: .destructive) {
                                                 deleteSet(exerciseSet, from: workout)
                                             } label: {
@@ -157,31 +175,28 @@ struct CreateWorkoutView: View {
                             .listRowBackground(Color.black)
                             .listRowSeparator(.hidden)
                         }
+
+                        Section {
+                            Button {
+                                showCancelConfirmation = true
+                            } label: {
+                                Text("Cancel Workout")
+                            }
+                            .buttonStyle(WorkoutActionButtonStyle(tint: .red, prominence: .plain))
+                        }
+                        .listRowBackground(Color.black)
+                        .listRowSeparator(.hidden)
                     }
                     .listStyle(.plain)
                     .scrollContentBackground(.hidden)
-
-                    // Finish Workout Button at bottom (only show if workout exists and has exercises)
-                    if let workout = savedWorkout, !workout.exerciseSets.isEmpty {
-                        VStack(spacing: 0) {
-                            Rectangle()
-                                .fill(Color(red: 0.17, green: 0.17, blue: 0.18))
-                                .frame(height: 0.5)
-
-                            Button {
-                                attemptFinishWorkout()
-                            } label: {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "checkmark.circle.fill")
-                                    Text("Finish Workout")
-                                }
+                    .onChange(of: pendingAutoFocusSetID) { _, newValue in
+                        guard let newValue else { return }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                            withAnimation {
+                                scrollProxy.scrollTo(newValue, anchor: .center)
                             }
-                            .buttonStyle(WorkoutActionButtonStyle(tint: .green, prominence: .filled))
-                            .padding(.horizontal, 10)
-                            .padding(.top, 12)
-                            .padding(.bottom, 30)
                         }
-                        .background(Color.black)
+                    }
                     }
                 }
             }
@@ -198,7 +213,7 @@ struct CreateWorkoutView: View {
                         .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
                 }
                 .padding(.trailing, 20)
-                .padding(.bottom, 110)
+                .padding(.bottom, 70)
             }
             .onAppear {
                 // Load existing workout data if resuming
@@ -231,6 +246,7 @@ struct CreateWorkoutView: View {
 
                         do {
                             try modelContext.save()
+                            pendingAutoFocusSetID = newExerciseSet.id
                         } catch {
                             print("Failed to save exercise: \(error.localizedDescription)")
                         }
@@ -254,17 +270,20 @@ struct CreateWorkoutView: View {
 
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        showCancelConfirmation = true
+                        attemptFinishWorkout()
                     } label: {
-                        Text("Cancel Workout")
-                            .foregroundColor(.primary)
-                            .font(.system(size: 16, weight: .medium))
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(width: 36, height: 36)
+                            .background(Color.green)
+                            .clipShape(Circle())
                     }
                 }
             }
             .alert("Cancel Workout", isPresented: $showCancelConfirmation) {
-                Button("Continue Workout", role: .cancel) { }
-                Button("Cancel Workout", role: .destructive) {
+                Button("No", role: .cancel) { }
+                Button("Yes", role: .destructive) {
                     cancelWorkout()
                 }
             } message: {
@@ -414,7 +433,7 @@ struct CreateWorkoutView: View {
             return
         }
 
-        let loggedSets = workout.exerciseSets.filter { $0.weight > 0 && $0.reps > 0 }
+        let loggedSets = workout.exerciseSets.filter { $0.reps > 0 }
         if loggedSets.isEmpty {
             showNoCompletedSetsAlert = true
             return
@@ -431,7 +450,7 @@ struct CreateWorkoutView: View {
     private func markLoggedSetsCompleteAndFinish() {
         guard let workout = savedWorkout else { return }
 
-        for set in workout.exerciseSets where set.weight > 0 && set.reps > 0 {
+        for set in workout.exerciseSets where set.reps > 0 {
             set.isCompleted = true
             set.updatedAt = .now
         }

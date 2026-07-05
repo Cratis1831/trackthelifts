@@ -11,6 +11,9 @@ import SwiftData
 struct ExerciseSetView: View {
     let exerciseSet: ExerciseSet
     var onPersonalRecord: ((ExerciseSet, PRKind) -> Void)? = nil
+    /// When set, this view claims focus for its weight field if its id matches the pending value,
+    /// then clears the binding so the focus request only fires once.
+    var autoFocusSetID: Binding<UUID?>? = nil
     @Environment(\.modelContext) private var modelContext
 
     @State private var weight: String = ""
@@ -84,6 +87,10 @@ struct ExerciseSetView: View {
         }
         .onAppear {
             loadExerciseSetData()
+            if let autoFocusSetID, autoFocusSetID.wrappedValue == exerciseSet.id {
+                isWeightFocused = true
+                autoFocusSetID.wrappedValue = nil
+            }
         }
     }
     
@@ -94,7 +101,7 @@ struct ExerciseSetView: View {
 
     private var previousSetSummary: String {
         guard let previous = fetchPreviousSet() else { return "- -" }
-        return "\(formattedWeight(previous.weight)) x \(previous.reps)"
+        return "\(previous.weight.formattedWeight) \(WeightUnitPreference.shared.unit.label) x \(previous.reps)"
     }
 
     private func fetchPreviousSet() -> ExerciseSet? {
@@ -104,18 +111,15 @@ struct ExerciseSetView: View {
         let descriptor = FetchDescriptor<ExerciseSet>(
             predicate: #Predicate<ExerciseSet> { set in
                 set.exercise.id == exerciseID && set.workout.id != workoutID && set.order == order
+                    && set.workout.completedAt != nil && !set.workout.isDeleted
             },
             sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
         )
         return try? modelContext.fetch(descriptor).first
     }
 
-    private func formattedWeight(_ weight: Double) -> String {
-        weight.truncatingRemainder(dividingBy: 1) == 0 ? String(Int(weight)) : String(weight)
-    }
-
     private func loadExerciseSetData() {
-        weight = exerciseSet.weight > 0 ? formattedWeight(exerciseSet.weight) : ""
+        weight = exerciseSet.weight > 0 ? exerciseSet.weight.formattedWeight : ""
         reps = exerciseSet.reps > 0 ? String(exerciseSet.reps) : ""
         isCompleted = exerciseSet.isCompleted
     }
@@ -143,9 +147,9 @@ struct ExerciseSetView: View {
     }
     
     private func toggleCompletion() {
-        // Only allow completion if weight and reps are entered
-        guard let weightValue = Double(weight), weightValue > 0,
-              let repsValue = Int(reps), repsValue > 0 else {
+        // Weight is optional (defaults to 0, e.g. for bodyweight exercises), but reps are required.
+        let weightValue = Double(weight) ?? 0
+        guard let repsValue = Int(reps), repsValue > 0 else {
             return
         }
 

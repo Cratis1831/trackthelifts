@@ -80,11 +80,16 @@ enum ProgressStatsService {
         }
     }
 
-    /// Chronological (oldest first) history of completed sets for a given exercise.
+    /// Chronological (oldest first) history of completed sets for a given exercise, from
+    /// workouts that were actually finished (excludes sets checked off in an abandoned/active
+    /// workout that never got a "Finish Workout").
     static func history(for exercise: Exercise, in context: ModelContext) -> [ExerciseHistoryPoint] {
         let exerciseID = exercise.id
         let descriptor = FetchDescriptor<ExerciseSet>(
-            predicate: #Predicate<ExerciseSet> { $0.exercise.id == exerciseID && $0.isCompleted }
+            predicate: #Predicate<ExerciseSet> {
+                $0.exercise.id == exerciseID && $0.isCompleted
+                    && $0.workout.completedAt != nil && !$0.workout.isDeleted
+            }
         )
         guard let sets = try? context.fetch(descriptor) else { return [] }
         return sets
@@ -99,9 +104,14 @@ enum ProgressStatsService {
             .sorted { $0.date < $1.date }
     }
 
-    /// Best weight and best estimated 1RM ever logged, per exercise, sorted alphabetically.
+    /// Best weight and best estimated 1RM ever logged, per exercise, sorted alphabetically. Only
+    /// counts sets from workouts that were actually finished.
     static func personalRecords(in context: ModelContext) -> [ExercisePersonalRecord] {
-        let descriptor = FetchDescriptor<ExerciseSet>(predicate: #Predicate<ExerciseSet> { $0.isCompleted })
+        let descriptor = FetchDescriptor<ExerciseSet>(
+            predicate: #Predicate<ExerciseSet> {
+                $0.isCompleted && $0.workout.completedAt != nil && !$0.workout.isDeleted
+            }
+        )
         guard let sets = try? context.fetch(descriptor), !sets.isEmpty else { return [] }
 
         let groupedByExerciseID = Dictionary(grouping: sets, by: { $0.exercise.id })

@@ -207,32 +207,32 @@ struct ExerciseListView: View {
                 ZStack {
                     Circle()
                         .fill(Color.orange.opacity(0.2))
-                        .frame(width: 40, height: 40)
-                    
+                        .frame(width: 32, height: 32)
+
                     Text(exerciseInitials(exercise.name))
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(.orange)
                 }
-                
-                VStack(alignment: .leading, spacing: 4) {
+
+                VStack(alignment: .leading, spacing: 2) {
                     Text(exercise.name)
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.white)
-                    
+
                     if let bodypart = exercise.bodypart {
                         Text(bodypart.name)
                             .font(.system(size: 14))
                             .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
                     }
                 }
-                
+
                 Spacer()
-                
+
                 Image(systemName: "chevron.forward")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, 4)
         }
             .listRowBackground(
             UnevenRoundedRectangle(

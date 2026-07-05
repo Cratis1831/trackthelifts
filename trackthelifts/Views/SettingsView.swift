@@ -6,14 +6,22 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct SettingsView: View {
     @EnvironmentObject var revenueCatService: RevenueCatService
+    @Environment(\.modelContext) private var modelContext
     @State private var isPaywallPresented = false
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = true
     private let notificationService = NotificationService.shared
     @State private var showNotificationDeniedAlert = false
     @State private var showRestoreErrorAlert = false
+
+    private let weightUnitPreference = WeightUnitPreference.shared
+    @State private var selectedUnit: WeightUnit = WeightUnitPreference.shared.unit
+    @State private var previousUnit: WeightUnit?
+    @State private var pendingUnit: WeightUnit?
+    @State private var showUnitChangeConfirmation = false
 
     private var remindersToggleBinding: Binding<Bool> {
         Binding(
@@ -213,6 +221,35 @@ struct SettingsView: View {
                                     .stroke(Color(red: 0.17, green: 0.17, blue: 0.18), lineWidth: 1)
                             )
                         }
+
+                        // Units Section
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Units")
+                                .font(.system(size: 24, weight: .semibold))
+                                .foregroundColor(.white)
+
+                            VStack(alignment: .leading, spacing: 12) {
+                                Picker("Weight Unit", selection: $selectedUnit) {
+                                    ForEach(WeightUnit.allCases, id: \.self) { unit in
+                                        Text(unit.label).tag(unit)
+                                    }
+                                }
+                                .pickerStyle(.segmented)
+                                .onChange(of: selectedUnit) { oldValue, newValue in
+                                    guard newValue != oldValue else { return }
+                                    previousUnit = oldValue
+                                    pendingUnit = newValue
+                                    showUnitChangeConfirmation = true
+                                }
+                            }
+                            .padding(16)
+                            .background(Color(red: 0.11, green: 0.11, blue: 0.12))
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color(red: 0.17, green: 0.17, blue: 0.18), lineWidth: 1)
+                            )
+                        }
                     }
                     .padding(.horizontal, 20)
                     .padding(.bottom, 30)
@@ -232,6 +269,39 @@ struct SettingsView: View {
             Button("OK") { }
         } message: {
             Text(revenueCatService.lastError?.localizedDescription ?? "Couldn't restore your purchases. Please try again.")
+        }
+        .alert("Change Weight Unit?", isPresented: $showUnitChangeConfirmation) {
+            Button("Cancel", role: .cancel) {
+                if let previousUnit {
+                    selectedUnit = previousUnit
+                }
+            }
+            Button("Convert") {
+                if let previousUnit, let pendingUnit {
+                    convertAllStoredWeights(from: previousUnit, to: pendingUnit)
+                    weightUnitPreference.unit = pendingUnit
+                }
+            }
+        } message: {
+            Text("Switching to \(pendingUnit?.label ?? "") will convert all your logged weights. Continue?")
+        }
+    }
+
+    private func convertAllStoredWeights(from oldUnit: WeightUnit, to newUnit: WeightUnit) {
+        do {
+            let sets = try modelContext.fetch(FetchDescriptor<ExerciseSet>())
+            for set in sets where set.weight != 0 {
+                set.weight = oldUnit.convert(set.weight, to: newUnit)
+            }
+
+            let templateExercises = try modelContext.fetch(FetchDescriptor<WorkoutTemplateExercise>())
+            for templateExercise in templateExercises where templateExercise.targetWeight != 0 {
+                templateExercise.targetWeight = oldUnit.convert(templateExercise.targetWeight, to: newUnit)
+            }
+
+            try modelContext.save()
+        } catch {
+            print("Failed to convert stored weights: \(error)")
         }
     }
 }

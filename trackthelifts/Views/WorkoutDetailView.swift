@@ -14,8 +14,15 @@ struct WorkoutDetailView: View {
 
     @Environment(\.modelContext) private var modelContext
 
+    /// Exercise names in the order they were added to the workout (earliest-created set first),
+    /// not alphabetically, so newly added exercises appear at the bottom of the list.
     private var groupedExerciseNames: [String] {
-        Dictionary(grouping: workout.exerciseSets, by: \.exercise.name).keys.sorted()
+        let grouped = Dictionary(grouping: workout.exerciseSets, by: \.exercise.name)
+        return grouped.keys.sorted { name1, name2 in
+            let earliest1 = grouped[name1]?.map(\.createdAt).min() ?? .distantFuture
+            let earliest2 = grouped[name2]?.map(\.createdAt).min() ?? .distantFuture
+            return earliest1 < earliest2
+        }
     }
 
     private func sets(for exerciseName: String) -> [ExerciseSet] {
@@ -138,7 +145,7 @@ struct WorkoutDetailView: View {
             Text("Previous")
                 .frame(maxWidth: .infinity, alignment: .center)
 
-            Text("lbs")
+            Text(WeightUnitPreference.shared.unit.label)
                 .frame(width: 50, alignment: .center)
 
             Text("Reps")

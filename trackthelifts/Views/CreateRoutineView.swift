@@ -12,6 +12,8 @@ struct CreateRoutineView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
+    var existingTemplate: WorkoutTemplate? = nil
+
     @State private var name: String = ""
     @State private var entries: [DraftExercise] = []
     @State private var showExercisePicker = false
@@ -24,6 +26,10 @@ struct CreateRoutineView: View {
 
     private var canSave: Bool {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !entries.isEmpty
+    }
+
+    private var navigationTitle: String {
+        existingTemplate == nil ? "New Routine" : "Edit Routine"
     }
 
     var body: some View {
@@ -95,7 +101,7 @@ struct CreateRoutineView: View {
                     .padding(.bottom, 20)
                 }
             }
-            .navigationTitle("New Routine")
+            .navigationTitle(navigationTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -114,24 +120,53 @@ struct CreateRoutineView: View {
                     showExercisePicker = false
                 })
             }
+            .onAppear {
+                if let existingTemplate, entries.isEmpty {
+                    name = existingTemplate.name
+                    entries = existingTemplate.templateExercises
+                        .sorted { $0.order < $1.order }
+                        .map { DraftExercise(exercise: $0.exercise, targetSets: $0.targetSets) }
+                }
+            }
         }
     }
 
     private func saveRoutine() {
-        let template = WorkoutTemplate(name: name.trimmingCharacters(in: .whitespacesAndNewlines))
-        modelContext.insert(template)
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let template: WorkoutTemplate
+
+        if let existingTemplate {
+            template = existingTemplate
+            template.name = trimmedName
+            template.updatedAt = .now
+
+            // Remove template exercises for anything no longer in `entries`.
+            let entryExerciseIDs = Set(entries.map { $0.exercise.id })
+            for stale in template.templateExercises where !entryExerciseIDs.contains(stale.exercise.id) {
+                modelContext.delete(stale)
+            }
+            template.templateExercises.removeAll { !entryExerciseIDs.contains($0.exercise.id) }
+        } else {
+            template = WorkoutTemplate(name: trimmedName)
+            modelContext.insert(template)
+        }
 
         for (index, entry) in entries.enumerated() {
-            let templateExercise = WorkoutTemplateExercise(
-                order: index,
-                targetSets: entry.targetSets,
-                targetReps: 8,
-                targetWeight: 0,
-                template: template,
-                exercise: entry.exercise
-            )
-            modelContext.insert(templateExercise)
-            template.templateExercises.append(templateExercise)
+            if let match = template.templateExercises.first(where: { $0.exercise.id == entry.exercise.id }) {
+                match.order = index
+                match.targetSets = entry.targetSets
+            } else {
+                let templateExercise = WorkoutTemplateExercise(
+                    order: index,
+                    targetSets: entry.targetSets,
+                    targetReps: 8,
+                    targetWeight: 0,
+                    template: template,
+                    exercise: entry.exercise
+                )
+                modelContext.insert(templateExercise)
+                template.templateExercises.append(templateExercise)
+            }
         }
 
         do {

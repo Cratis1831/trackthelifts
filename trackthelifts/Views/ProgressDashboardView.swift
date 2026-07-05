@@ -167,7 +167,7 @@ struct ProgressDashboardView: View {
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.white)
 
-                Text("Best: \(formattedWeight(record.bestWeight)) \u{00D7} \(record.bestWeightReps)")
+                Text("Best: \(record.bestWeight.formattedWeight) \(WeightUnitPreference.shared.unit.label) \u{00D7} \(record.bestWeightReps)")
                     .font(.system(size: 13))
                     .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
             }
@@ -175,7 +175,7 @@ struct ProgressDashboardView: View {
             Spacer()
 
             VStack(alignment: .trailing, spacing: 4) {
-                Text("~\(formattedWeight(record.best1RM))")
+                Text("~\(record.best1RM.formattedWeight) \(WeightUnitPreference.shared.unit.label)")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.orange)
                 Text("est. 1RM")
@@ -197,9 +197,6 @@ struct ProgressDashboardView: View {
         )
     }
 
-    private func formattedWeight(_ weight: Double) -> String {
-        weight.truncatingRemainder(dividingBy: 1) == 0 ? String(Int(weight)) : String(format: "%.1f", weight)
-    }
 }
 
 /// Section title with a subtitle and a tappable info icon that explains what the section shows.

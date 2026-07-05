@@ -40,6 +40,9 @@ struct ContentView: View {
         )) {
             OnboardingView()
         }
+        .onAppear {
+            UIApplication.shared.enableTapToDismissKeyboard()
+        }
     }
 
 }

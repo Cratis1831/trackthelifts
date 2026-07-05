@@ -82,8 +82,8 @@ struct ExerciseProgressView: View {
 
     private var summaryRow: some View {
         HStack(spacing: 12) {
-            summaryCard(title: "Best Weight", value: "\(formattedWeight(bestWeight))")
-            summaryCard(title: "Est. 1RM", value: "\(formattedWeight(best1RM))")
+            summaryCard(title: "Best Weight", value: "\(bestWeight.formattedWeight) \(WeightUnitPreference.shared.unit.label)")
+            summaryCard(title: "Est. 1RM", value: "\(best1RM.formattedWeight) \(WeightUnitPreference.shared.unit.label)")
             summaryCard(title: "Sets Logged", value: "\(history.count)")
         }
     }
@@ -111,7 +111,7 @@ struct ExerciseProgressView: View {
 
             Spacer()
 
-            Text("\(formattedWeight(point.weight)) \u{00D7} \(point.reps)")
+            Text("\(point.weight.formattedWeight) \(WeightUnitPreference.shared.unit.label) \u{00D7} \(point.reps)")
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white)
         }
@@ -131,9 +131,6 @@ struct ExerciseProgressView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    private func formattedWeight(_ weight: Double) -> String {
-        weight.truncatingRemainder(dividingBy: 1) == 0 ? String(Int(weight)) : String(format: "%.1f", weight)
-    }
 }
 
 #Preview {

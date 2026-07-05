@@ -46,18 +46,25 @@ struct ExerciseDetailView: View {
                         Text("Exercise Name")
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.white)
-                        
+
                         TextField("Enter exercise name", text: $exerciseName)
                             .font(.system(size: 16))
-                            .textFieldStyle(.roundedBorder)
+                            .textFieldStyle(.plain)
                             .focused($isNameFieldFocused)
+                            .padding(12)
+                            .background(Color(red: 0.11, green: 0.11, blue: 0.12))
+                            .cornerRadius(10)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color(red: 0.17, green: 0.17, blue: 0.18), lineWidth: 1)
+                            )
                     }
-                    
+
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Body Part")
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.white)
-                        
+
                         Menu {
                             Button("None") {
                                 selectedBodypart = nil
@@ -69,12 +76,28 @@ struct ExerciseDetailView: View {
                                 }
                             }
                         } label: {
-                            Text(selectedBodypart?.name ?? "Select body part")
+                            HStack {
+                                Text(selectedBodypart?.name ?? "Select body part")
+                                    .font(.system(size: 16))
+                                    .foregroundColor(selectedBodypart == nil ? Color(red: 0.56, green: 0.56, blue: 0.58) : .white)
+
+                                Spacer()
+
+                                Image(systemName: "chevron.up.chevron.down")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                            }
+                            .padding(12)
+                            .background(Color(red: 0.11, green: 0.11, blue: 0.12))
+                            .cornerRadius(10)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color(red: 0.17, green: 0.17, blue: 0.18), lineWidth: 1)
+                            )
                         }
-                        .buttonStyle(.bordered)
-                        .tint(.orange)
+                        .buttonStyle(.plain)
                     }
-                    
+
                     Spacer()
                 }
                 .padding(.horizontal, 20)
