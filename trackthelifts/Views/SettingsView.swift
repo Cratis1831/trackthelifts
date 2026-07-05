@@ -250,6 +250,40 @@ struct SettingsView: View {
                                     .stroke(Color(red: 0.17, green: 0.17, blue: 0.18), lineWidth: 1)
                             )
                         }
+
+                        // Data Section
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Data")
+                                .font(.system(size: 24, weight: .semibold))
+                                .foregroundColor(.white)
+
+                            VStack(alignment: .leading, spacing: 12) {
+                                ShareLink(
+                                    item: WorkoutCSVDocument(text: WorkoutExportService.buildCSV(in: modelContext)),
+                                    preview: SharePreview("Workout History.csv")
+                                ) {
+                                    HStack {
+                                        Text("Export Workout History (CSV)")
+                                            .font(.system(size: 16))
+                                            .foregroundColor(.white)
+
+                                        Spacer()
+
+                                        Image(systemName: "square.and.arrow.up")
+                                            .font(.system(size: 14, weight: .medium))
+                                            .foregroundColor(.orange)
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            .padding(16)
+                            .background(Color(red: 0.11, green: 0.11, blue: 0.12))
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color(red: 0.17, green: 0.17, blue: 0.18), lineWidth: 1)
+                            )
+                        }
                     }
                     .padding(.horizontal, 20)
                     .padding(.bottom, 30)
