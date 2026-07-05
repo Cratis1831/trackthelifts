@@ -82,10 +82,12 @@ struct WorkoutDetailView: View {
             Button(role: .destructive) {
                 deleteExercise(named: name)
             } label: {
-                Image(systemName: "trash")
-                    .font(.system(size: 13))
-                    .frame(width: 32, height: 32)
-                    .contentShape(Rectangle())
+                IconTile(color: Color(red: 0.90, green: 0.30, blue: 0.24), size: 28) {
+                    Image(systemName: "trash")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
         }
@@ -152,9 +154,12 @@ struct WorkoutDetailView: View {
                         persistWorkoutEdit()
                     }
 
-                    HStack {
-                        Image(systemName: "calendar")
-                            .foregroundColor(Color(.secondaryLabel))
+                    HStack(spacing: 10) {
+                        IconTile(color: Color(red: 0.36, green: 0.42, blue: 0.90), size: 28) {
+                            Image(systemName: "calendar")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.white)
+                        }
                         Text(
                             workout.date.formatted(
                                 .dateTime.weekday(.wide).month(.wide).day().year()
@@ -164,9 +169,12 @@ struct WorkoutDetailView: View {
                     }
 
                     if let completedAt = workout.completedAt {
-                        HStack {
-                            Image(systemName: "clock")
-                                .foregroundColor(Color(.secondaryLabel))
+                        HStack(spacing: 10) {
+                            IconTile(color: Color(red: 0.95, green: 0.55, blue: 0.19), size: 28) {
+                                Image(systemName: "clock")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(.white)
+                            }
                             Text(formattedDuration(from: workout.createdAt, to: completedAt))
                                 .foregroundColor(Color(.secondaryLabel))
                         }

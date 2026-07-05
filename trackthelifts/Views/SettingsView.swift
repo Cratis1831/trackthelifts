@@ -172,9 +172,16 @@ struct SettingsView: View {
                             // Reminders Card
                             VStack(alignment: .leading, spacing: 12) {
                                 Toggle(isOn: remindersToggleBinding) {
-                                    Text("Daily Workout Reminder")
-                                        .font(.system(size: 16))
-                                        .foregroundColor(.white)
+                                    HStack(spacing: 12) {
+                                        IconTile(color: Color(red: 0.90, green: 0.30, blue: 0.24)) {
+                                            Image(systemName: "bell.fill")
+                                                .font(.system(size: 14, weight: .semibold))
+                                                .foregroundColor(.white)
+                                        }
+                                        Text("Daily Workout Reminder")
+                                            .font(.system(size: 16))
+                                            .foregroundColor(.white)
+                                    }
                                 }
                                 .tint(.orange)
 
@@ -200,16 +207,17 @@ struct SettingsView: View {
                                 Button {
                                     hasCompletedOnboarding = false
                                 } label: {
-                                    HStack {
+                                    HStack(spacing: 12) {
+                                        IconTile(color: Color(red: 0.40, green: 0.40, blue: 0.43)) {
+                                            Image(systemName: "arrow.counterclockwise")
+                                                .font(.system(size: 14, weight: .semibold))
+                                                .foregroundColor(.white)
+                                        }
                                         Text("Reset Onboarding")
                                             .font(.system(size: 16))
                                             .foregroundColor(.white)
 
                                         Spacer()
-
-                                        Image(systemName: "arrow.counterclockwise")
-                                            .font(.system(size: 14, weight: .medium))
-                                            .foregroundColor(.orange)
                                     }
                                 }
                             }
@@ -229,6 +237,18 @@ struct SettingsView: View {
                                 .foregroundColor(.white)
 
                             VStack(alignment: .leading, spacing: 12) {
+                                HStack(spacing: 12) {
+                                    IconTile(color: Color(red: 0.20, green: 0.48, blue: 0.96)) {
+                                        Image(systemName: "scalemass.fill")
+                                            .font(.system(size: 14, weight: .semibold))
+                                            .foregroundColor(.white)
+                                    }
+                                    Text("Weight Unit")
+                                        .font(.system(size: 16))
+                                        .foregroundColor(.white)
+                                    Spacer()
+                                }
+
                                 Picker("Weight Unit", selection: $selectedUnit) {
                                     ForEach(WeightUnit.allCases, id: \.self) { unit in
                                         Text(unit.label).tag(unit)
@@ -262,16 +282,17 @@ struct SettingsView: View {
                                     item: WorkoutCSVDocument(text: WorkoutExportService.buildCSV(in: modelContext)),
                                     preview: SharePreview("Workout History.csv")
                                 ) {
-                                    HStack {
+                                    HStack(spacing: 12) {
+                                        IconTile(color: Color(red: 0.30, green: 0.72, blue: 0.40)) {
+                                            Image(systemName: "square.and.arrow.up")
+                                                .font(.system(size: 14, weight: .semibold))
+                                                .foregroundColor(.white)
+                                        }
                                         Text("Export Workout History (CSV)")
                                             .font(.system(size: 16))
                                             .foregroundColor(.white)
 
                                         Spacer()
-
-                                        Image(systemName: "square.and.arrow.up")
-                                            .font(.system(size: 14, weight: .medium))
-                                            .foregroundColor(.orange)
                                     }
                                 }
                                 .buttonStyle(.plain)
@@ -325,12 +346,12 @@ struct SettingsView: View {
         do {
             let sets = try modelContext.fetch(FetchDescriptor<ExerciseSet>())
             for set in sets where set.weight != 0 {
-                set.weight = oldUnit.convert(set.weight, to: newUnit)
+                set.weight = oldUnit.convertForStorage(set.weight, to: newUnit)
             }
 
             let templateExercises = try modelContext.fetch(FetchDescriptor<WorkoutTemplateExercise>())
             for templateExercise in templateExercises where templateExercise.targetWeight != 0 {
-                templateExercise.targetWeight = oldUnit.convert(templateExercise.targetWeight, to: newUnit)
+                templateExercise.targetWeight = oldUnit.convertForStorage(templateExercise.targetWeight, to: newUnit)
             }
 
             try modelContext.save()

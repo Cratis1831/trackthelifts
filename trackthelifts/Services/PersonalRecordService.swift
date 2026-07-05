@@ -9,6 +9,7 @@ import SwiftData
 enum PRKind {
     case weight
     case estimated1RM
+    case volume
 }
 
 enum PersonalRecordService {
@@ -37,13 +38,17 @@ enum PersonalRecordService {
 
         let bestWeight = history.map(\.weight).max() ?? 0
         let best1RM = history.map { estimated1RM(weight: $0.weight, reps: $0.reps) }.max() ?? 0
+        let bestVolume = history.map { $0.weight * Double($0.reps) }.max() ?? 0
 
         let setEstimated1RM = estimated1RM(weight: set.weight, reps: set.reps)
+        let setVolume = set.weight * Double(set.reps)
 
         if set.weight > bestWeight {
             return .weight
         } else if setEstimated1RM > best1RM {
             return .estimated1RM
+        } else if setVolume > bestVolume {
+            return .volume
         }
         return nil
     }

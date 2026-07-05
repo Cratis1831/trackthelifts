@@ -208,9 +208,12 @@ struct CreateWorkoutView: View {
                                     persistNameAndNotes(name: workoutName, notes: newValue)
                                 }
 
-                            HStack {
-                                Image(systemName: "calendar")
-                                    .foregroundColor(Color(.secondaryLabel))
+                            HStack(spacing: 10) {
+                                IconTile(color: Color(red: 0.36, green: 0.42, blue: 0.90), size: 28) {
+                                    Image(systemName: "calendar")
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundColor(.white)
+                                }
                                 Text(
                                     (savedWorkout?.date ?? Date()).formatted(
                                         .dateTime.weekday(.wide).month(.wide).day()
@@ -219,9 +222,12 @@ struct CreateWorkoutView: View {
                                 )
                                 .foregroundColor(Color(.secondaryLabel))
                             }
-                            HStack {
-                                Image(systemName: "clock")
-                                    .foregroundColor(Color(.secondaryLabel))
+                            HStack(spacing: 10) {
+                                IconTile(color: Color(red: 0.95, green: 0.55, blue: 0.19), size: 28) {
+                                    Image(systemName: "clock")
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundColor(.white)
+                                }
                                 TimerView(startDate: savedWorkout?.createdAt ?? sessionStartDate)
                             }
 
@@ -446,7 +452,12 @@ struct CreateWorkoutView: View {
     }
 
     private func showPersonalRecord(for set: ExerciseSet, kind: PRKind) {
-        let label = kind == .weight ? "New weight PR!" : "New estimated 1RM PR!"
+        let label: String
+        switch kind {
+        case .weight: label = "New weight PR!"
+        case .estimated1RM: label = "New estimated 1RM PR!"
+        case .volume: label = "New volume PR!"
+        }
         Haptics.success()
         withAnimation {
             prAnnouncement = "🏆 \(set.exercise.name): \(label)"
@@ -699,8 +710,11 @@ struct RestTimerBanner: View {
     var body: some View {
         if manager.isRunning {
             HStack {
-                Image(systemName: "timer")
-                    .foregroundColor(.orange)
+                IconTile(color: Color(red: 0.95, green: 0.55, blue: 0.19), size: 28) {
+                    Image(systemName: "timer")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white)
+                }
                 Text("Rest: \(formattedTime(remainingSeconds))")
                     .font(.system(size: 14, weight: .semibold))
                 Spacer()
@@ -725,6 +739,7 @@ struct RestTimerBanner: View {
                 now = value
                 if wasPositive && remainingSeconds <= 0 {
                     Haptics.success()
+                    SoundEffects.restTimerChime()
                 }
             }
         }
