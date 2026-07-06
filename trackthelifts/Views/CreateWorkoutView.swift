@@ -745,17 +745,10 @@ struct RestTimerBanner: View {
             .background(Color(red: 0.11, green: 0.11, blue: 0.12))
             .cornerRadius(10)
             .onReceive(ticker) { value in
-                // Fire the rest-over haptic exactly on the tick where the countdown crosses zero.
-                // A manual Skip nils endDate first, making wasPositive false, so skips stay silent.
-                let wasPositive = remainingSeconds > 0
+                // Just drive the countdown display. Completion alerting (chime/haptic vs. the
+                // background notification) is handled once, app-wide, by RestTimerCompletionWatcher
+                // so it works on any screen and never double-fires.
                 now = value
-                if wasPositive && remainingSeconds <= 0 {
-                    Haptics.restTimerComplete()
-                    if TimerSoundPreference.shared.isEnabled {
-                        SoundEffects.restTimerChime()
-                    }
-                    manager.clearPendingNotification()
-                }
             }
         }
     }
