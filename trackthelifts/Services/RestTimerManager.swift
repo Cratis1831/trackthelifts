@@ -94,7 +94,12 @@ class RestTimerManager {
         let content = UNMutableNotificationContent()
         content.title = "Rest Time over!"
         content.body = "Get back at it!"
-        content.sound = TimerSoundPreference.shared.isEnabled ? .default : nil
+        // Carry the same bundled chime the app plays in the foreground, so the alert sounds the
+        // same whether the timer finishes in-app or while backgrounded. Nil when the user has
+        // turned Set Timer Sound off (the notification still shows, just silently).
+        content.sound = TimerSoundPreference.shared.isEnabled
+            ? UNNotificationSound(named: UNNotificationSoundName(SoundEffects.restTimerSoundName))
+            : nil
         content.interruptionLevel = .timeSensitive
 
         let trigger = UNTimeIntervalNotificationTrigger(
