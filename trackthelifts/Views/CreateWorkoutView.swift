@@ -230,8 +230,6 @@ struct CreateWorkoutView: View {
                                 }
                                 TimerView(startDate: savedWorkout?.createdAt ?? sessionStartDate)
                             }
-
-                            RestTimerBanner()
                         }
                         .listRowBackground(Color.black)
                         .listRowSeparator(.hidden)
@@ -239,6 +237,8 @@ struct CreateWorkoutView: View {
                         if let workout = savedWorkout, !workout.exerciseSets.isEmpty {
                             ForEach(groupedExerciseNames, id: \.self) { exerciseName in
                                 Section {
+                                    RestTimerBanner(exerciseName: exerciseName)
+
                                     exerciseTitleRow(exerciseName)
 
                                     columnHeader
@@ -690,7 +690,11 @@ struct WorkoutActionButtonStyle: ButtonStyle {
     }
 }
 
+/// Shows the rest countdown above the exercise whose set just started it, so it stays in view
+/// without requiring a scroll back to the top of the workout once more exercises are added.
 struct RestTimerBanner: View {
+    let exerciseName: String
+
     @State private var now = Date()
     private let manager = RestTimerManager.shared
     private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -701,7 +705,7 @@ struct RestTimerBanner: View {
     }
 
     var body: some View {
-        if manager.isRunning {
+        if manager.isRunning && manager.activeExerciseName == exerciseName {
             HStack {
                 IconTile(color: Color(red: 0.95, green: 0.55, blue: 0.19), size: 28) {
                     Image(systemName: "timer")
