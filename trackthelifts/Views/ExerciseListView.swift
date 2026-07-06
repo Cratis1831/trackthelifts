@@ -137,7 +137,7 @@ struct ExerciseListView: View {
                                 } header: {
                                     Text("Recent")
                                         .font(.system(size: 14, weight: .semibold))
-                                        .foregroundColor(.orange)
+                                        .foregroundColor(.appAccent)
                                         .textCase(nil)
                                 }
                                 .listSectionSeparator(.hidden)
@@ -156,7 +156,7 @@ struct ExerciseListView: View {
                                 } header: {
                                     Text(bodypartName)
                                         .font(.system(size: 14, weight: .semibold))
-                                        .foregroundColor(.orange)
+                                        .foregroundColor(.appAccent)
                                         .textCase(nil)
                                 }
                                 .listSectionSeparator(.hidden)
@@ -177,14 +177,14 @@ struct ExerciseListView: View {
                         Button("Cancel") {
                             dismiss()
                         }
-                        .foregroundColor(.orange)
+                        .foregroundColor(.appAccent)
                     }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Add") {
                         showingExerciseDetail = true
                     }
-                    .foregroundColor(.orange)
+                    .foregroundColor(.appAccent)
                 }
             }
         }

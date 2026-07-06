@@ -23,6 +23,8 @@ struct SettingsView: View {
     @State private var pendingUnit: WeightUnit?
     @State private var showUnitChangeConfirmation = false
 
+    private var themePreference = ThemePreference.shared
+
     private var remindersToggleBinding: Binding<Bool> {
         Binding(
             get: { notificationService.remindersEnabled },
@@ -90,7 +92,7 @@ struct SettingsView: View {
                                     
                                     if revenueCatService.currentTier == .premium {
                                         Image(systemName: "checkmark.circle.fill")
-                                            .foregroundColor(.orange)
+                                            .foregroundColor(.appAccent)
                                             .font(.system(size: 24))
                                     }
                                 }
@@ -100,7 +102,7 @@ struct SettingsView: View {
                                     ForEach(revenueCatService.currentTier.features, id: \.self) { feature in
                                         HStack(spacing: 8) {
                                             Image(systemName: "checkmark")
-                                                .foregroundColor(.orange)
+                                                .foregroundColor(.appAccent)
                                                 .font(.system(size: 12, weight: .bold))
                                             
                                             Text(feature)
@@ -127,7 +129,7 @@ struct SettingsView: View {
                                     }
                                     .buttonStyle(.borderedProminent)
                                     .buttonBorderShape(.roundedRectangle(radius: 12))
-                                    .tint(.orange)
+                                    .tint(.appAccent)
                                     .padding(.top, 8)
                                 }
                             }
@@ -161,7 +163,7 @@ struct SettingsView: View {
                             }
                             .buttonStyle(.bordered)
                             .buttonBorderShape(.roundedRectangle(radius: 12))
-                            .tint(.orange)
+                            .tint(.appAccent)
                             .disabled(revenueCatService.isLoading)
                         }
                         
@@ -185,7 +187,7 @@ struct SettingsView: View {
                                             .foregroundColor(.white)
                                     }
                                 }
-                                .tint(.orange)
+                                .tint(.appAccent)
 
                                 if notificationService.remindersEnabled {
                                     DatePicker(
@@ -193,7 +195,7 @@ struct SettingsView: View {
                                         selection: reminderTimeBinding,
                                         displayedComponents: .hourAndMinute
                                     )
-                                    .tint(.orange)
+                                    .tint(.appAccent)
                                     .foregroundColor(.white)
                                 }
                             }
@@ -220,6 +222,60 @@ struct SettingsView: View {
                                             .foregroundColor(.white)
 
                                         Spacer()
+                                    }
+                                }
+                            }
+                            .padding(16)
+                            .background(Color(red: 0.11, green: 0.11, blue: 0.12))
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color(red: 0.17, green: 0.17, blue: 0.18), lineWidth: 1)
+                            )
+                        }
+
+                        // Appearance Section
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Appearance")
+                                .font(.system(size: 24, weight: .semibold))
+                                .foregroundColor(.white)
+
+                            VStack(alignment: .leading, spacing: 16) {
+                                HStack(spacing: 12) {
+                                    IconTile(color: themePreference.accentColor) {
+                                        Image(systemName: "paintpalette.fill")
+                                            .font(.system(size: 14, weight: .semibold))
+                                            .foregroundColor(.white)
+                                    }
+                                    Text("Accent Color")
+                                        .font(.system(size: 16))
+                                        .foregroundColor(.white)
+                                    Spacer()
+                                }
+
+                                HStack(spacing: 0) {
+                                    ForEach(AppTheme.allCases) { theme in
+                                        Button {
+                                            Haptics.selection()
+                                            withAnimation(.easeInOut(duration: 0.15)) {
+                                                themePreference.theme = theme
+                                            }
+                                        } label: {
+                                            ZStack {
+                                                Circle()
+                                                    .fill(theme.color)
+                                                    .frame(width: 30, height: 30)
+                                                if themePreference.theme == theme {
+                                                    Circle()
+                                                        .stroke(Color.white, lineWidth: 2)
+                                                        .frame(width: 38, height: 38)
+                                                }
+                                            }
+                                            .frame(maxWidth: .infinity)
+                                            .frame(height: 44)
+                                            .contentShape(Rectangle())
+                                        }
+                                        .buttonStyle(.plain)
                                     }
                                 }
                             }

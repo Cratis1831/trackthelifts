@@ -110,14 +110,14 @@ struct ExerciseDetailView: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(.orange)
+                    .foregroundColor(.appAccent)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
                         saveExercise()
                     }
-                    .foregroundColor(.orange)
+                    .foregroundColor(.appAccent)
                     .disabled(exerciseName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }

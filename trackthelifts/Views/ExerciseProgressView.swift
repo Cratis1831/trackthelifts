@@ -45,14 +45,14 @@ struct ExerciseProgressView: View {
                                     x: .value("Date", point.date),
                                     y: .value("Est. 1RM", point.estimated1RM)
                                 )
-                                .foregroundStyle(Color.orange)
+                                .foregroundStyle(Color.appAccent)
                                 .interpolationMethod(.catmullRom)
 
                                 PointMark(
                                     x: .value("Date", point.date),
                                     y: .value("Est. 1RM", point.estimated1RM)
                                 )
-                                .foregroundStyle(Color.orange)
+                                .foregroundStyle(Color.appAccent)
                             }
                             .frame(height: 200)
                             .chartYAxis {
@@ -92,7 +92,7 @@ struct ExerciseProgressView: View {
         VStack(spacing: 4) {
             Text(value)
                 .font(.system(size: 18, weight: .bold))
-                .foregroundColor(.orange)
+                .foregroundColor(.appAccent)
             Text(title)
                 .font(.system(size: 12))
                 .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))

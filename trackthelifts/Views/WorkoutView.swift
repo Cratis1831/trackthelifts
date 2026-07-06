@@ -93,7 +93,7 @@ struct WorkoutView: View {
                                 }
                                 .buttonStyle(.bordered)
                                 .buttonBorderShape(.roundedRectangle(radius: 8))
-                                .tint(.orange)
+                                .tint(.appAccent)
                             }
 
                             // My Templates Header
@@ -114,7 +114,7 @@ struct WorkoutView: View {
                                     }
                                 } label: {
                                     Image(systemName: "ellipsis")
-                                        .foregroundColor(.orange)
+                                        .foregroundColor(.appAccent)
                                         .font(.system(size: 20))
                                 }
                             }
@@ -162,7 +162,7 @@ struct WorkoutView: View {
                                 .font(.system(size: 24, weight: .medium))
                                 .foregroundColor(.white)
                                 .frame(width: 56, height: 56)
-                                .background(sessionManager.isWorkoutMinimized ? Color.green : Color.orange)
+                                .background(sessionManager.isWorkoutMinimized ? Color.green : Color.appAccent)
                                 .clipShape(Circle())
                                 .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
                         }
@@ -266,7 +266,7 @@ struct TemplateCard: View {
                         }
                     } label: {
                         Image(systemName: "ellipsis")
-                            .foregroundColor(.orange)
+                            .foregroundColor(.appAccent)
                             .font(.system(size: 16))
                             .frame(width: 44, height: 44)
                             .contentShape(Rectangle())

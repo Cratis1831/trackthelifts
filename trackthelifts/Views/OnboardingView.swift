@@ -62,7 +62,7 @@ struct OnboardingView: View {
                         .frame(maxWidth: .infinity, minHeight: 50)
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(.orange)
+                .tint(.appAccent)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 20)
             }
@@ -75,7 +75,7 @@ struct OnboardingView: View {
 
             Image(systemName: page.systemImage)
                 .font(.system(size: 70))
-                .foregroundColor(.orange)
+                .foregroundColor(.appAccent)
 
             Text(page.title)
                 .font(.system(size: 26, weight: .bold))

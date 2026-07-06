@@ -70,7 +70,7 @@ struct ProgressDashboardView: View {
             HStack(spacing: 6) {
                 ForEach(weeklyCounts) { week in
                     RoundedRectangle(cornerRadius: 5)
-                        .fill(week.count > 0 ? Color.orange : Color(red: 0.17, green: 0.17, blue: 0.18))
+                        .fill(week.count > 0 ? Color.appAccent : Color(red: 0.17, green: 0.17, blue: 0.18))
                         .frame(height: 28)
                 }
             }
@@ -90,7 +90,7 @@ struct ProgressDashboardView: View {
                     x: .value("Week", week.weekStart, unit: .weekOfYear),
                     y: .value("Workouts", week.count)
                 )
-                .foregroundStyle(Color.orange)
+                .foregroundStyle(Color.appAccent)
                 .cornerRadius(4)
             }
             .frame(height: 160)
@@ -118,14 +118,14 @@ struct ProgressDashboardView: View {
                         x: .value("Date", point.date),
                         y: .value("Volume", point.volume)
                     )
-                    .foregroundStyle(Color.orange)
+                    .foregroundStyle(Color.appAccent)
                     .interpolationMethod(.catmullRom)
 
                     PointMark(
                         x: .value("Date", point.date),
                         y: .value("Volume", point.volume)
                     )
-                    .foregroundStyle(Color.orange)
+                    .foregroundStyle(Color.appAccent)
                 }
                 .frame(height: 160)
                 .chartYAxis {
@@ -177,7 +177,7 @@ struct ProgressDashboardView: View {
             VStack(alignment: .trailing, spacing: 4) {
                 Text("~\(record.best1RM.formattedWeight) \(WeightUnitPreference.shared.unit.label)")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.orange)
+                    .foregroundColor(.appAccent)
                 Text("est. 1RM")
                     .font(.system(size: 11))
                     .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))

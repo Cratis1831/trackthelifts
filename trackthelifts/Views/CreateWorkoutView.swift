@@ -155,7 +155,7 @@ struct CreateWorkoutView: View {
         } header: {
             Text("Drag to reorder exercises")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.orange)
+                .foregroundColor(.appAccent)
                 .textCase(nil)
         }
         .listRowBackground(Color(red: 0.11, green: 0.11, blue: 0.12))
@@ -262,7 +262,7 @@ struct CreateWorkoutView: View {
                                             Text("Add Set")
                                         }
                                     }
-                                    .buttonStyle(WorkoutActionButtonStyle(tint: .orange, prominence: .plain))
+                                    .buttonStyle(WorkoutActionButtonStyle(tint: .appAccent, prominence: .plain))
                                 }
                                 .listRowBackground(Color.black)
                                 .listRowSeparator(.hidden)
@@ -312,7 +312,7 @@ struct CreateWorkoutView: View {
                             .font(.system(size: 24, weight: .medium))
                             .foregroundColor(.white)
                             .frame(width: 56, height: 56)
-                            .background(Color.orange)
+                            .background(Color.appAccent)
                             .clipShape(Circle())
                             .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
                     }
@@ -373,7 +373,7 @@ struct CreateWorkoutView: View {
                             }
                         }
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.orange)
+                        .foregroundColor(.appAccent)
                     }
                 } else {
                     ToolbarItem(placement: .topBarLeading) {

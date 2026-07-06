@@ -33,7 +33,7 @@ struct ContentView: View {
                 SettingsView()
             }
         }
-        .tint(.orange)
+        .tint(.appAccent)
         .toolbarColorScheme(.dark, for: .tabBar)
         .fullScreenCover(isPresented: Binding(
             get: { !hasCompletedOnboarding },

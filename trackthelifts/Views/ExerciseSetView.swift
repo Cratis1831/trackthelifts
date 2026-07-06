@@ -28,7 +28,7 @@ struct ExerciseSetView: View {
             Text("\(exerciseSet.order + 1)")
                 .font(.system(size: 14, weight: .medium))
                 .frame(width: 30, height: 32)
-                .background(isPersonalRecord ? Color.yellow.opacity(0.4) : (isCompleted ? Color.orange.opacity(0.3) : Color.gray.opacity(0.3)))
+                .background(isPersonalRecord ? Color.yellow.opacity(0.4) : (isCompleted ? Color.appAccent.opacity(0.3) : Color.gray.opacity(0.3)))
                 .cornerRadius(6)
 
             // Column 2 & 3: Previous summary (last time this exercise/set-number was logged)
@@ -81,7 +81,7 @@ struct ExerciseSetView: View {
                 Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 20))
                     .frame(width: 30, height: 32)
-                    .foregroundColor(isCompleted ? .orange : Color.secondary)
+                    .foregroundColor(isCompleted ? .appAccent : Color.secondary)
             }
             .buttonStyle(PlainButtonStyle())
         }
