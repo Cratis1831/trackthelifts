@@ -12,6 +12,9 @@ class RestTimerManager {
     static let shared = RestTimerManager()
 
     private(set) var endDate: Date?
+    /// Name of the exercise whose completed set started the current rest period, so the UI can
+    /// surface the countdown next to that exercise instead of a single fixed location.
+    private(set) var activeExerciseName: String?
 
     private init() {}
 
@@ -25,8 +28,9 @@ class RestTimerManager {
         return max(0, endDate.timeIntervalSince(.now))
     }
 
-    func startTimer(duration: TimeInterval = 90) {
+    func startTimer(duration: TimeInterval = 90, for exerciseName: String) {
         endDate = Date().addingTimeInterval(duration)
+        activeExerciseName = exerciseName
     }
 
     func addTime(_ seconds: TimeInterval) {
@@ -36,5 +40,6 @@ class RestTimerManager {
 
     func cancel() {
         endDate = nil
+        activeExerciseName = nil
     }
 }

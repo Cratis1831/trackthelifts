@@ -170,7 +170,7 @@ struct ExerciseSetView: View {
 
         if !wasCompleted && isCompleted {
             Haptics.impact(.light)
-            RestTimerManager.shared.startTimer()
+            RestTimerManager.shared.startTimer(for: exerciseSet.exercise.name)
             if let prKind = PersonalRecordService.personalRecord(for: exerciseSet, in: modelContext) {
                 onPersonalRecord?(exerciseSet, prKind)
             }
