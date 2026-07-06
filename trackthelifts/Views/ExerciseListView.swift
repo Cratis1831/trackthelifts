@@ -64,7 +64,7 @@ struct ExerciseListView: View {
             .sheet(isPresented: $showingExerciseDetail, onDismiss: {
                 exerciseToEdit = nil
             }) {
-                ExerciseDetailView(exercise: exerciseToEdit, onSave: { savedExercise in
+                ExerciseDetailView(exercise: exerciseToEdit, initialName: exerciseToEdit == nil ? searchText : "", onSave: { savedExercise in
                     if chooseExercise, let onExerciseSelected {
                         onExerciseSelected(savedExercise)
                         dismiss()
@@ -121,7 +121,12 @@ struct ExerciseListView: View {
                     EmptyStateView(
                         systemImage: "magnifyingglass",
                         title: "No Results",
-                        message: "Try a different search term"
+                        message: "Try a different search term",
+                        actionTitle: "Add New Exercise",
+                        action: {
+                            exerciseToEdit = nil
+                            showingExerciseDetail = true
+                        }
                     )
                 } else {
                     VStack(spacing: 0) {

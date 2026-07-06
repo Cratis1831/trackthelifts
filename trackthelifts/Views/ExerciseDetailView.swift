@@ -15,6 +15,7 @@ struct ExerciseDetailView: View {
     @Query(sort: \Bodypart.name) private var bodyparts: [Bodypart]
     
     let exercise: Exercise?
+    var initialName: String = ""
     var onSave: ((Exercise) -> Void)? = nil
     @State private var exerciseName: String = ""
     @State private var selectedBodypart: Bodypart?
@@ -22,8 +23,9 @@ struct ExerciseDetailView: View {
     @State private var errorMessage: String = ""
     @FocusState private var isNameFieldFocused: Bool
 
-    init(exercise: Exercise? = nil, onSave: ((Exercise) -> Void)? = nil) {
+    init(exercise: Exercise? = nil, initialName: String = "", onSave: ((Exercise) -> Void)? = nil) {
         self.exercise = exercise
+        self.initialName = initialName
         self.onSave = onSave
     }
     
@@ -137,6 +139,7 @@ struct ExerciseDetailView: View {
             exerciseName = exercise.name
             selectedBodypart = exercise.bodypart
         } else {
+            exerciseName = initialName
             isNameFieldFocused = true
         }
     }
