@@ -122,7 +122,7 @@ struct WorkoutDetailView: View {
         } header: {
             Text("Drag to reorder exercises")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.orange)
+                .foregroundColor(.appAccent)
                 .textCase(nil)
         }
         .listRowBackground(Color(red: 0.11, green: 0.11, blue: 0.12))
@@ -211,7 +211,7 @@ struct WorkoutDetailView: View {
                                     Text("Add Set")
                                 }
                             }
-                            .buttonStyle(WorkoutActionButtonStyle(tint: .orange, prominence: .plain))
+                            .buttonStyle(WorkoutActionButtonStyle(tint: .appAccent, prominence: .plain))
                         }
                         .listRowBackground(Color.black)
                         .listRowSeparator(.hidden)
@@ -234,7 +234,7 @@ struct WorkoutDetailView: View {
                         }
                     }
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.orange)
+                    .foregroundColor(.appAccent)
                 }
             }
         }

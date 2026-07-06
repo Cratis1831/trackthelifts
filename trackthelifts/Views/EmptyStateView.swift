@@ -33,7 +33,7 @@ struct EmptyStateView: View {
                 Button(actionTitle, action: action)
                     .padding(.horizontal, 20)
                     .padding(.vertical, 10)
-                    .background(Color.orange)
+                    .background(Color.appAccent)
                     .foregroundColor(.white)
                     .cornerRadius(8)
             }

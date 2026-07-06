@@ -169,7 +169,7 @@ struct WorkoutHistoryCard: View {
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("\(completedSets)/\(totalSets) sets")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.orange)
+                        .foregroundColor(.appAccent)
 
                     Text("\(exerciseGroups.count) exercises")
                         .font(.system(size: 12))
@@ -180,7 +180,7 @@ struct WorkoutHistoryCard: View {
                     cardMenuActions
                 } label: {
                     Image(systemName: "ellipsis")
-                        .foregroundColor(.orange)
+                        .foregroundColor(.appAccent)
                         .font(.system(size: 16))
                         .frame(width: 44, height: 44)
                         .contentShape(Rectangle())

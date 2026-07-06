@@ -29,7 +29,7 @@ struct PaywallView: View {
                         VStack(alignment: .center, spacing: 12) {
                             Image(systemName: "icloud")
                                 .font(.system(size: 50))
-                                .foregroundColor(.orange)
+                                .foregroundColor(.appAccent)
                             
                             Text("Upgrade to Premium")
                                 .font(.system(size: 22, weight: .bold))
@@ -99,7 +99,7 @@ struct PaywallView: View {
                                 } else {
                                     VStack(spacing: 12) {
                                         ProgressView()
-                                            .tint(.orange)
+                                            .tint(.appAccent)
                                         Text("Loading subscription plans...")
                                             .font(.system(size: 14))
                                             .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
@@ -148,7 +148,7 @@ struct PaywallView: View {
                             }
                             .frame(maxWidth: .infinity)
                             .frame(height: 56)
-                            .background(selectedPackage != nil ? Color.orange : Color.gray)
+                            .background(selectedPackage != nil ? Color.appAccent : Color.gray)
                             .cornerRadius(12)
                         }
                         .disabled(revenueCatService.isLoading || selectedPackage == nil)
@@ -177,7 +177,7 @@ struct PaywallView: View {
                     Button("Close") {
                         dismiss()
                     }
-                    .foregroundColor(.orange)
+                    .foregroundColor(.appAccent)
                 }
             }
         }
@@ -203,7 +203,7 @@ struct FeatureRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
             Image(systemName: icon)
-                .foregroundColor(.orange)
+                .foregroundColor(.appAccent)
                 .font(.system(size: 24))
                 .frame(width: 32)
             
@@ -271,10 +271,10 @@ struct PackageCard: View {
                         if let savings = savings {
                             Text(savings)
                                 .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(.orange)
+                                .foregroundColor(.appAccent)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 4)
-                                .background(Color.orange.opacity(0.2))
+                                .background(Color.appAccent.opacity(0.2))
                                 .cornerRadius(4)
                         }
                     }
@@ -293,7 +293,7 @@ struct PackageCard: View {
                 }
                 
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(isSelected ? .orange : Color(red: 0.56, green: 0.56, blue: 0.58))
+                    .foregroundColor(isSelected ? .appAccent : Color(red: 0.56, green: 0.56, blue: 0.58))
                     .font(.system(size: 24))
             }
             .padding(16)
@@ -301,7 +301,7 @@ struct PackageCard: View {
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? Color.orange : Color(red: 0.17, green: 0.17, blue: 0.18), lineWidth: isSelected ? 2 : 1)
+                    .stroke(isSelected ? Color.appAccent : Color(red: 0.17, green: 0.17, blue: 0.18), lineWidth: isSelected ? 2 : 1)
             )
         }
         .buttonStyle(PlainButtonStyle())

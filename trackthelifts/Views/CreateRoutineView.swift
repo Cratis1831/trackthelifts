@@ -104,7 +104,7 @@ struct CreateRoutineView: View {
                             Text("Add Exercise")
                         }
                     }
-                    .buttonStyle(WorkoutActionButtonStyle(tint: .orange, prominence: .filled))
+                    .buttonStyle(WorkoutActionButtonStyle(tint: .appAccent, prominence: .filled))
                     .padding(.horizontal, 10)
                     .padding(.top, 12)
                     .padding(.bottom, 20)
