@@ -16,6 +16,8 @@ struct SettingsView: View {
     private let notificationService = NotificationService.shared
     @State private var showNotificationDeniedAlert = false
     @State private var showRestoreErrorAlert = false
+    @State private var showRestoreResultAlert = false
+    @State private var restoreResultMessage = ""
 
     private let weightUnitPreference = WeightUnitPreference.shared
     @State private var selectedUnit: WeightUnit = WeightUnitPreference.shared.unit
@@ -145,7 +147,12 @@ struct SettingsView: View {
                             Button {
                                 Task {
                                     let success = await revenueCatService.restorePurchases()
-                                    if !success {
+                                    if success {
+                                        restoreResultMessage = revenueCatService.currentTier == .premium
+                                            ? "Your premium subscription has been restored."
+                                            : "No active purchases were found to restore."
+                                        showRestoreResultAlert = true
+                                    } else {
                                         showRestoreErrorAlert = true
                                     }
                                 }
@@ -382,6 +389,11 @@ struct SettingsView: View {
             Button("OK") { }
         } message: {
             Text(revenueCatService.lastError?.localizedDescription ?? "Couldn't restore your purchases. Please try again.")
+        }
+        .alert("Restore Purchases", isPresented: $showRestoreResultAlert) {
+            Button("OK") { }
+        } message: {
+            Text(restoreResultMessage)
         }
         .alert("Change Weight Unit?", isPresented: $showUnitChangeConfirmation) {
             Button("Cancel", role: .cancel) {
