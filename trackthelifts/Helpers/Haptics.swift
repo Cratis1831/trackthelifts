@@ -20,4 +20,15 @@ enum Haptics {
     static func selection() {
         UISelectionFeedbackGenerator().selectionChanged()
     }
+
+    /// Strongest feedback UIKit exposes: a full-intensity heavy impact stacked with the
+    /// notification generator's success buzz. Used for the rest-timer-complete alert, which
+    /// needs to be noticeable even if the phone isn't in hand. Only fires while the app is
+    /// active — UIKit feedback generators are no-ops when the app is backgrounded.
+    static func restTimerComplete() {
+        let impact = UIImpactFeedbackGenerator(style: .heavy)
+        impact.prepare()
+        impact.impactOccurred(intensity: 1.0)
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+    }
 }
