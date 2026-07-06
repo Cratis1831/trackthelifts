@@ -279,6 +279,16 @@ struct CreateWorkoutView: View {
 
                         Section {
                             Button {
+                                showExerciseList.toggle()
+                            } label: {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "plus")
+                                    Text("Add Exercise")
+                                }
+                            }
+                            .buttonStyle(WorkoutActionButtonStyle(tint: .appAccent, prominence: .plain))
+
+                            Button {
                                 showCancelConfirmation = true
                             } label: {
                                 Text("Cancel Workout")
@@ -301,23 +311,6 @@ struct CreateWorkoutView: View {
                         }
                     }
                     }
-                }
-            }
-            .overlay(alignment: .bottomTrailing) {
-                if !isReorderingExercises {
-                    Button {
-                        showExerciseList.toggle()
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.system(size: 24, weight: .medium))
-                            .foregroundColor(.white)
-                            .frame(width: 56, height: 56)
-                            .background(Color.appAccent)
-                            .clipShape(Circle())
-                            .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
-                    }
-                    .padding(.trailing, 20)
-                    .padding(.bottom, 70)
                 }
             }
             .onAppear {
