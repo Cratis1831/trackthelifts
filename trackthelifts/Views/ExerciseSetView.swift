@@ -23,6 +23,13 @@ struct ExerciseSetView: View {
     @FocusState private var isWeightFocused: Bool
     @FocusState private var isRepsFocused: Bool
 
+    // Cached in @State and computed on appear / on completion rather than in `body`. Both back a
+    // SwiftData fetch, and doing them in `body` re-ran the fetches on every redraw — the main
+    // cause of scroll jank on a workout with many sets. The underlying data is stable during a
+    // session ("previous" is historical; PR status only changes when this set is completed).
+    @State private var previousSummary: String = "- -"
+    @State private var isPersonalRecord: Bool = false
+
     var body: some View {
         HStack {
             // Column 1: Set number. Long-press to classify this set (warm-up/working/failure) -
@@ -64,7 +71,7 @@ struct ExerciseSetView: View {
             }
 
             // Column 2 & 3: Previous summary (last time this exercise/set-number was logged)
-            Text(previousSetSummary)
+            Text(previousSummary)
                 .font(.system(size: 14))
                 .frame(maxWidth: .infinity, alignment: .center)
                 .foregroundColor(Color.secondary)
@@ -142,14 +149,21 @@ struct ExerciseSetView: View {
         }
     }
 
-    private var isPersonalRecord: Bool {
-        guard isCompleted else { return false }
-        return PersonalRecordService.personalRecord(for: exerciseSet, in: modelContext) != nil
+    /// Recomputes the cached PR highlight. Called on appear and whenever completion toggles — not
+    /// from `body` — since it runs a fetch over the exercise's completed-set history.
+    private func refreshPersonalRecordFlag() {
+        isPersonalRecord = isCompleted
+            && PersonalRecordService.personalRecord(for: exerciseSet, in: modelContext) != nil
     }
 
-    private var previousSetSummary: String {
-        guard let previous = fetchPreviousSet() else { return "- -" }
-        return "\(previous.weight.formattedWeight) \(WeightUnitPreference.shared.unit.label) x \(previous.reps)"
+    /// Recomputes the cached "previous" summary. Historical (prior completed workouts), so it's
+    /// stable for the session and only needs to run on appear.
+    private func refreshPreviousSummary() {
+        guard let previous = fetchPreviousSet() else {
+            previousSummary = "- -"
+            return
+        }
+        previousSummary = "\(previous.weight.formattedWeight) \(WeightUnitPreference.shared.unit.label) x \(previous.reps)"
     }
 
     private func fetchPreviousSet() -> ExerciseSet? {
@@ -170,6 +184,8 @@ struct ExerciseSetView: View {
         weight = exerciseSet.weight > 0 ? exerciseSet.weight.formattedWeight : ""
         reps = exerciseSet.reps > 0 ? String(exerciseSet.reps) : ""
         isCompleted = exerciseSet.isCompleted
+        refreshPreviousSummary()
+        refreshPersonalRecordFlag()
     }
     
     private func updateExerciseSet() {
@@ -233,10 +249,15 @@ struct ExerciseSetView: View {
         if !wasCompleted && isCompleted {
             Haptics.impact(.light)
             RestTimerManager.shared.startTimer(for: exerciseSet.exercise.name)
-            if let prKind = PersonalRecordService.personalRecord(for: exerciseSet, in: modelContext) {
+            // Compute the PR once here and reuse it for both the announcement and the cached
+            // highlight, so `body` never has to fetch.
+            let prKind = PersonalRecordService.personalRecord(for: exerciseSet, in: modelContext)
+            isPersonalRecord = prKind != nil
+            if let prKind {
                 onPersonalRecord?(exerciseSet, prKind)
             }
         } else if wasCompleted && !isCompleted {
+            isPersonalRecord = false
             Haptics.selection()
         }
     }
