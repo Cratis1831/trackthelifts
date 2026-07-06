@@ -738,8 +738,9 @@ struct RestTimerBanner: View {
                 let wasPositive = remainingSeconds > 0
                 now = value
                 if wasPositive && remainingSeconds <= 0 {
-                    Haptics.success()
+                    Haptics.restTimerComplete()
                     SoundEffects.restTimerChime()
+                    manager.clearPendingNotification()
                 }
             }
         }
