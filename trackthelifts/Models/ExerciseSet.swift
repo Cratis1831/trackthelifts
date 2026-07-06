@@ -18,6 +18,9 @@ class ExerciseSet {
     /// exercise), so exercises can be drag-reordered independently of when each set was logged.
     var exerciseOrder: Int = 0
     var isCompleted: Bool
+    /// Warm-up / working / failure classification for this specific set. Defaults to `.working`
+    /// so existing sets (and new sets that are never explicitly classified) behave as before.
+    var setType: SetClassification = SetClassification.working
 
     // CloudKit sync properties
     var createdAt: Date
@@ -38,6 +41,7 @@ class ExerciseSet {
         exercise: Exercise,
         workout: Workout,
         isCompleted: Bool = false,
+        setType: SetClassification = .working,
         createdAt: Date = .now,
         updatedAt: Date = .now,
         isDeleted: Bool = false,
@@ -52,6 +56,7 @@ class ExerciseSet {
         self.exercise = exercise
         self.workout = workout
         self.isCompleted = isCompleted
+        self.setType = setType
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.isDeleted = isDeleted

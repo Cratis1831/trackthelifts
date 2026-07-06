@@ -7,7 +7,7 @@ import Foundation
 import SwiftData
 
 enum WorkoutExportService {
-    private static let columns = ["Date", "Workout Title", "Exercise", "Body Part", "Set", "Weight", "Unit", "Reps", "Notes"]
+    private static let columns = ["Date", "Workout Title", "Exercise", "Body Part", "Set", "Set Type", "Weight", "Unit", "Reps", "Notes"]
 
     private static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -53,6 +53,7 @@ enum WorkoutExportService {
                         name,
                         bodypart,
                         "Set \(index + 1)",
+                        set.setType.label,
                         set.weight.formattedWeight,
                         unitLabel,
                         String(set.reps),
