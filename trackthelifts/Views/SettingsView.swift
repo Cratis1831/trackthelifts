@@ -126,6 +126,7 @@ struct SettingsView: View {
                                         }
                                     }
                                     .buttonStyle(.borderedProminent)
+                                    .buttonBorderShape(.roundedRectangle(radius: 12))
                                     .tint(.orange)
                                     .padding(.top, 8)
                                 }
@@ -159,6 +160,7 @@ struct SettingsView: View {
                                 }
                             }
                             .buttonStyle(.bordered)
+                            .buttonBorderShape(.roundedRectangle(radius: 12))
                             .tint(.orange)
                             .disabled(revenueCatService.isLoading)
                         }
