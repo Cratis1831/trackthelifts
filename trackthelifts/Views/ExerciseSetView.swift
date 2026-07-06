@@ -51,6 +51,9 @@ struct ExerciseSetView: View {
                 .onChange(of: weight) { _, newValue in
                     updateExerciseSet()
                 }
+                .onChange(of: isWeightFocused) { _, focused in
+                    selectAllText(if: focused)
+                }
                 .onSubmit {
                     isRepsFocused = true
                 }
@@ -68,6 +71,9 @@ struct ExerciseSetView: View {
                 .autocorrectionDisabled()
                 .onChange(of: reps) { _, newValue in
                     updateExerciseSet()
+                }
+                .onChange(of: isRepsFocused) { _, focused in
+                    selectAllText(if: focused)
                 }
                 .onSubmit {
                     isRepsFocused = false
@@ -94,6 +100,16 @@ struct ExerciseSetView: View {
         }
     }
     
+    /// Selects the full text of whichever weight/reps field just gained focus, so tapping into a
+    /// field that already has a value lets the user immediately type over it instead of having to
+    /// manually clear it first.
+    private func selectAllText(if focused: Bool) {
+        guard focused else { return }
+        DispatchQueue.main.async {
+            UIApplication.shared.sendAction(#selector(UIResponder.selectAll(_:)), to: nil, from: nil, for: nil)
+        }
+    }
+
     private var isPersonalRecord: Bool {
         guard isCompleted else { return false }
         return PersonalRecordService.personalRecord(for: exerciseSet, in: modelContext) != nil
