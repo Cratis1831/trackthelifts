@@ -534,12 +534,16 @@ struct CreateWorkoutView: View {
     }
     
     private func cancelWorkout() {
-        // If there's a saved workout and it has no exercises, delete it
-        if let workout = savedWorkout, workout.exerciseSets.isEmpty {
+        // Canceling discards the whole workout ("any unsaved changes will be lost"), so delete it
+        // regardless of whether any sets were logged — its ExerciseSets cascade away with it. The
+        // guard here previously only fired for empty workouts, which left a workout that had sets
+        // persisted as `isActive` with `activeWorkoutID` still pointing at it: the session never
+        // ended, so "Workout In Progress" kept blocking new workouts even after canceling.
+        if let workout = savedWorkout {
             modelContext.delete(workout)
             try? modelContext.save()
-            sessionManager.completeWorkout()
         }
+        sessionManager.completeWorkout()
         RestTimerManager.shared.cancel()
         dismiss()
     }

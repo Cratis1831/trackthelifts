@@ -44,6 +44,7 @@ struct ContentView: View {
         .onAppear {
             UIApplication.shared.enableTapToDismissKeyboard()
             ExerciseData.seedIfNeeded(in: modelContext)
+            WorkoutSessionManager.shared.reconcileOrphanedActiveWorkouts(in: modelContext)
         }
     }
 
