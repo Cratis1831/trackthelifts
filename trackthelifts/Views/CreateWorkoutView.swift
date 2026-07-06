@@ -736,6 +736,10 @@ struct RestTimerBanner: View {
                     }
                     .font(.system(size: 13, weight: .medium))
                 }
+                // Inside a List row, default-styled buttons share one hit target, so a tap
+                // anywhere on the banner would fire one of them (e.g. Skip). Borderless gives each
+                // button its own independent tap region.
+                .buttonStyle(.borderless)
             }
             .padding(10)
             .background(Color(red: 0.11, green: 0.11, blue: 0.12))
