@@ -51,6 +51,15 @@ class RestTimerManager {
         scheduleCompletionNotification()
     }
 
+    /// Reduces the remaining rest time, clamped so the countdown never drops into the past (i.e.
+    /// remaining time can't go below zero). Callers should also gate the control so it's only
+    /// tappable while more than `seconds` remain, keeping the result comfortably positive.
+    func subtractTime(_ seconds: TimeInterval) {
+        guard let endDate else { return }
+        self.endDate = max(endDate.addingTimeInterval(-seconds), Date())
+        scheduleCompletionNotification()
+    }
+
     func cancel() {
         endDate = nil
         activeExerciseName = nil
@@ -78,7 +87,7 @@ class RestTimerManager {
             let content = UNMutableNotificationContent()
             content.title = "Rest complete"
             content.body = "Time to get back to it."
-            content.sound = .default
+            content.sound = TimerSoundPreference.shared.isEnabled ? .default : nil
             content.interruptionLevel = .timeSensitive
 
             let trigger = UNTimeIntervalNotificationTrigger(

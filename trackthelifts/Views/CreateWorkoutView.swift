@@ -719,7 +719,14 @@ struct RestTimerBanner: View {
                 Text("Rest: \(formattedTime(remainingSeconds))")
                     .font(.system(size: 14, weight: .semibold))
                 Spacer()
-                HStack(spacing: 20) {
+                HStack(spacing: 16) {
+                    // Only offer -15s while there's more than 15s left, so the countdown can't be
+                    // pulled to or below zero.
+                    Button("-15s") {
+                        manager.subtractTime(15)
+                    }
+                    .font(.system(size: 13, weight: .medium))
+                    .disabled(remainingSeconds <= 15)
                     Button("+15s") {
                         manager.addTime(15)
                     }
@@ -740,7 +747,9 @@ struct RestTimerBanner: View {
                 now = value
                 if wasPositive && remainingSeconds <= 0 {
                     Haptics.restTimerComplete()
-                    SoundEffects.restTimerChime()
+                    if TimerSoundPreference.shared.isEnabled {
+                        SoundEffects.restTimerChime()
+                    }
                     manager.clearPendingNotification()
                 }
             }
