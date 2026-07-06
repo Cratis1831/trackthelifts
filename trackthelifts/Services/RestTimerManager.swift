@@ -85,8 +85,8 @@ class RestTimerManager {
             guard allowed else { return }
 
             let content = UNMutableNotificationContent()
-            content.title = "Rest complete"
-            content.body = "Time to get back to it."
+            content.title = "Rest Time over!"
+            content.body = "Get back at it!"
             content.sound = TimerSoundPreference.shared.isEnabled ? .default : nil
             content.interruptionLevel = .timeSensitive
 
