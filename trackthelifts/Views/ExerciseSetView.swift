@@ -137,6 +137,13 @@ struct ExerciseSetView: View {
                 autoFocusSetID.wrappedValue = nil
             }
         }
+        // Settings converts the underlying `exerciseSet.weight` in place when the user switches
+        // lbs/kg, but this view's weight field is cached in @State for scroll-perf reasons (see
+        // above), so it won't pick up that change on its own if this row was already on screen
+        // (e.g. an in-progress workout left open in the background) — reload it explicitly.
+        .onChange(of: WeightUnitPreference.shared.unit) { _, _ in
+            loadExerciseSetData()
+        }
     }
     
     /// Selects the full text of whichever weight/reps field just gained focus, so tapping into a
