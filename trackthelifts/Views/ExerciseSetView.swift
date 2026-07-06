@@ -35,12 +35,12 @@ struct ExerciseSetView: View {
                     .background(isPersonalRecord ? Color.yellow.opacity(0.4) : (isCompleted ? Color.appAccent.opacity(0.3) : Color.gray.opacity(0.3)))
                     .cornerRadius(6)
 
-                if let badgeText = exerciseSet.setType.badgeText {
+                if let badgeText = exerciseSet.classification.badgeText {
                     Text(badgeText)
                         .font(.system(size: 9, weight: .bold))
                         .foregroundColor(.white)
                         .frame(width: 14, height: 14)
-                        .background(exerciseSet.setType == .warmup ? Color.blue : Color.red)
+                        .background(exerciseSet.classification == .warmup ? Color.blue : Color.red)
                         .clipShape(Circle())
                         .offset(x: 6, y: -6)
                 }
@@ -56,7 +56,7 @@ struct ExerciseSetView: View {
                 titleVisibility: .visible
             ) {
                 ForEach(SetClassification.allCases, id: \.self) { classification in
-                    Button(classification.label + (classification == exerciseSet.setType ? " (current)" : "")) {
+                    Button(classification.label + (classification == exerciseSet.classification ? " (current)" : "")) {
                         setClassification(classification)
                     }
                 }
@@ -195,7 +195,7 @@ struct ExerciseSetView: View {
     }
     
     private func setClassification(_ classification: SetClassification) {
-        guard exerciseSet.setType != classification else { return }
+        guard exerciseSet.classification != classification else { return }
         exerciseSet.setType = classification
         exerciseSet.updatedAt = .now
 

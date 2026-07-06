@@ -53,7 +53,7 @@ enum WorkoutExportService {
                         name,
                         bodypart,
                         "Set \(index + 1)",
-                        set.setType.label,
+                        set.classification.label,
                         set.weight.formattedWeight,
                         unitLabel,
                         String(set.reps),

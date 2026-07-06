@@ -18,9 +18,18 @@ class ExerciseSet {
     /// exercise), so exercises can be drag-reordered independently of when each set was logged.
     var exerciseOrder: Int = 0
     var isCompleted: Bool
-    /// Warm-up / working / failure classification for this specific set. Defaults to `.working`
-    /// so existing sets (and new sets that are never explicitly classified) behave as before.
-    var setType: SetClassification = SetClassification.working
+    /// Warm-up / working / failure classification for this specific set. Optional at the storage
+    /// layer because SwiftData's lightweight migration does not backfill a declared enum default
+    /// into rows written before this column existed — those rows persist `NULL`, and reading a
+    /// non-optional enum from `NULL` force-casts and crashes. Keeping it optional lets old sets
+    /// read back as `nil`; use `classification` to get the resolved `.working` default everywhere.
+    var setType: SetClassification? = SetClassification.working
+
+    /// The set's classification with the legacy/default fallback applied. Read this instead of
+    /// `setType` so pre-migration sets (stored `nil`) behave as working sets.
+    var classification: SetClassification {
+        setType ?? .working
+    }
 
     // CloudKit sync properties
     var createdAt: Date
