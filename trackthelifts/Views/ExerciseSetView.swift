@@ -40,7 +40,7 @@ struct ExerciseSetView: View {
             // Column 4: weight
             TextField("0", text: $weight)
                 .font(.system(size: 14, weight: .medium))
-                .frame(width: 50, height: 32)
+                .frame(width: 68, height: 32)
                 .textFieldStyle(.roundedBorder)
                 .keyboardType(.decimalPad)
                 .multilineTextAlignment(.center)
@@ -58,7 +58,7 @@ struct ExerciseSetView: View {
             // Column 5: reps
             TextField("0", text: $reps)
                 .font(.system(size: 14, weight: .medium))
-                .frame(width: 50, height: 32)
+                .frame(width: 68, height: 32)
                 .textFieldStyle(.roundedBorder)
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.center)

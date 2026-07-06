@@ -170,10 +170,10 @@ struct CreateWorkoutView: View {
                 .frame(maxWidth: .infinity, alignment: .center)
 
             Text(WeightUnitPreference.shared.unit.label)
-                .frame(width: 50, alignment: .center)
+                .frame(width: 68, alignment: .center)
 
             Text("Reps")
-                .frame(width: 50, alignment: .center)
+                .frame(width: 68, alignment: .center)
 
             Image(systemName: "checkmark")
                 .frame(width: 30, alignment: .center)
