@@ -19,17 +19,49 @@ struct ExerciseSetView: View {
     @State private var weight: String = ""
     @State private var reps: String = ""
     @State private var isCompleted: Bool = false
+    @State private var showClassificationDialog: Bool = false
     @FocusState private var isWeightFocused: Bool
     @FocusState private var isRepsFocused: Bool
 
     var body: some View {
         HStack {
-            // Column 1: Set number
-            Text("\(exerciseSet.order + 1)")
-                .font(.system(size: 14, weight: .medium))
-                .frame(width: 30, height: 32)
-                .background(isPersonalRecord ? Color.yellow.opacity(0.4) : (isCompleted ? Color.appAccent.opacity(0.3) : Color.gray.opacity(0.3)))
-                .cornerRadius(6)
+            // Column 1: Set number. Long-press to classify this set (warm-up/working/failure) -
+            // the classification is stored on this exerciseSet only, so it never affects other
+            // sets or other exercises.
+            ZStack(alignment: .topTrailing) {
+                Text("\(exerciseSet.order + 1)")
+                    .font(.system(size: 14, weight: .medium))
+                    .frame(width: 30, height: 32)
+                    .background(isPersonalRecord ? Color.yellow.opacity(0.4) : (isCompleted ? Color.appAccent.opacity(0.3) : Color.gray.opacity(0.3)))
+                    .cornerRadius(6)
+
+                if let badgeText = exerciseSet.setType.badgeText {
+                    Text(badgeText)
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(width: 14, height: 14)
+                        .background(exerciseSet.setType == .warmup ? Color.blue : Color.red)
+                        .clipShape(Circle())
+                        .offset(x: 6, y: -6)
+                }
+            }
+            .contentShape(Rectangle())
+            .onLongPressGesture {
+                Haptics.selection()
+                showClassificationDialog = true
+            }
+            .confirmationDialog(
+                "Classify Set \(exerciseSet.order + 1)",
+                isPresented: $showClassificationDialog,
+                titleVisibility: .visible
+            ) {
+                ForEach(SetClassification.allCases, id: \.self) { classification in
+                    Button(classification.label + (classification == exerciseSet.setType ? " (current)" : "")) {
+                        setClassification(classification)
+                    }
+                }
+                Button("Cancel", role: .cancel) { }
+            }
 
             // Column 2 & 3: Previous summary (last time this exercise/set-number was logged)
             Text(previousSetSummary)
@@ -162,6 +194,20 @@ struct ExerciseSetView: View {
         }
     }
     
+    private func setClassification(_ classification: SetClassification) {
+        guard exerciseSet.setType != classification else { return }
+        exerciseSet.setType = classification
+        exerciseSet.updatedAt = .now
+
+        do {
+            try modelContext.save()
+        } catch {
+            print("Failed to update set classification: \(error)")
+        }
+
+        Haptics.selection()
+    }
+
     private func toggleCompletion() {
         // Weight is optional (defaults to 0, e.g. for bodyweight exercises), but reps are required.
         let weightValue = Double(weight) ?? 0
