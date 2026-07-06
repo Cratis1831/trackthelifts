@@ -27,13 +27,13 @@ enum WeightUnit: String, CaseIterable {
     }
 
     /// Converts and snaps the result to a sensible granularity for the target unit, so a bulk
-    /// unit change doesn't leave awkward decimals: pounds land on whole numbers or 0.25 increments
-    /// (matching real plate math), kilograms are left as the raw converted value.
+    /// unit change doesn't leave awkward decimals: pounds land on whole numbers or 0.5 increments,
+    /// kilograms are left as the raw converted value.
     func convertForStorage(_ value: Double, to target: WeightUnit) -> Double {
         let converted = convert(value, to: target)
         switch target {
         case .pounds:
-            return (converted * 4).rounded() / 4
+            return (converted * 2).rounded() / 2
         case .kilograms:
             return converted
         }
