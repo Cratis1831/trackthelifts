@@ -35,6 +35,7 @@ struct ContentView: View {
         }
         .tint(.appAccent)
         .toolbarColorScheme(.dark, for: .tabBar)
+        .watchesRestTimerCompletion()
         .fullScreenCover(isPresented: Binding(
             get: { !hasCompletedOnboarding },
             set: { isPresented in hasCompletedOnboarding = !isPresented }

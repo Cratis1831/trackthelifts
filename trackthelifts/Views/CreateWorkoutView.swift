@@ -700,7 +700,6 @@ struct RestTimerBanner: View {
     let exerciseName: String
 
     @State private var now = Date()
-    @Environment(\.scenePhase) private var scenePhase
     private let manager = RestTimerManager.shared
     private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
@@ -746,30 +745,10 @@ struct RestTimerBanner: View {
             .background(Color(red: 0.11, green: 0.11, blue: 0.12))
             .cornerRadius(10)
             .onReceive(ticker) { value in
-                // Fire the rest-over chime/haptic exactly on the tick where the countdown crosses
-                // zero. A manual Skip nils endDate first, making wasPositive false, so skips stay
-                // silent.
-                let wasPositive = remainingSeconds > 0
-                // Only alert in-app if the timer finished during this active session. If it elapsed
-                // while the app was backgrounded, its endDate precedes when we last became active,
-                // and the completion notification already played the same chime — so don't replay
-                // it (which would double-alert: quiet notification while away, loud chime on return).
-                let finishedWhileActive = (manager.endDate ?? .distantPast) >= manager.lastBecameActiveDate
+                // Just drive the countdown display. Completion alerting (chime/haptic vs. the
+                // background notification) is handled once, app-wide, by RestTimerCompletionWatcher
+                // so it works on any screen and never double-fires.
                 now = value
-                if wasPositive && remainingSeconds <= 0 && finishedWhileActive {
-                    Haptics.restTimerComplete()
-                    if TimerSoundPreference.shared.isEnabled {
-                        SoundEffects.restTimerChime()
-                    }
-                    manager.clearPendingNotification()
-                }
-            }
-            .onChange(of: scenePhase) { _, newPhase in
-                // Record each foreground return so a timer that elapsed while the app was away is
-                // recognized as "finished in the background" and doesn't replay the chime on return.
-                if newPhase == .active {
-                    manager.markBecameActive()
-                }
             }
         }
     }

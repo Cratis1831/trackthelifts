@@ -28,16 +28,33 @@ class RestTimerManager {
     /// elapsed while the app was backgrounded — in which case its completion notification already
     /// carried the chime — versus during an active session, where the in-app chime should play.
     /// If the timer's `endDate` precedes this, the timer finished while the app was away.
+    @ObservationIgnored
     private(set) var lastBecameActiveDate = Date()
 
-    func markBecameActive() {
-        lastBecameActiveDate = Date()
-    }
+    /// Set once the current timer's completion has been alerted in-app, so the foreground driver
+    /// (which polls every second) only chimes a single time per timer.
+    @ObservationIgnored
+    private var completionHandled = false
 
     @ObservationIgnored
     private let center = UNUserNotificationCenter.current()
 
     private init() {}
+
+    func markBecameActive() {
+        lastBecameActiveDate = Date()
+    }
+
+    /// Called by the app-level foreground driver every second while the scene is active. Returns
+    /// `true` exactly once, when the running timer has just elapsed *during this active session*,
+    /// so the caller should play the in-app chime. A timer that elapsed while the app was
+    /// backgrounded/locked has an `endDate` before `lastBecameActiveDate`; it returns `false` there
+    /// (the completion notification was the alert) but still marks it handled so it stays silent.
+    func consumeForegroundCompletion() -> Bool {
+        guard let endDate, !completionHandled, Date() >= endDate else { return false }
+        completionHandled = true
+        return endDate >= lastBecameActiveDate
+    }
 
     var isRunning: Bool {
         guard let endDate else { return false }
@@ -52,12 +69,14 @@ class RestTimerManager {
     func startTimer(duration: TimeInterval = 90, for exerciseName: String) {
         endDate = Date().addingTimeInterval(duration)
         activeExerciseName = exerciseName
+        completionHandled = false
         scheduleCompletionNotification()
     }
 
     func addTime(_ seconds: TimeInterval) {
         guard let endDate else { return }
         self.endDate = endDate.addingTimeInterval(seconds)
+        completionHandled = false
         scheduleCompletionNotification()
     }
 
@@ -67,6 +86,7 @@ class RestTimerManager {
     func subtractTime(_ seconds: TimeInterval) {
         guard let endDate else { return }
         self.endDate = max(endDate.addingTimeInterval(-seconds), Date())
+        completionHandled = false
         scheduleCompletionNotification()
     }
 
@@ -76,11 +96,13 @@ class RestTimerManager {
         clearPendingNotification()
     }
 
-    /// Cancels the background notification once the countdown has already been handled
-    /// in-app (foreground chime + haptic already fired), so the user doesn't also get a
-    /// system banner for a timer they just watched finish.
+    /// Cancels the completion notification once the countdown has been handled in-app (foreground
+    /// chime + haptic already fired), so the user doesn't also get a system banner. Removes both
+    /// the pending request and any already-delivered copy (iOS may still file a foreground-
+    /// suppressed notification in Notification Center) for a timer they just watched finish.
     func clearPendingNotification() {
         center.removePendingNotificationRequests(withIdentifiers: [Self.completionNotificationIdentifier])
+        center.removeDeliveredNotifications(withIdentifiers: [Self.completionNotificationIdentifier])
     }
 
     /// Schedules a local notification for the exact moment the rest timer ends. If the app is
