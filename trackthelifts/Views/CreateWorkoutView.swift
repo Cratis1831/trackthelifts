@@ -745,11 +745,18 @@ struct RestTimerBanner: View {
             .background(Color(red: 0.11, green: 0.11, blue: 0.12))
             .cornerRadius(10)
             .onReceive(ticker) { value in
-                // Fire the rest-over haptic exactly on the tick where the countdown crosses zero.
-                // A manual Skip nils endDate first, making wasPositive false, so skips stay silent.
+                // Fire the rest-over chime/haptic exactly on the tick where the countdown crosses
+                // zero. A manual Skip nils endDate first, making wasPositive false, so skips stay
+                // silent.
                 let wasPositive = remainingSeconds > 0
+                // The ticker pauses while the app is backgrounded, so a gap much larger than the
+                // 1s interval means the timer actually finished while the app was away — the OS
+                // completion notification already alerted the user. Only alert in-app when the
+                // crossing happens on a live foreground tick, so we never double-alert (notification
+                // sound while away, then a replayed chime on return).
+                let finishedInForeground = value.timeIntervalSince(now) < 2
                 now = value
-                if wasPositive && remainingSeconds <= 0 {
+                if wasPositive && remainingSeconds <= 0 && finishedInForeground {
                     Haptics.restTimerComplete()
                     if TimerSoundPreference.shared.isEnabled {
                         SoundEffects.restTimerChime()

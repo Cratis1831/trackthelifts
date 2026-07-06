@@ -76,30 +76,40 @@ class RestTimerManager {
     /// Schedules a local notification for the exact moment the rest timer ends. If the app is
     /// still active when it fires, iOS suppresses the banner/sound by default (no delegate is
     /// registered to opt back in), so this only ever surfaces while the app is backgrounded.
+    ///
+    /// The request is submitted synchronously via the completion-handler API rather than an
+    /// awaited `Task`. This notification matters exactly when the user completes a set and then
+    /// immediately backgrounds the app or locks the phone — and that suspends the app, which would
+    /// freeze an awaited authorization/add chain before it ever reached `center.add`, so nothing
+    /// got scheduled. Enqueuing right here (while still active) makes the request survive.
     private func scheduleCompletionNotification() {
         guard let endDate else { return }
         clearPendingNotification()
 
-        Task {
-            let allowed = await NotificationService.shared.requestAuthorizationIfNeeded()
-            guard allowed else { return }
+        // Ensure permission for next time (first run); harmless when already authorized. We don't
+        // gate scheduling on it — an unauthorized add simply won't surface, and the user has
+        // already granted notifications in the flows that matter.
+        Task { _ = await NotificationService.shared.requestAuthorizationIfNeeded() }
 
-            let content = UNMutableNotificationContent()
-            content.title = "Rest Time over!"
-            content.body = "Get back at it!"
-            content.sound = TimerSoundPreference.shared.isEnabled ? .default : nil
-            content.interruptionLevel = .timeSensitive
+        let content = UNMutableNotificationContent()
+        content.title = "Rest Time over!"
+        content.body = "Get back at it!"
+        content.sound = TimerSoundPreference.shared.isEnabled ? .default : nil
+        content.interruptionLevel = .timeSensitive
 
-            let trigger = UNTimeIntervalNotificationTrigger(
-                timeInterval: max(1, endDate.timeIntervalSinceNow),
-                repeats: false
-            )
-            let request = UNNotificationRequest(
-                identifier: Self.completionNotificationIdentifier,
-                content: content,
-                trigger: trigger
-            )
-            try? await center.add(request)
+        let trigger = UNTimeIntervalNotificationTrigger(
+            timeInterval: max(1, endDate.timeIntervalSinceNow),
+            repeats: false
+        )
+        let request = UNNotificationRequest(
+            identifier: Self.completionNotificationIdentifier,
+            content: content,
+            trigger: trigger
+        )
+        center.add(request) { error in
+            if let error {
+                print("Failed to schedule rest timer notification: \(error)")
+            }
         }
     }
 }
