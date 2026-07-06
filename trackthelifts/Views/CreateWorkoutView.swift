@@ -719,7 +719,14 @@ struct RestTimerBanner: View {
                 Text("Rest: \(formattedTime(remainingSeconds))")
                     .font(.system(size: 14, weight: .semibold))
                 Spacer()
-                HStack(spacing: 20) {
+                HStack(spacing: 16) {
+                    // Only offer -15s while there's more than 15s left, so the countdown can't be
+                    // pulled to or below zero.
+                    Button("-15s") {
+                        manager.subtractTime(15)
+                    }
+                    .font(.system(size: 13, weight: .medium))
+                    .disabled(remainingSeconds <= 15)
                     Button("+15s") {
                         manager.addTime(15)
                     }
@@ -729,6 +736,10 @@ struct RestTimerBanner: View {
                     }
                     .font(.system(size: 13, weight: .medium))
                 }
+                // Inside a List row, default-styled buttons share one hit target, so a tap
+                // anywhere on the banner would fire one of them (e.g. Skip). Borderless gives each
+                // button its own independent tap region.
+                .buttonStyle(.borderless)
             }
             .padding(10)
             .background(Color(red: 0.11, green: 0.11, blue: 0.12))
@@ -740,7 +751,9 @@ struct RestTimerBanner: View {
                 now = value
                 if wasPositive && remainingSeconds <= 0 {
                     Haptics.restTimerComplete()
-                    SoundEffects.restTimerChime()
+                    if TimerSoundPreference.shared.isEnabled {
+                        SoundEffects.restTimerChime()
+                    }
                     manager.clearPendingNotification()
                 }
             }

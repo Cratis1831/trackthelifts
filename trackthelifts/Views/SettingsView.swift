@@ -58,6 +58,13 @@ struct SettingsView: View {
         )
     }
 
+    private var timerSoundBinding: Binding<Bool> {
+        Binding(
+            get: { TimerSoundPreference.shared.isEnabled },
+            set: { TimerSoundPreference.shared.isEnabled = $0 }
+        )
+    }
+
     private var reminderTimeBinding: Binding<Date> {
         Binding(
             get: { notificationService.reminderTime },
@@ -261,6 +268,8 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 16) {
                 remindersRow
                 rowDivider
+                timerSoundRow
+                rowDivider
                 accentColorRow
                 rowDivider
                 weightUnitRow
@@ -299,6 +308,22 @@ struct SettingsView: View {
                 .foregroundColor(.white)
             }
         }
+    }
+
+    private var timerSoundRow: some View {
+        Toggle(isOn: timerSoundBinding) {
+            HStack(spacing: 12) {
+                IconTile(color: Color(red: 0.58, green: 0.36, blue: 0.90)) {
+                    Image(systemName: "speaker.wave.2.fill")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+                Text("Set Timer Sound")
+                    .font(.system(size: 16))
+                    .foregroundColor(.white)
+            }
+        }
+        .tint(.appAccent)
     }
 
     private var accentColorRow: some View {
