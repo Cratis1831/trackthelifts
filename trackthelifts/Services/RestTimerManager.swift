@@ -24,6 +24,16 @@ class RestTimerManager {
     /// surface the countdown next to that exercise instead of a single fixed location.
     private(set) var activeExerciseName: String?
 
+    /// Wall-clock time the app most recently became active. Used to tell whether a rest timer
+    /// elapsed while the app was backgrounded — in which case its completion notification already
+    /// carried the chime — versus during an active session, where the in-app chime should play.
+    /// If the timer's `endDate` precedes this, the timer finished while the app was away.
+    private(set) var lastBecameActiveDate = Date()
+
+    func markBecameActive() {
+        lastBecameActiveDate = Date()
+    }
+
     @ObservationIgnored
     private let center = UNUserNotificationCenter.current()
 
