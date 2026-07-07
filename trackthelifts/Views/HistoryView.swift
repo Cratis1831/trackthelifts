@@ -51,7 +51,7 @@ struct HistoryView: View {
                                             templateName = workout.title
                                             workoutToNameTemplate = workout
                                         },
-                                        onDuplicate: { duplicateWorkout(workout) },
+                                        onRepeat: { repeatWorkout(workout) },
                                         onDelete: {
                                             workoutToDelete = workout
                                             showingDeleteConfirmation = true
@@ -116,7 +116,7 @@ struct HistoryView: View {
         }
     }
 
-    private func duplicateWorkout(_ workout: Workout) {
+    private func repeatWorkout(_ workout: Workout) {
         guard !sessionManager.hasActiveWorkout(in: modelContext) else {
             showActiveWorkoutAlert = true
             return
@@ -131,7 +131,7 @@ struct HistoryView: View {
 struct WorkoutHistoryCard: View {
     let workout: Workout
     var onSaveAsTemplate: () -> Void
-    var onDuplicate: () -> Void
+    var onRepeat: () -> Void
     var onDelete: () -> Void
 
     private var exerciseGroups: [(String, [ExerciseSet])] {
@@ -246,9 +246,9 @@ struct WorkoutHistoryCard: View {
             Label("Save as Template", systemImage: "square.and.arrow.down.on.square")
         }
         Button {
-            onDuplicate()
+            onRepeat()
         } label: {
-            Label("Duplicate Workout", systemImage: "repeat")
+            Label("Repeat Workout", systemImage: "repeat")
         }
         Button(role: .destructive) {
             onDelete()
