@@ -66,7 +66,8 @@ class RestTimerManager {
         return max(0, endDate.timeIntervalSince(.now))
     }
 
-    func startTimer(duration: TimeInterval = 90, for exerciseName: String) {
+    func startTimer(duration: TimeInterval? = nil, for exerciseName: String) {
+        let duration = duration ?? RestTimerDurationPreference.shared.duration
         endDate = Date().addingTimeInterval(duration)
         activeExerciseName = exerciseName
         completionHandled = false

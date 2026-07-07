@@ -27,6 +27,7 @@ struct SettingsView: View {
     @State private var showUnitChangeConfirmation = false
 
     private var themePreference = ThemePreference.shared
+    private var restTimerDurationPreference = RestTimerDurationPreference.shared
 
     // Shared card/typography constants so every section reads as one system.
     private let cardBackground = Color(red: 0.11, green: 0.11, blue: 0.12)
@@ -62,6 +63,13 @@ struct SettingsView: View {
         Binding(
             get: { TimerSoundPreference.shared.isEnabled },
             set: { TimerSoundPreference.shared.isEnabled = $0 }
+        )
+    }
+
+    private var restTimerDurationBinding: Binding<TimeInterval> {
+        Binding(
+            get: { restTimerDurationPreference.duration },
+            set: { restTimerDurationPreference.duration = $0 }
         )
     }
 
@@ -268,6 +276,8 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 16) {
                 remindersRow
                 rowDivider
+                restTimerDurationRow
+                rowDivider
                 timerSoundRow
                 rowDivider
                 accentColorRow
@@ -307,6 +317,31 @@ struct SettingsView: View {
                 .tint(.appAccent)
                 .foregroundColor(.white)
             }
+        }
+    }
+
+    private var restTimerDurationRow: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                IconTile(color: Color(red: 0.95, green: 0.55, blue: 0.19)) {
+                    Image(systemName: "timer")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+                Text("Rest Timer Duration")
+                    .font(.system(size: 16))
+                    .foregroundColor(.white)
+                Spacer()
+            }
+
+            Picker("Rest Timer Duration", selection: restTimerDurationBinding) {
+                ForEach(RestTimerDurationPreference.options, id: \.self) { option in
+                    Text(RestTimerDurationPreference.label(for: option)).tag(option)
+                }
+            }
+            .pickerStyle(.menu)
+            .tint(.appAccent)
+            .frame(maxWidth: .infinity, alignment: .trailing)
         }
     }
 
