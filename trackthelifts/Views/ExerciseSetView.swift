@@ -119,14 +119,23 @@ struct ExerciseSetView: View {
                     isWeightFocused = false
                 }
 
-            // Column 6: checkmark
+            // Column 6: checkmark. A rounded square matching the SF Symbol icon tiles (see
+            // `IconTile`): same continuous corner radius and 30pt size, filled when completed.
             Button {
                 toggleCompletion()
             } label: {
-                Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 20))
-                    .frame(width: 30, height: 32)
-                    .foregroundColor(isCompleted ? .appAccent : Color.secondary)
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(isCompleted ? Color.appAccent : Color.clear)
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .strokeBorder(isCompleted ? Color.clear : Color.secondary, lineWidth: 1.5)
+                    if isCompleted {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                }
+                .frame(width: 30, height: 30)
             }
             .buttonStyle(PlainButtonStyle())
         }
