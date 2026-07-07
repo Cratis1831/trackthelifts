@@ -12,9 +12,12 @@ struct ExerciseProgressView: View {
 
     @Environment(\.modelContext) private var modelContext
 
-    private var history: [ProgressStatsService.ExerciseHistoryPoint] {
-        ProgressStatsService.history(for: exercise, in: modelContext)
-    }
+    // Cached in @State and fetched on appear rather than computed in `body`: the history backs a
+    // SwiftData fetch and `body` reads it many times per render (summary cards, chart, list).
+    @State private var history: [ProgressStatsService.ExerciseHistoryPoint] = []
+    /// Distinguishes "not fetched yet" from "fetched and genuinely empty", so the empty state
+    /// doesn't flash for one frame before the first fetch completes.
+    @State private var hasLoadedHistory = false
 
     private var bestWeight: Double {
         history.map(\.weight).max() ?? 0
@@ -29,7 +32,9 @@ struct ExerciseProgressView: View {
             Color.black.ignoresSafeArea()
 
             if history.isEmpty {
-                emptyState
+                if hasLoadedHistory {
+                    emptyState
+                }
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
@@ -78,6 +83,10 @@ struct ExerciseProgressView: View {
         }
         .navigationTitle(exercise.name)
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            history = ProgressStatsService.history(for: exercise, in: modelContext)
+            hasLoadedHistory = true
+        }
     }
 
     private var summaryRow: some View {

@@ -15,23 +15,23 @@ struct ExerciseListView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \Exercise.name) private var exercises: [Exercise]
-    @Query private var exerciseSets: [ExerciseSet]
-    @State private var refreshTrigger = false
-    @State private var manualExercises: [Exercise] = []
     @State private var searchText: String = ""
     @State private var showingExerciseDetail: Bool = false
     @State private var exerciseToEdit: Exercise?
     @State private var showingDeleteConfirmation: Bool = false
     @State private var exerciseToDelete: Exercise?
+    /// How many logged sets reference `exerciseToDelete`, counted (not fetched) when the delete
+    /// confirmation is requested. Replaces a `@Query` over every ExerciseSet in the store, which
+    /// loaded the user's entire workout history into memory whenever this view was shown.
+    @State private var deleteUsageCount = 0
     @State private var deleteErrorMessage: String?
     @State private var showingDeleteError: Bool = false
-    
+
     private var filteredExercises: [Exercise] {
-        let allExercises = exercises.isEmpty ? manualExercises : exercises
         if searchText.isEmpty {
-            return allExercises
+            return exercises
         } else {
-            return allExercises.filter { exercise in
+            return exercises.filter { exercise in
                 exercise.name.localizedCaseInsensitiveContains(searchText) ||
                 (exercise.bodypart?.name.localizedCaseInsensitiveContains(searchText) ?? false)
             }
@@ -45,22 +45,20 @@ struct ExerciseListView: View {
         return grouped.sorted { $0.key < $1.key }
     }
 
-    private var recentExercises: [Exercise] {
-        guard chooseExercise, searchText.isEmpty else { return [] }
-        return RecentExercisesService.recentExercises(in: modelContext)
-    }
+    /// Recently logged exercises for the picker, fetched once on appear instead of in `body`
+    /// (the fetch scans up to 200 recent sets, too much to re-run on every keystroke/redraw).
+    @State private var recentExercises: [Exercise] = []
 
     var body: some View {
         content
             .onAppear {
-                loadExercises()
-                if exercises.isEmpty && manualExercises.isEmpty {
+                if exercises.isEmpty {
                     ExerciseData.seedIfNeeded(in: modelContext)
-                    loadExercises()
-                    refreshTrigger.toggle()
+                }
+                if chooseExercise {
+                    recentExercises = RecentExercisesService.recentExercises(in: modelContext)
                 }
             }
-            .id(refreshTrigger)
             .sheet(isPresented: $showingExerciseDetail, onDismiss: {
                 exerciseToEdit = nil
             }) {
@@ -78,9 +76,8 @@ struct ExerciseListView: View {
                 Button("Cancel", role: .cancel) { }
             } message: {
                 if let exercise = exerciseToDelete {
-                    let usageCount = exerciseSets.filter { $0.exercise.id == exercise.id }.count
-                    if usageCount > 0 {
-                        Text("This exercise is used in \(usageCount) workout set(s). Deleting it will affect your workout history.")
+                    if deleteUsageCount > 0 {
+                        Text("This exercise is used in \(deleteUsageCount) workout set(s). Deleting it will affect your workout history.")
                     } else {
                         Text("Are you sure you want to delete '\(exercise.name)'?")
                     }
@@ -131,7 +128,7 @@ struct ExerciseListView: View {
                 } else {
                     VStack(spacing: 0) {
                         List {
-                            if !recentExercises.isEmpty {
+                            if searchText.isEmpty && !recentExercises.isEmpty {
                                 Section {
                                     ForEach(Array(recentExercises.enumerated()), id: \.element.id) { index, exercise in
                                         exerciseRow(exercise,
@@ -250,6 +247,11 @@ struct ExerciseListView: View {
         for index in indexSet {
             let exercise = exercises[index]
             exerciseToDelete = exercise
+            let exerciseID = exercise.id
+            let descriptor = FetchDescriptor<ExerciseSet>(
+                predicate: #Predicate<ExerciseSet> { $0.exercise.id == exerciseID }
+            )
+            deleteUsageCount = (try? modelContext.fetchCount(descriptor)) ?? 0
             showingDeleteConfirmation = true
             break
         }
@@ -267,51 +269,23 @@ struct ExerciseListView: View {
     
     private func confirmDelete() {
         guard let exercise = exerciseToDelete else { return }
-        
-        let usageCount = exerciseSets.filter { $0.exercise.id == exercise.id }.count
-        
-        if usageCount > 0 {
-            do {
-                modelContext.delete(exercise)
-                try modelContext.save()
-                exerciseToDelete = nil
-                Haptics.impact(.medium)
-            } catch {
-                deleteErrorMessage = "Failed to delete exercise: \(error.localizedDescription)"
-                showingDeleteError = true
-            }
-        } else {
-            do {
-                modelContext.delete(exercise)
-                try modelContext.save()
-                exerciseToDelete = nil
-                Haptics.impact(.medium)
-            } catch {
-                deleteErrorMessage = "Failed to delete exercise: \(error.localizedDescription)"
-                showingDeleteError = true
-            }
+
+        do {
+            modelContext.delete(exercise)
+            try modelContext.save()
+            exerciseToDelete = nil
+            Haptics.impact(.medium)
+        } catch {
+            deleteErrorMessage = "Failed to delete exercise: \(error.localizedDescription)"
+            showingDeleteError = true
         }
     }
     
     /// Manual recovery action for the empty state (e.g. if every exercise was deleted, or the
     /// automatic launch-time seed didn't run yet). Seeding itself normally happens once,
-    /// automatically, from `ContentView`.
+    /// automatically, from `ContentView`; the `@Query` picks up the inserted rows on save.
     private func restoreDefaultExercises() {
         ExerciseData.seedIfNeeded(in: modelContext)
-        loadExercises()
-        refreshTrigger.toggle()
-    }
-
-    private func loadExercises() {
-        let descriptor = FetchDescriptor<Exercise>(
-            sortBy: [SortDescriptor(\Exercise.name)]
-        )
-
-        do {
-            manualExercises = try modelContext.fetch(descriptor)
-        } catch {
-            print("Failed to manually load exercises: \(error)")
-        }
     }
 
     func addExercise(from template: Exercise, to workout: Workout) {

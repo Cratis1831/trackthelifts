@@ -149,6 +149,9 @@ struct WorkoutHistoryCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            // Grouping walks every set of the workout; compute it once per render instead of
+            // once per access (the header, summary list, and overflow line all read it).
+            let groups = exerciseGroups
             // Header
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
@@ -171,7 +174,7 @@ struct WorkoutHistoryCard: View {
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.appAccent)
 
-                    Text("\(exerciseGroups.count) exercises")
+                    Text("\(groups.count) exercises")
                         .font(.system(size: 12))
                         .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
                 }
@@ -188,9 +191,9 @@ struct WorkoutHistoryCard: View {
             }
             
             // Exercise Summary
-            if !exerciseGroups.isEmpty {
+            if !groups.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
-                    ForEach(Array(exerciseGroups.prefix(3)), id: \.0) { exerciseName, sets in
+                    ForEach(Array(groups.prefix(3)), id: \.0) { exerciseName, sets in
                         HStack {
                             Text("• \(exerciseName)")
                                 .font(.system(size: 14))
@@ -205,8 +208,8 @@ struct WorkoutHistoryCard: View {
                         }
                     }
                     
-                    if exerciseGroups.count > 3 {
-                        Text("and \(exerciseGroups.count - 3) more...")
+                    if groups.count > 3 {
+                        Text("and \(groups.count - 3) more...")
                             .font(.system(size: 12))
                             .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
                             .padding(.top, 2)

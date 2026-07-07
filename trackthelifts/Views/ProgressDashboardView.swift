@@ -13,16 +13,18 @@ struct ProgressDashboardView: View {
         filter: #Predicate<Workout> { $0.completedAt != nil && !$0.isDeleted }
     ) private var completedWorkouts: [Workout]
 
-    private var weeklyCounts: [ProgressStatsService.WeeklyCount] {
-        ProgressStatsService.weeklyWorkoutCounts(in: modelContext)
-    }
+    // Cached in @State and recomputed on appear / when the completed-workout list changes, rather
+    // than computed in `body`. Each of these backs a full SwiftData fetch plus aggregation, and
+    // `body` reads them several times per render — as computed properties they re-ran the fetches
+    // on every access.
+    @State private var weeklyCounts: [ProgressStatsService.WeeklyCount] = []
+    @State private var volumePoints: [ProgressStatsService.WorkoutVolumePoint] = []
+    @State private var records: [ProgressStatsService.ExercisePersonalRecord] = []
 
-    private var volumePoints: [ProgressStatsService.WorkoutVolumePoint] {
-        ProgressStatsService.volumeOverTime(in: modelContext)
-    }
-
-    private var records: [ProgressStatsService.ExercisePersonalRecord] {
-        ProgressStatsService.personalRecords(in: modelContext)
+    private func refreshStats() {
+        weeklyCounts = ProgressStatsService.weeklyWorkoutCounts(in: modelContext)
+        volumePoints = ProgressStatsService.volumeOverTime(in: modelContext)
+        records = ProgressStatsService.personalRecords(in: modelContext)
     }
 
     var body: some View {
@@ -47,6 +49,10 @@ struct ProgressDashboardView: View {
             .navigationTitle("Progress")
             .navigationDestination(for: Exercise.self) { exercise in
                 ExerciseProgressView(exercise: exercise)
+            }
+            .onAppear(perform: refreshStats)
+            .onChange(of: completedWorkouts) { _, _ in
+                refreshStats()
             }
         }
     }
