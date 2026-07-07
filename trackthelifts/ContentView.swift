@@ -12,36 +12,43 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
 
     var body: some View {
-        TabView {
-            Tab("Profile", systemImage: "person") {
-                ProfileView()
-            }
+        ZStack {
+            TabView {
+                Tab("Profile", systemImage: "person") {
+                    ProfileView()
+                }
 
-            Tab("History", systemImage: "clock") {
-                HistoryView()
-            }
+                Tab("History", systemImage: "clock") {
+                    HistoryView()
+                }
 
-            Tab("Create Workout", systemImage: "plus") {
-                WorkoutView()
-            }
+                Tab("Create Workout", systemImage: "plus") {
+                    WorkoutView()
+                }
 
-            Tab("Exercises", systemImage: "dumbbell") {
-                ExerciseListView()
-            }
+                Tab("Exercises", systemImage: "dumbbell") {
+                    ExerciseListView()
+                }
 
-            Tab("Settings", systemImage: "gearshape") {
-                SettingsView()
+                Tab("Settings", systemImage: "gearshape") {
+                    SettingsView()
+                }
+            }
+            .tint(.appAccent)
+            .toolbarColorScheme(.dark, for: .tabBar)
+
+            // Onboarding is a plain overlay rather than a fullScreenCover: presenting a cover
+            // from a computed binding during the app's very first frame can fail and write
+            // `false` back through the binding, permanently marking onboarding completed before
+            // a new user ever saw it.
+            if !hasCompletedOnboarding {
+                OnboardingView()
+                    .zIndex(1)
+                    .transition(.opacity)
             }
         }
-        .tint(.appAccent)
-        .toolbarColorScheme(.dark, for: .tabBar)
+        .animation(.easeOut(duration: 0.3), value: hasCompletedOnboarding)
         .watchesRestTimerCompletion()
-        .fullScreenCover(isPresented: Binding(
-            get: { !hasCompletedOnboarding },
-            set: { isPresented in hasCompletedOnboarding = !isPresented }
-        )) {
-            OnboardingView()
-        }
         .onAppear {
             UIApplication.shared.enableTapToDismissKeyboard()
             ExerciseData.seedIfNeeded(in: modelContext)
