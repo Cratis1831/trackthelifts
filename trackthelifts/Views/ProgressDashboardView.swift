@@ -41,6 +41,11 @@ struct ProgressDashboardView: View {
                                 .frame(maxWidth: .infinity)
                                 .padding(.top, 40)
                         } else {
+                            Text("Progress")
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(.top, 4)
+
                             consistencySection
                             weeklyCountSection
                             volumeSection
