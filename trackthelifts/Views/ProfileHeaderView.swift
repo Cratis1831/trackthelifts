@@ -44,10 +44,6 @@ struct ProfileHeaderView: View {
 
                 Spacer(minLength: 0)
             }
-
-            Text("Your photo and name stay on this device.")
-                .font(.system(size: 12))
-                .foregroundColor(secondaryColor)
         }
         .onChange(of: selectedItem) { _, newItem in
             guard let newItem else { return }

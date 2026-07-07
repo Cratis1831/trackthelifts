@@ -54,6 +54,11 @@ struct ProgressDashboardView: View {
                     }
                     .padding(20)
                 }
+                // The only text field (the profile name) sits at the very top of this scroll
+                // content, so it's never covered by the keyboard. Opting out of keyboard avoidance
+                // stops the keyboard from insetting — and therefore re-laying out — the charts and
+                // records below it, which is what caused a hitch when tapping into the name field.
+                .ignoresSafeArea(.keyboard, edges: .bottom)
             }
             .navigationTitle("Profile")
             .navigationDestination(for: Exercise.self) { exercise in
