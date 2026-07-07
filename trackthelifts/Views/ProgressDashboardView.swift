@@ -18,12 +18,12 @@ struct ProgressDashboardView: View {
     // `body` reads them several times per render — as computed properties they re-ran the fetches
     // on every access.
     @State private var weeklyCounts: [ProgressStatsService.WeeklyCount] = []
-    @State private var volumePoints: [ProgressStatsService.WorkoutVolumePoint] = []
+    @State private var volume = ProgressStatsService.VolumeOverTime(granularity: .day, points: [])
     @State private var records: [ProgressStatsService.ExercisePersonalRecord] = []
 
     private func refreshStats() {
         weeklyCounts = ProgressStatsService.weeklyWorkoutCounts(in: modelContext)
-        volumePoints = ProgressStatsService.volumeOverTime(in: modelContext)
+        volume = ProgressStatsService.volumeOverTime(in: modelContext)
         records = ProgressStatsService.personalRecords(in: modelContext)
     }
 
@@ -107,33 +107,51 @@ struct ProgressDashboardView: View {
     }
 
     private var volumeSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        let isDaily = volume.granularity == .day
+        let axisUnit: Calendar.Component = isDaily ? .day : .month
+
+        return VStack(alignment: .leading, spacing: 12) {
             SectionHeaderView(
                 title: "Volume Over Time",
-                subtitle: "Weight \u{00D7} reps per workout",
-                info: "Total volume (weight \u{00D7} reps, added up across all your completed sets) for each workout, so you can see whether your training load is trending up over time."
+                subtitle: isDaily ? "Weight \u{00D7} reps per day" : "Weight \u{00D7} reps per month",
+                info: "Total volume (weight \u{00D7} reps, added up across all your completed sets) summed per \(isDaily ? "day" : "month"), so you can see whether your training load is trending up over time. Once you have workouts spanning more than the current month, this switches from days to months."
             )
 
-            if volumePoints.isEmpty {
+            if volume.points.isEmpty {
                 Text("No completed sets yet.")
                     .font(.system(size: 14))
                     .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
             } else {
-                Chart(volumePoints) { point in
+                Chart(volume.points) { point in
                     LineMark(
-                        x: .value("Date", point.date),
+                        x: .value("Date", point.date, unit: axisUnit),
                         y: .value("Volume", point.volume)
                     )
                     .foregroundStyle(Color.appAccent)
                     .interpolationMethod(.catmullRom)
 
                     PointMark(
-                        x: .value("Date", point.date),
+                        x: .value("Date", point.date, unit: axisUnit),
                         y: .value("Volume", point.volume)
                     )
                     .foregroundStyle(Color.appAccent)
                 }
                 .frame(height: 160)
+                .chartXAxis {
+                    if isDaily {
+                        AxisMarks(values: .stride(by: .day, count: 5)) { _ in
+                            AxisGridLine()
+                            AxisTick()
+                            AxisValueLabel(format: .dateTime.day())
+                        }
+                    } else {
+                        AxisMarks(values: .stride(by: .month)) { _ in
+                            AxisGridLine()
+                            AxisTick()
+                            AxisValueLabel(format: .dateTime.month(.abbreviated))
+                        }
+                    }
+                }
                 .chartYAxis {
                     AxisMarks(position: .leading)
                 }
