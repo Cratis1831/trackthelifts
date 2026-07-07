@@ -32,21 +32,30 @@ struct ProgressDashboardView: View {
             ZStack {
                 Color.black.ignoresSafeArea()
 
-                if completedWorkouts.isEmpty {
-                    emptyState
-                } else {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 28) {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 28) {
+                        ProfileHeaderView(totalWorkouts: completedWorkouts.count)
+
+                        if completedWorkouts.isEmpty {
+                            emptyState
+                                .frame(maxWidth: .infinity)
+                                .padding(.top, 40)
+                        } else {
+                            Text("Progress")
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(.top, 4)
+
                             consistencySection
                             weeklyCountSection
                             volumeSection
                             personalRecordsSection
                         }
-                        .padding(20)
                     }
+                    .padding(20)
                 }
             }
-            .navigationTitle("Progress")
+            .navigationTitle("Profile")
             .navigationDestination(for: Exercise.self) { exercise in
                 ExerciseProgressView(exercise: exercise)
             }
