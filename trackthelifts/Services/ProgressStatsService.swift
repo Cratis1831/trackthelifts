@@ -19,6 +19,19 @@ enum ProgressStatsService {
         let volume: Double
     }
 
+    /// Whether volume points are bucketed by calendar day or by calendar month.
+    enum VolumeGranularity {
+        case day
+        case month
+    }
+
+    /// Volume trend plus the granularity its points are bucketed at, so the chart can pick a
+    /// matching X axis (individual days vs. months).
+    struct VolumeOverTime {
+        let granularity: VolumeGranularity
+        let points: [WorkoutVolumePoint]
+    }
+
     struct ExerciseHistoryPoint: Identifiable {
         let id: UUID
         let date: Date
@@ -66,18 +79,47 @@ enum ProgressStatsService {
         }
     }
 
-    /// Total volume (weight x reps, completed sets only) for the most recent `limit` completed workouts, oldest to newest.
-    static func volumeOverTime(limit: Int = 12, in context: ModelContext) -> [WorkoutVolumePoint] {
-        let sorted = completedWorkouts(in: context).sorted {
-            ($0.completedAt ?? $0.date) < ($1.completedAt ?? $1.date)
-        }
-        let recent = sorted.suffix(limit)
-        return recent.map { workout in
+    /// Total volume (weight x reps, completed sets only) bucketed over time, oldest to newest.
+    ///
+    /// While all completed workouts fall within the current calendar month, volume is summed per
+    /// day so the chart can show individual days. Once data spans beyond the current month it is
+    /// summed per month instead (capped to the most recent `monthLimit` months), so the axis stays
+    /// readable as history grows.
+    static func volumeOverTime(monthLimit: Int = 12, in context: ModelContext) -> VolumeOverTime {
+        let calendar = Calendar.current
+        let now = Date()
+
+        let workoutVolumes: [(date: Date, volume: Double)] = completedWorkouts(in: context).map { workout in
             let volume = workout.exerciseSets
                 .filter { $0.isCompleted }
                 .reduce(0.0) { $0 + $1.weight * Double($1.reps) }
-            return WorkoutVolumePoint(id: workout.id, date: workout.completedAt ?? workout.date, volume: volume)
+            return (workout.completedAt ?? workout.date, volume)
         }
+
+        guard let earliestDate = workoutVolumes.map(\.date).min() else {
+            return VolumeOverTime(granularity: .day, points: [])
+        }
+
+        // If the oldest workout is in the current month, everything is — show individual days.
+        let allInCurrentMonth = calendar.isDate(earliestDate, equalTo: now, toGranularity: .month)
+        let component: Calendar.Component = allInCurrentMonth ? .day : .month
+        let granularity: VolumeGranularity = allInCurrentMonth ? .day : .month
+
+        var volumeByBucket: [Date: Double] = [:]
+        for entry in workoutVolumes {
+            let bucketStart = calendar.dateInterval(of: component, for: entry.date)?.start ?? entry.date
+            volumeByBucket[bucketStart, default: 0] += entry.volume
+        }
+
+        var points = volumeByBucket
+            .map { WorkoutVolumePoint(id: UUID(), date: $0.key, volume: $0.value) }
+            .sorted { $0.date < $1.date }
+
+        if granularity == .month {
+            points = Array(points.suffix(monthLimit))
+        }
+
+        return VolumeOverTime(granularity: granularity, points: points)
     }
 
     /// Chronological (oldest first) history of completed sets for a given exercise, from
