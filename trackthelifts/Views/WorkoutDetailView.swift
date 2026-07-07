@@ -15,18 +15,22 @@ struct WorkoutDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var isReorderingExercises = false
 
-    /// Exercise names in their persisted `exerciseOrder` (drag-reorderable by the user), falling
-    /// back to earliest-created-set order for older data that predates `exerciseOrder`.
-    private var groupedExerciseNames: [String] {
+    /// The workout's sets grouped per exercise (sets sorted by set order), in the persisted
+    /// `exerciseOrder` (drag-reorderable by the user), falling back to earliest-created-set order
+    /// for older data that predates `exerciseOrder`. `body` computes this once per render and
+    /// passes the groups down, instead of re-grouping/re-sorting per exercise row.
+    private var exerciseGroups: [(name: String, sets: [ExerciseSet])] {
         let grouped = Dictionary(grouping: workout.exerciseSets, by: \.exercise.name)
-        return grouped.keys.sorted { name1, name2 in
-            let order1 = grouped[name1]?.map(\.exerciseOrder).min() ?? Int.max
-            let order2 = grouped[name2]?.map(\.exerciseOrder).min() ?? Int.max
-            if order1 != order2 { return order1 < order2 }
-            let earliest1 = grouped[name1]?.map(\.createdAt).min() ?? .distantFuture
-            let earliest2 = grouped[name2]?.map(\.createdAt).min() ?? .distantFuture
-            return earliest1 < earliest2
-        }
+        return grouped
+            .map { (name: $0.key, sets: $0.value.sorted { $0.order < $1.order }) }
+            .sorted { lhs, rhs in
+                let order1 = lhs.sets.map(\.exerciseOrder).min() ?? Int.max
+                let order2 = rhs.sets.map(\.exerciseOrder).min() ?? Int.max
+                if order1 != order2 { return order1 < order2 }
+                let earliest1 = lhs.sets.map(\.createdAt).min() ?? .distantFuture
+                let earliest2 = rhs.sets.map(\.createdAt).min() ?? .distantFuture
+                return earliest1 < earliest2
+            }
     }
 
     private func sets(for exerciseName: String) -> [ExerciseSet] {
@@ -40,12 +44,12 @@ struct WorkoutDetailView: View {
     /// `.onMove` configuration List supports reliably (moving multi-row Sections crashes the
     /// List's index mapping).
     private func moveExercises(from source: IndexSet, to destination: Int) {
-        var names = groupedExerciseNames
-        guard source.allSatisfy({ $0 < names.count }), destination <= names.count else { return }
-        names.move(fromOffsets: source, toOffset: destination)
+        var groups = exerciseGroups
+        guard source.allSatisfy({ $0 < groups.count }), destination <= groups.count else { return }
+        groups.move(fromOffsets: source, toOffset: destination)
 
-        for (index, name) in names.enumerated() {
-            for set in sets(for: name) {
+        for (index, group) in groups.enumerated() {
+            for set in group.sets {
                 set.exerciseOrder = index
             }
         }
@@ -55,7 +59,7 @@ struct WorkoutDetailView: View {
     }
 
     /// Exercise name row: long-press it (or tap its grip icon) to enter reorder mode.
-    private func exerciseTitleRow(_ name: String) -> some View {
+    private func exerciseTitleRow(_ name: String, canReorder: Bool) -> some View {
         HStack {
             Text(name)
                 .font(.system(size: 16, weight: .semibold))
@@ -63,7 +67,7 @@ struct WorkoutDetailView: View {
 
             Spacer()
 
-            if groupedExerciseNames.count > 1 {
+            if canReorder {
                 Button {
                     Haptics.selection()
                     withAnimation {
@@ -93,7 +97,7 @@ struct WorkoutDetailView: View {
         }
         .contentShape(Rectangle())
         .onLongPressGesture {
-            if groupedExerciseNames.count > 1 {
+            if canReorder {
                 Haptics.selection()
                 withAnimation {
                     isReorderingExercises = true
@@ -104,15 +108,15 @@ struct WorkoutDetailView: View {
 
     /// Compact reorder mode: the workout collapses to one draggable row per exercise.
     @ViewBuilder
-    private var reorderModeContent: some View {
+    private func reorderModeContent(groups: [(name: String, sets: [ExerciseSet])]) -> some View {
         Section {
-            ForEach(groupedExerciseNames, id: \.self) { name in
+            ForEach(groups, id: \.name) { group in
                 HStack(spacing: 12) {
-                    Text(name)
+                    Text(group.name)
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.primary)
                     Spacer()
-                    Text("\(sets(for: name).count) set\(sets(for: name).count == 1 ? "" : "s")")
+                    Text("\(group.sets.count) set\(group.sets.count == 1 ? "" : "s")")
                         .font(.system(size: 14))
                         .foregroundColor(Color(.secondaryLabel))
                 }
@@ -183,16 +187,19 @@ struct WorkoutDetailView: View {
                 .listRowBackground(Color.black)
                 .listRowSeparator(.hidden)
 
+                // Grouping walks and sorts every set, so compute it once per render here and hand
+                // the result down instead of re-deriving it per exercise row.
+                let groups = exerciseGroups
                 if isReorderingExercises {
-                    reorderModeContent
+                    reorderModeContent(groups: groups)
                 } else {
-                    ForEach(groupedExerciseNames, id: \.self) { name in
+                    ForEach(groups, id: \.name) { group in
                         Section {
-                            exerciseTitleRow(name)
+                            exerciseTitleRow(group.name, canReorder: groups.count > 1)
 
                             columnHeader
 
-                            ForEach(sets(for: name)) { set in
+                            ForEach(group.sets) { set in
                                 ExerciseSetView(exerciseSet: set)
                                     .swipeActions(edge: .trailing) {
                                         Button(role: .destructive) {
@@ -204,7 +211,7 @@ struct WorkoutDetailView: View {
                             }
 
                             Button {
-                                addSet(for: name)
+                                addSet(for: group.name)
                             } label: {
                                 HStack(spacing: 6) {
                                     Image(systemName: "plus")

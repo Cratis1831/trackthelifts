@@ -38,19 +38,23 @@ struct CreateWorkoutView: View {
     var dataFilled: Bool {
         !workoutName.isEmpty
     }
-    /// Exercise names in their persisted `exerciseOrder` (drag-reorderable by the user), falling
-    /// back to earliest-created-set order for older data that predates `exerciseOrder`.
-    private var groupedExerciseNames: [String] {
+    /// The workout's sets grouped per exercise (sets sorted by set order), in the persisted
+    /// `exerciseOrder` (drag-reorderable by the user), falling back to earliest-created-set order
+    /// for older data that predates `exerciseOrder`. `body` computes this once per render and
+    /// passes the groups down, instead of re-grouping/re-sorting per exercise row.
+    private var exerciseGroups: [(name: String, sets: [ExerciseSet])] {
         guard let workout = savedWorkout else { return [] }
         let grouped = Dictionary(grouping: workout.exerciseSets, by: \.exercise.name)
-        return grouped.keys.sorted { name1, name2 in
-            let order1 = grouped[name1]?.map(\.exerciseOrder).min() ?? Int.max
-            let order2 = grouped[name2]?.map(\.exerciseOrder).min() ?? Int.max
-            if order1 != order2 { return order1 < order2 }
-            let earliest1 = grouped[name1]?.map(\.createdAt).min() ?? .distantFuture
-            let earliest2 = grouped[name2]?.map(\.createdAt).min() ?? .distantFuture
-            return earliest1 < earliest2
-        }
+        return grouped
+            .map { (name: $0.key, sets: $0.value.sorted { $0.order < $1.order }) }
+            .sorted { lhs, rhs in
+                let order1 = lhs.sets.map(\.exerciseOrder).min() ?? Int.max
+                let order2 = rhs.sets.map(\.exerciseOrder).min() ?? Int.max
+                if order1 != order2 { return order1 < order2 }
+                let earliest1 = lhs.sets.map(\.createdAt).min() ?? .distantFuture
+                let earliest2 = rhs.sets.map(\.createdAt).min() ?? .distantFuture
+                return earliest1 < earliest2
+            }
     }
 
     /// Reassigns sequential `exerciseOrder` values to every set after a drag-reorder, so the new
@@ -59,12 +63,12 @@ struct CreateWorkoutView: View {
     /// Sections crashes the List's index mapping, which is why reordering collapses to compact
     /// rows first).
     private func moveExercises(from source: IndexSet, to destination: Int) {
-        var names = groupedExerciseNames
-        guard source.allSatisfy({ $0 < names.count }), destination <= names.count else { return }
-        names.move(fromOffsets: source, toOffset: destination)
+        var groups = exerciseGroups
+        guard source.allSatisfy({ $0 < groups.count }), destination <= groups.count else { return }
+        groups.move(fromOffsets: source, toOffset: destination)
 
-        for (index, name) in names.enumerated() {
-            for set in sets(for: name) {
+        for (index, group) in groups.enumerated() {
+            for set in group.sets {
                 set.exerciseOrder = index
             }
         }
@@ -75,13 +79,6 @@ struct CreateWorkoutView: View {
         } catch {
             print("Failed to reorder exercises: \(error)")
         }
-    }
-
-    private func sets(for exerciseName: String) -> [ExerciseSet] {
-        guard let workout = savedWorkout else { return [] }
-        return workout.exerciseSets
-            .filter { $0.exercise.name == exerciseName }
-            .sorted { $0.order < $1.order }
     }
 
     private func exerciseSetRow(_ exerciseSet: ExerciseSet, in workout: Workout) -> some View {
@@ -96,7 +93,7 @@ struct CreateWorkoutView: View {
     }
 
     /// Exercise name row: long-press it (or tap its grip icon) to enter reorder mode.
-    private func exerciseTitleRow(_ exerciseName: String) -> some View {
+    private func exerciseTitleRow(_ exerciseName: String, canReorder: Bool) -> some View {
         HStack {
             Text(exerciseName)
                 .font(.system(size: 16, weight: .semibold))
@@ -104,7 +101,7 @@ struct CreateWorkoutView: View {
 
             Spacer()
 
-            if groupedExerciseNames.count > 1 {
+            if canReorder {
                 Button {
                     enterReorderMode()
                 } label: {
@@ -119,7 +116,7 @@ struct CreateWorkoutView: View {
         }
         .contentShape(Rectangle())
         .onLongPressGesture {
-            if groupedExerciseNames.count > 1 {
+            if canReorder {
                 enterReorderMode()
             }
         }
@@ -137,15 +134,15 @@ struct CreateWorkoutView: View {
     /// `.onMove` configuration List supports reliably (dragging multi-row Sections crashes the
     /// List's internal index mapping). Edit mode is forced active so drag handles show instantly.
     @ViewBuilder
-    private var reorderModeContent: some View {
+    private func reorderModeContent(groups: [(name: String, sets: [ExerciseSet])]) -> some View {
         Section {
-            ForEach(groupedExerciseNames, id: \.self) { exerciseName in
+            ForEach(groups, id: \.name) { group in
                 HStack(spacing: 12) {
-                    Text(exerciseName)
+                    Text(group.name)
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.primary)
                     Spacer()
-                    Text("\(sets(for: exerciseName).count) set\(sets(for: exerciseName).count == 1 ? "" : "s")")
+                    Text("\(group.sets.count) set\(group.sets.count == 1 ? "" : "s")")
                         .font(.system(size: 14))
                         .foregroundColor(Color(.secondaryLabel))
                 }
@@ -190,8 +187,11 @@ struct CreateWorkoutView: View {
                 VStack(spacing: 0) {
                     ScrollViewReader { scrollProxy in
                     List {
+                        // Grouping walks and sorts every set, so compute it once per render here
+                        // and hand the result down instead of re-deriving it per exercise row.
+                        let groups = exerciseGroups
                         if isReorderingExercises {
-                            reorderModeContent
+                            reorderModeContent(groups: groups)
                         } else {
                         Section {
                             TextField("Workout Name", text: $workoutName)
@@ -234,16 +234,16 @@ struct CreateWorkoutView: View {
                         .listRowBackground(Color.black)
                         .listRowSeparator(.hidden)
 
-                        if let workout = savedWorkout, !workout.exerciseSets.isEmpty {
-                            ForEach(groupedExerciseNames, id: \.self) { exerciseName in
+                        if let workout = savedWorkout, !groups.isEmpty {
+                            ForEach(groups, id: \.name) { group in
                                 Section {
-                                    RestTimerBanner(exerciseName: exerciseName)
+                                    RestTimerBanner(exerciseName: group.name)
 
-                                    exerciseTitleRow(exerciseName)
+                                    exerciseTitleRow(group.name, canReorder: groups.count > 1)
 
                                     columnHeader
 
-                                    ForEach(sets(for: exerciseName)) { exerciseSet in
+                                    ForEach(group.sets) { exerciseSet in
                                         exerciseSetRow(exerciseSet, in: workout)
                                             .swipeActions(edge: .trailing) {
                                             Button(role: .destructive) {
@@ -255,7 +255,7 @@ struct CreateWorkoutView: View {
                                     }
 
                                     Button {
-                                        addNewSet(for: sets(for: exerciseName).first?.exercise, to: workout)
+                                        addNewSet(for: group.sets.first?.exercise, to: workout)
                                     } label: {
                                         HStack(spacing: 6) {
                                             Image(systemName: "plus")
