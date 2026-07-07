@@ -120,14 +120,7 @@ struct WorkoutView: View {
                             }
 
                             // Template Cards
-                            if templates.isEmpty {
-                                EmptyStateView(
-                                    systemImage: "list.bullet.rectangle",
-                                    title: "No Routines Yet",
-                                    message: "Save a completed workout as a routine, or add a new one, to see it here."
-                                )
-                                .padding(.top, 20)
-                            } else {
+                            if !templates.isEmpty {
                                 LazyVStack(spacing: 15) {
                                     ForEach(sortedTemplates) { template in
                                         TemplateCard(template: template, onTap: {
@@ -143,7 +136,17 @@ struct WorkoutView: View {
                     }
                     .padding(.bottom, 100) // Space for floating action button
                 }
-                
+
+                // Empty state — centered in the screen to match the
+                // History and Progress tabs.
+                if templates.isEmpty {
+                    EmptyStateView(
+                        systemImage: "list.bullet.rectangle",
+                        title: "No Routines Yet",
+                        message: "Save a completed workout as a routine, or add a new one, to see it here."
+                    )
+                }
+
                 // Floating Action Button
                 VStack {
                     Spacer()
