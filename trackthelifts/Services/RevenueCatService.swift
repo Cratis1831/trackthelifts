@@ -33,8 +33,12 @@ class RevenueCatService: ObservableObject {
         // Configure RevenueCat
         Purchases.configure(withAPIKey: apiKey)
         
-        // Enable debug logs
+        // Verbose SDK logs are visible in Console.app/sysdiagnose, so keep them out of release builds.
+        #if DEBUG
         Purchases.logLevel = .debug
+        #else
+        Purchases.logLevel = .error
+        #endif
         
         do {
             // Get initial customer info using the completion handler
@@ -108,13 +112,15 @@ class RevenueCatService: ObservableObject {
                 Purchases.shared.purchase(package: package) { transaction, customerInfo, error, userCancelled in
                     if let error = error {
                         continuation.resume(throwing: error)
-                    } else {
+                    } else if let customerInfo = customerInfo {
                         let resultData = PurchaseResultData(
                             transaction: transaction,
-                            customerInfo: customerInfo!,
+                            customerInfo: customerInfo,
                             userCancelled: userCancelled
                         )
                         continuation.resume(returning: resultData)
+                    } else {
+                        continuation.resume(throwing: RevenueCatError.notConfigured)
                     }
                 }
             }
@@ -243,7 +249,10 @@ class RevenueCatService: ObservableObject {
             currentTier = .free
         }
         
+        // The user's tier and entitlements are account state; only log them in debug builds.
+        #if DEBUG
         print("Updated subscription status - Current tier: \(currentTier.displayName)")
         print("Active entitlements: \(customerInfo.entitlements.active.keys)")
+        #endif
     }
 }
