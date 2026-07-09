@@ -84,7 +84,7 @@ struct ProfileHeaderView: View {
         .overlay(alignment: .bottomTrailing) {
             Image(systemName: "camera.fill")
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundColor(.white)
+                .foregroundColor(.onAppAccent)
                 .padding(6)
                 .background(Color.appAccent)
                 .clipShape(Circle())

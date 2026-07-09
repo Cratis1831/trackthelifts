@@ -26,7 +26,7 @@ class ThemePreference {
         if let raw = userDefaults.string(forKey: "appTheme"), let saved = AppTheme(rawValue: raw) {
             self.theme = saved
         } else {
-            self.theme = .orange
+            self.theme = .indigo
         }
     }
 }

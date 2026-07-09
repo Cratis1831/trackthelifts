@@ -164,7 +164,7 @@ struct SettingsView: View {
                 IconTile(color: .appAccent) {
                     Image(systemName: "checkmark.seal.fill")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(.onAppAccent)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
@@ -225,6 +225,7 @@ struct SettingsView: View {
                     Image(systemName: "arrow.right")
                         .font(.system(size: 14, weight: .medium))
                 }
+                .foregroundStyle(Color.onAppAccent)
             }
             .buttonStyle(.borderedProminent)
             .buttonBorderShape(.roundedRectangle(radius: 12))
@@ -306,7 +307,7 @@ struct SettingsView: View {
                         .foregroundColor(.white)
                 }
             }
-            .tint(.appAccent)
+            .tint(.appToggleTint)
 
             if notificationService.remindersEnabled {
                 DatePicker(
@@ -356,7 +357,7 @@ struct SettingsView: View {
                     .foregroundColor(.white)
             }
         }
-        .tint(.appAccent)
+        .tint(.appToggleTint)
     }
 
     private var accentColorRow: some View {
@@ -365,7 +366,7 @@ struct SettingsView: View {
                 IconTile(color: themePreference.accentColor) {
                     Image(systemName: "paintpalette.fill")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(.onAppAccent)
                 }
                 Text("Accent Color")
                     .font(.system(size: 16))
@@ -394,6 +395,9 @@ struct SettingsView: View {
             Circle()
                 .fill(theme.color)
                 .frame(width: 30, height: 30)
+                .overlay(
+                    Circle().strokeBorder(Color.white.opacity(0.15), lineWidth: 1)
+                )
             if themePreference.theme == theme {
                 Circle()
                     .stroke(Color.white, lineWidth: 2)

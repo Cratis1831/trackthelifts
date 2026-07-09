@@ -127,11 +127,11 @@ struct PaywallView: View {
                                 if revenueCatService.isLoading {
                                     ProgressView()
                                         .scaleEffect(0.9)
-                                        .tint(.white)
+                                        .tint(selectedPackage != nil ? .onAppAccent : .white)
                                 } else {
                                     Text(purchaseButtonText)
                                         .font(.system(size: 16, weight: .semibold))
-                                        .foregroundColor(.white)
+                                        .foregroundColor(selectedPackage != nil ? .onAppAccent : .white)
                                 }
                             }
                             .frame(maxWidth: .infinity)

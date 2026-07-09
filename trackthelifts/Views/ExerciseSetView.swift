@@ -132,7 +132,7 @@ struct ExerciseSetView: View {
                     if isCompleted {
                         Image(systemName: "checkmark")
                             .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.white)
+                            .foregroundColor(.onAppAccent)
                     }
                 }
                 .frame(width: 30, height: 30)

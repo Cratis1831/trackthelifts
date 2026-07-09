@@ -163,7 +163,7 @@ struct WorkoutView: View {
                         }) {
                             Image(systemName: sessionManager.isWorkoutMinimized ? "play.fill" : "plus")
                                 .font(.system(size: 24, weight: .medium))
-                                .foregroundColor(.white)
+                                .foregroundColor(sessionManager.isWorkoutMinimized ? .white : .onAppAccent)
                                 .frame(width: 56, height: 56)
                                 .background(sessionManager.isWorkoutMinimized ? Color.green : Color.appAccent)
                                 .clipShape(Circle())

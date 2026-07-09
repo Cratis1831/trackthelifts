@@ -68,7 +68,7 @@ struct OnboardingView: View {
                 } label: {
                     Text(currentPage == Self.pageCount - 1 ? "Start Lifting" : "Continue")
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(.onAppAccent)
                         .frame(maxWidth: .infinity, minHeight: 54)
                         .background(
                             Capsule().fill(Color.appAccent)
@@ -105,20 +105,14 @@ private struct WelcomePage: View {
         VStack(spacing: 0) {
             Spacer()
 
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [Color.appAccent, Color.appAccent.opacity(0.6)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+            Image("AppIconDisplay")
+                .resizable()
+                .interpolation(.high)
                 .frame(width: 112, height: 112)
+                .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
                 .overlay(
-                    Image(systemName: "dumbbell.fill")
-                        .font(.system(size: 50, weight: .medium))
-                        .foregroundColor(.white)
-                        .rotationEffect(.degrees(showMark ? -45 : -90))
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
                 )
                 .shadow(color: Color.appAccent.opacity(0.45), radius: 24, y: 10)
                 .scaleEffect(showMark ? 1 : 0.5)
