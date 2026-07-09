@@ -21,10 +21,22 @@ struct ProgressDashboardView: View {
     @State private var volume = ProgressStatsService.VolumeOverTime(granularity: .day, points: [])
     @State private var records: [ProgressStatsService.ExercisePersonalRecord] = []
 
+    // Chart selection is split into two vars per chart: the raw date bound to `chartXSelection`
+    // (which the system clears on finger lift) and a persisted snapped point that keeps the
+    // callout visible after the gesture ends. Tapping the selected mark again dismisses it.
+    @State private var rawSelectedWeekDate: Date?
+    @State private var selectedWeek: ProgressStatsService.WeeklyCount?
+    @State private var rawSelectedVolumeDate: Date?
+    @State private var selectedVolumePoint: ProgressStatsService.WorkoutVolumePoint?
+
     private func refreshStats() {
         weeklyCounts = ProgressStatsService.weeklyWorkoutCounts(in: modelContext)
         volume = ProgressStatsService.volumeOverTime(in: modelContext)
         records = ProgressStatsService.personalRecords(in: modelContext)
+        // The arrays above are rebuilt with fresh ids, so a retained selection could describe
+        // data that no longer matches what's drawn.
+        selectedWeek = nil
+        selectedVolumePoint = nil
     }
 
     var body: some View {
@@ -110,12 +122,43 @@ struct ProgressDashboardView: View {
                     x: .value("Week", week.weekStart, unit: .weekOfYear),
                     y: .value("Workouts", week.count)
                 )
-                .foregroundStyle(Color.appAccent)
+                .foregroundStyle(
+                    selectedWeek == nil || selectedWeek?.weekStart == week.weekStart
+                        ? Color.appAccent
+                        : Color.appAccent.opacity(0.35)
+                )
                 .cornerRadius(4)
+                .annotation(
+                    position: .top,
+                    spacing: 6,
+                    overflowResolution: .init(x: .fit(to: .chart), y: .disabled)
+                ) {
+                    if week.weekStart == selectedWeek?.weekStart {
+                        ChartCalloutView(
+                            title: "Week of \(week.weekStart.formatted(.dateTime.month(.abbreviated).day()))",
+                            value: "\(week.count) workout\(week.count == 1 ? "" : "s")"
+                        )
+                    }
+                }
             }
             .frame(height: 160)
             .chartYAxis {
                 AxisMarks(position: .leading)
+            }
+            .chartXSelection(value: $rawSelectedWeekDate)
+            .animation(.easeInOut(duration: 0.15), value: selectedWeek?.weekStart)
+            .onChange(of: rawSelectedWeekDate) { old, new in
+                guard let new else { return }
+                let weekStart = Calendar.current.dateInterval(of: .weekOfYear, for: new)?.start
+                let snapped = weeklyCounts.first { $0.weekStart == weekStart }
+                    ?? weeklyCounts.nearest(to: new, by: \.weekStart)
+                // Compare by weekStart, not id — WeeklyCount ids are regenerated on every refresh.
+                if old == nil, snapped?.weekStart == selectedWeek?.weekStart {
+                    selectedWeek = nil
+                } else if snapped?.weekStart != selectedWeek?.weekStart {
+                    selectedWeek = snapped
+                    Haptics.selection()
+                }
             }
         }
     }
@@ -136,19 +179,46 @@ struct ProgressDashboardView: View {
                     .font(.system(size: 14))
                     .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
             } else {
-                Chart(volume.points) { point in
-                    LineMark(
-                        x: .value("Date", point.date, unit: axisUnit),
-                        y: .value("Volume", point.volume)
-                    )
-                    .foregroundStyle(Color.appAccent)
-                    .interpolationMethod(.catmullRom)
+                Chart {
+                    ForEach(volume.points) { point in
+                        LineMark(
+                            x: .value("Date", point.date, unit: axisUnit),
+                            y: .value("Volume", point.volume)
+                        )
+                        .foregroundStyle(Color.appAccent)
+                        .interpolationMethod(.catmullRom)
 
-                    PointMark(
-                        x: .value("Date", point.date, unit: axisUnit),
-                        y: .value("Volume", point.volume)
-                    )
-                    .foregroundStyle(Color.appAccent)
+                        PointMark(
+                            x: .value("Date", point.date, unit: axisUnit),
+                            y: .value("Volume", point.volume)
+                        )
+                        .foregroundStyle(Color.appAccent)
+                    }
+
+                    if let sel = selectedVolumePoint {
+                        RuleMark(x: .value("Date", sel.date, unit: axisUnit))
+                            .foregroundStyle(Color.white.opacity(0.25))
+                            .lineStyle(StrokeStyle(lineWidth: 1))
+                            .annotation(
+                                position: .top,
+                                spacing: 0,
+                                overflowResolution: .init(x: .fit(to: .chart), y: .disabled)
+                            ) {
+                                ChartCalloutView(
+                                    title: isDaily
+                                        ? sel.date.formatted(.dateTime.month(.abbreviated).day())
+                                        : sel.date.formatted(.dateTime.month(.wide).year()),
+                                    value: "\(Int(sel.volume.rounded()).formatted()) \(WeightUnitPreference.shared.unit.label)"
+                                )
+                            }
+
+                        PointMark(
+                            x: .value("Date", sel.date, unit: axisUnit),
+                            y: .value("Volume", sel.volume)
+                        )
+                        .symbolSize(120)
+                        .foregroundStyle(Color.appAccent)
+                    }
                 }
                 .frame(height: 160)
                 .chartXAxis {
@@ -168,6 +238,22 @@ struct ProgressDashboardView: View {
                 }
                 .chartYAxis {
                     AxisMarks(position: .leading)
+                }
+                .chartXSelection(value: $rawSelectedVolumeDate)
+                .onChange(of: rawSelectedVolumeDate) { old, new in
+                    guard let new else { return }
+                    // Mirror the marks' bucketing; fall back to nearest since points are sparse
+                    // (days/months without workouts have no point).
+                    let component: Calendar.Component = volume.granularity == .day ? .day : .month
+                    let bucket = Calendar.current.dateInterval(of: component, for: new)?.start
+                    let snapped = volume.points.first { $0.date == bucket }
+                        ?? volume.points.nearest(to: new, by: \.date)
+                    if old == nil, snapped?.id == selectedVolumePoint?.id {
+                        selectedVolumePoint = nil
+                    } else if snapped?.id != selectedVolumePoint?.id {
+                        selectedVolumePoint = snapped
+                        Haptics.selection()
+                    }
                 }
             }
         }
