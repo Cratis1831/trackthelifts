@@ -704,8 +704,12 @@ struct RestTimerBanner: View {
     private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     private var remainingSeconds: Int {
-        guard let endDate = manager.endDate else { return 0 }
-        return max(0, Int(endDate.timeIntervalSince(now).rounded()))
+        // Compute against the live clock (`manager.remainingTime` reads `Date.now`) rather than the
+        // `now` state. `now` is only seeded when the banner is first created — near the workout's
+        // start — and isn't refreshed until the ticker fires a second later. Using it here made the
+        // first frame show `endDate - staleNow` (≈ rest duration + workout-elapsed time), so the
+        // countdown briefly flashed a too-large value before snapping to the real remaining time.
+        max(0, Int(manager.remainingTime.rounded()))
     }
 
     var body: some View {
@@ -745,9 +749,10 @@ struct RestTimerBanner: View {
             .background(Color(red: 0.11, green: 0.11, blue: 0.12))
             .cornerRadius(10)
             .onReceive(ticker) { value in
-                // Just drive the countdown display. Completion alerting (chime/haptic vs. the
-                // background notification) is handled once, app-wide, by RestTimerCompletionWatcher
-                // so it works on any screen and never double-fires.
+                // Bump `now` once a second purely to force a re-render so `remainingSeconds`
+                // (computed against the live clock) refreshes. Completion alerting (chime/haptic vs.
+                // the background notification) is handled once, app-wide, by
+                // RestTimerCompletionWatcher so it works on any screen and never double-fires.
                 now = value
             }
         }
