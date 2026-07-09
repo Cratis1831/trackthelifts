@@ -197,6 +197,8 @@ struct WorkoutDetailView: View {
                         Section {
                             exerciseTitleRow(group.name, canReorder: groups.count > 1)
 
+                            ExerciseNoteField(workout: workout, exerciseName: group.name)
+
                             columnHeader
 
                             ForEach(group.sets) { set in
@@ -297,6 +299,7 @@ struct WorkoutDetailView: View {
     /// Removes a set and renumbers the remaining sets for that exercise so "Set N" stays sequential.
     private func deleteSet(_ set: ExerciseSet) {
         let exercise = set.exercise
+        workout.preserveExerciseNote(beforeDeleting: set)
         workout.exerciseSets.removeAll { $0.id == set.id }
         modelContext.delete(set)
 

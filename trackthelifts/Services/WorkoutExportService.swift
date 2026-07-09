@@ -7,7 +7,7 @@ import Foundation
 import SwiftData
 
 enum WorkoutExportService {
-    private static let columns = ["Date", "Workout Title", "Exercise", "Body Part", "Set", "Set Type", "Weight", "Unit", "Reps", "Notes"]
+    private static let columns = ["Date", "Workout Title", "Exercise", "Body Part", "Set", "Set Type", "Weight", "Unit", "Reps", "Notes", "Exercise Note"]
 
     private static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -45,6 +45,9 @@ enum WorkoutExportService {
             for name in orderedNames {
                 guard let sets = grouped[name]?.sorted(by: { $0.order < $1.order }) else { continue }
                 let bodypart = sets.first?.exercise.bodypart?.name ?? ""
+                // Read via the Workout helper (which scans all of the workout's sets), not this
+                // completed-only group — the note may live on a set that was never completed.
+                let exerciseNote = workout.exerciseNote(for: name)
 
                 for (index, set) in sets.enumerated() {
                     rows.append([
@@ -58,6 +61,7 @@ enum WorkoutExportService {
                         unitLabel,
                         String(set.reps),
                         notes,
+                        exerciseNote,
                     ])
                 }
             }
