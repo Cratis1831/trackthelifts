@@ -241,6 +241,8 @@ struct CreateWorkoutView: View {
 
                                     exerciseTitleRow(group.name, canReorder: groups.count > 1)
 
+                                    ExerciseNoteField(workout: workout, exerciseName: group.name)
+
                                     columnHeader
 
                                     ForEach(group.sets) { exerciseSet in
@@ -637,6 +639,7 @@ struct CreateWorkoutView: View {
     /// Removes a set and renumbers the remaining sets for that exercise so "Set N" stays sequential.
     private func deleteSet(_ set: ExerciseSet, from workout: Workout) {
         let exercise = set.exercise
+        workout.preserveExerciseNote(beforeDeleting: set)
         workout.exerciseSets.removeAll { $0.id == set.id }
         modelContext.delete(set)
 
@@ -691,6 +694,38 @@ struct WorkoutActionButtonStyle: ButtonStyle {
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
             .opacity(configuration.isPressed ? 0.85 : 1)
             .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
+    }
+}
+
+/// Optional per-exercise note field shown under the exercise title in both the active-workout
+/// and history-detail screens. The note lives on one of the exercise's sets (see
+/// `ExerciseSet.exerciseNote`), so all reads/writes go through the `Workout` helpers, saving on
+/// every change like the workout name/notes fields do.
+struct ExerciseNoteField: View {
+    let workout: Workout
+    let exerciseName: String
+
+    @Environment(\.modelContext) private var modelContext
+
+    var body: some View {
+        TextField(
+            "Add note",
+            text: Binding(
+                get: { workout.exerciseNote(for: exerciseName) },
+                set: { newValue in
+                    workout.setExerciseNote(newValue, for: exerciseName)
+                    workout.updatedAt = .now
+                    do {
+                        try modelContext.save()
+                    } catch {
+                        print("Failed to save exercise note: \(error)")
+                    }
+                }
+            ),
+            axis: .vertical
+        )
+        .font(.system(size: 14))
+        .textFieldStyle(.plain)
     }
 }
 

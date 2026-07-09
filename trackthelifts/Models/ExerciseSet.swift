@@ -31,6 +31,16 @@ class ExerciseSet {
         setType ?? .working
     }
 
+    /// Optional user note for this set's exercise within this specific workout (e.g. "felt heavy,
+    /// drop 5 lbs next time"). Scoped to the exercise-in-this-workout — distinct from the
+    /// workout-level `Workout.notes` and from the global `Exercise` catalog entry. By convention
+    /// only one set per (workout, exercise) group carries the note, so read/write it through
+    /// `Workout.exerciseNote(for:)` / `Workout.setExerciseNote(_:for:)` rather than directly.
+    /// Optional with a `nil` default so SwiftData's lightweight migration can add the column in
+    /// place: sets written before this property existed persist `NULL` and read back as `nil`
+    /// (no note) instead of crashing.
+    var exerciseNote: String?
+
     // CloudKit sync properties
     var createdAt: Date
     var updatedAt: Date
@@ -51,6 +61,7 @@ class ExerciseSet {
         workout: Workout,
         isCompleted: Bool = false,
         setType: SetClassification = .working,
+        exerciseNote: String? = nil,
         createdAt: Date = .now,
         updatedAt: Date = .now,
         isDeleted: Bool = false,
@@ -66,6 +77,7 @@ class ExerciseSet {
         self.workout = workout
         self.isCompleted = isCompleted
         self.setType = setType
+        self.exerciseNote = exerciseNote
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.isDeleted = isDeleted

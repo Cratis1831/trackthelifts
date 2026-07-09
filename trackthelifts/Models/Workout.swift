@@ -53,6 +53,52 @@ extension Workout {
         exerciseSets.append(newExercise)
     }
 
+    /// The per-exercise note for the given exercise within this workout, or "" if none. The note
+    /// is stored on one of the exercise's sets (first non-nil in set order) — see
+    /// `ExerciseSet.exerciseNote`.
+    func exerciseNote(for exerciseName: String) -> String {
+        orderedSets(ofExerciseNamed: exerciseName)
+            .compactMap(\.exerciseNote)
+            .first ?? ""
+    }
+
+    /// Writes the per-exercise note onto the exercise's first set (lowest `order`) and clears any
+    /// stale copy from its other sets, keeping exactly one carrier. Empty/whitespace-only input
+    /// stores `nil` so "no note" round-trips identically for pre- and post-migration sets. The
+    /// string is stored untrimmed so a live TextField binding reads back exactly what was typed.
+    /// Caller is responsible for saving the context.
+    func setExerciseNote(_ note: String, for exerciseName: String) {
+        let sets = orderedSets(ofExerciseNamed: exerciseName)
+        guard let first = sets.first else { return }
+        let normalized = note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : note
+        if first.exerciseNote != normalized {
+            first.exerciseNote = normalized
+            first.updatedAt = .now
+        }
+        for other in sets.dropFirst() where other.exerciseNote != nil {
+            other.exerciseNote = nil
+            other.updatedAt = .now
+        }
+    }
+
+    /// Call before deleting `set`: if it carries its exercise's note, move the note onto a
+    /// surviving set of the same exercise so deleting one set doesn't silently delete the note.
+    /// (When it's the exercise's last set, the note is intentionally deleted with the exercise.)
+    func preserveExerciseNote(beforeDeleting set: ExerciseSet) {
+        guard let note = set.exerciseNote else { return }
+        guard let survivor = orderedSets(ofExerciseNamed: set.exercise.name)
+            .first(where: { $0.id != set.id }) else { return }
+        survivor.exerciseNote = note
+        survivor.updatedAt = .now
+        set.exerciseNote = nil
+    }
+
+    private func orderedSets(ofExerciseNamed name: String) -> [ExerciseSet] {
+        exerciseSets
+            .filter { $0.exercise.name == name }
+            .sorted { $0.order < $1.order }
+    }
+
     /// Creates a new in-progress `Workout` that repeats this (typically completed) workout's
     /// exercises and set count, carrying over the previous weight/reps as a starting point
     /// but resetting completion so the user logs each set fresh. Preserves the original
@@ -75,6 +121,7 @@ extension Workout {
             guard let group = grouped[name] else { continue }
             let sets = group.sorted { $0.order < $1.order }
             guard let exercise = sets.first?.exercise else { continue }
+            let groupNote = sets.compactMap(\.exerciseNote).first
 
             for (index, previousSet) in sets.enumerated() {
                 let newSet = ExerciseSet(
@@ -83,7 +130,8 @@ extension Workout {
                     order: index,
                     exerciseOrder: exerciseIndex,
                     exercise: exercise,
-                    workout: newWorkout
+                    workout: newWorkout,
+                    exerciseNote: index == 0 ? groupNote : nil
                 )
                 context.insert(newSet)
                 newWorkout.exerciseSets.append(newSet)
