@@ -19,6 +19,11 @@ struct ExerciseProgressView: View {
     /// doesn't flash for one frame before the first fetch completes.
     @State private var hasLoadedHistory = false
 
+    // Raw date bound to `chartXSelection` (cleared by the system on finger lift) plus a persisted
+    // snapped point that keeps the callout visible after the gesture ends.
+    @State private var rawSelectedDate: Date?
+    @State private var selectedPoint: ProgressStatsService.ExerciseHistoryPoint?
+
     private var bestWeight: Double {
         history.map(\.weight).max() ?? 0
     }
@@ -45,23 +50,66 @@ struct ExerciseProgressView: View {
                                 .font(.system(size: 18, weight: .semibold))
                                 .foregroundColor(.white)
 
-                            Chart(history) { point in
-                                LineMark(
-                                    x: .value("Date", point.date),
-                                    y: .value("Est. 1RM", point.estimated1RM)
-                                )
-                                .foregroundStyle(Color.appAccent)
-                                .interpolationMethod(.catmullRom)
+                            Chart {
+                                ForEach(history) { point in
+                                    LineMark(
+                                        x: .value("Date", point.date),
+                                        y: .value("Est. 1RM", point.estimated1RM)
+                                    )
+                                    .foregroundStyle(Color.appAccent)
+                                    .interpolationMethod(.catmullRom)
 
-                                PointMark(
-                                    x: .value("Date", point.date),
-                                    y: .value("Est. 1RM", point.estimated1RM)
-                                )
-                                .foregroundStyle(Color.appAccent)
+                                    PointMark(
+                                        x: .value("Date", point.date),
+                                        y: .value("Est. 1RM", point.estimated1RM)
+                                    )
+                                    .foregroundStyle(Color.appAccent)
+                                }
+
+                                if let sel = selectedPoint {
+                                    RuleMark(x: .value("Date", sel.date))
+                                        .foregroundStyle(Color.white.opacity(0.25))
+                                        .lineStyle(StrokeStyle(lineWidth: 1))
+                                        .annotation(
+                                            position: .top,
+                                            spacing: 0,
+                                            overflowResolution: .init(x: .fit(to: .chart), y: .disabled)
+                                        ) {
+                                            ChartCalloutView(
+                                                title: sel.date.formatted(date: .abbreviated, time: .omitted),
+                                                value: "~\(sel.estimated1RM.formattedWeight) \(WeightUnitPreference.shared.unit.label) est. 1RM",
+                                                detail: "\(sel.weight.formattedWeight) \(WeightUnitPreference.shared.unit.label) \u{00D7} \(sel.reps)"
+                                            )
+                                        }
+
+                                    PointMark(
+                                        x: .value("Date", sel.date),
+                                        y: .value("Est. 1RM", sel.estimated1RM)
+                                    )
+                                    .symbolSize(120)
+                                    .foregroundStyle(Color.appAccent)
+                                }
                             }
                             .frame(height: 200)
                             .chartYAxis {
                                 AxisMarks(position: .leading)
+                            }
+                            .chartXSelection(value: $rawSelectedDate)
+                            .onChange(of: rawSelectedDate) { old, new in
+                                guard let new else { return }
+                                guard var snapped = history.nearest(to: new, by: \.date) else { return }
+                                // Sets from the same workout share one completedAt date; among such
+                                // ties show the best set of the day.
+                                let tied = history.filter { $0.date == snapped.date }
+                                if let best = tied.max(by: { $0.estimated1RM < $1.estimated1RM }) {
+                                    snapped = best
+                                }
+                                if old == nil, snapped.id == selectedPoint?.id {
+                                    selectedPoint = nil
+                                } else if snapped.id != selectedPoint?.id {
+                                    selectedPoint = snapped
+                                    Haptics.selection()
+                                }
                             }
                         }
 
@@ -84,6 +132,7 @@ struct ExerciseProgressView: View {
         .navigationTitle(exercise.name)
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
+            selectedPoint = nil
             history = ProgressStatsService.history(for: exercise, in: modelContext)
             hasLoadedHistory = true
         }
