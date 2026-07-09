@@ -321,27 +321,25 @@ struct SettingsView: View {
     }
 
     private var restTimerDurationRow: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 12) {
-                IconTile(color: Color(red: 0.95, green: 0.55, blue: 0.19)) {
-                    Image(systemName: "timer")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white)
-                }
-                Text("Rest Timer Duration")
-                    .font(.system(size: 16))
+        HStack(spacing: 12) {
+            IconTile(color: Color(red: 0.95, green: 0.55, blue: 0.19)) {
+                Image(systemName: "timer")
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white)
-                Spacer()
             }
+            Text("Rest Timer Duration")
+                .font(.system(size: 16))
+                .foregroundColor(.white)
+            Spacer()
 
             Picker("Rest Timer Duration", selection: restTimerDurationBinding) {
                 ForEach(RestTimerDurationPreference.options, id: \.self) { option in
                     Text(RestTimerDurationPreference.label(for: option)).tag(option)
                 }
             }
+            .labelsHidden()
             .pickerStyle(.menu)
             .tint(.appAccent)
-            .frame(maxWidth: .infinity, alignment: .trailing)
         }
     }
 
