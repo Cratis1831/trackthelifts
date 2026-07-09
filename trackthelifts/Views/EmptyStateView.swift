@@ -34,7 +34,7 @@ struct EmptyStateView: View {
                     .padding(.horizontal, 20)
                     .padding(.vertical, 10)
                     .background(Color.appAccent)
-                    .foregroundColor(.white)
+                    .foregroundColor(.onAppAccent)
                     .cornerRadius(8)
             }
         }

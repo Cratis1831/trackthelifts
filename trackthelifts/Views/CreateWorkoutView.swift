@@ -675,7 +675,7 @@ struct WorkoutActionButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 16, weight: .semibold))
-            .foregroundStyle(prominence == .filled ? Color.white : tint)
+            .foregroundStyle(prominence == .filled ? Color.onAppAccent : tint)
             .frame(maxWidth: .infinity, minHeight: prominence == .plain ? 44 : 50)
             .background {
                 if prominence == .filled {
