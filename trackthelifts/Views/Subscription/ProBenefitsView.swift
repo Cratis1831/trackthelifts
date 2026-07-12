@@ -14,7 +14,7 @@ struct ProBenefitsView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.black
+                Color.appCanvas
                     .ignoresSafeArea()
 
                 ScrollView {
@@ -26,7 +26,7 @@ struct ProBenefitsView: View {
 
                             Text("You're a Pro Member")
                                 .font(.system(size: 22, weight: .bold))
-                                .foregroundColor(.white)
+                                .foregroundColor(.appTextPrimary)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.top, 8)
@@ -34,7 +34,7 @@ struct ProBenefitsView: View {
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Your Benefits")
                                 .font(.system(size: 20, weight: .semibold))
-                                .foregroundColor(.white)
+                                .foregroundColor(.appTextPrimary)
 
                             VStack(alignment: .leading, spacing: 12) {
                                 FeatureRow(
@@ -72,17 +72,17 @@ struct ProBenefitsView: View {
                                 HStack {
                                     Text("Manage Subscription")
                                         .font(.system(size: 16))
-                                        .foregroundColor(.white)
+                                        .foregroundColor(.appTextPrimary)
                                     Spacer()
                                     Image(systemName: "arrow.up.right")
                                         .font(.system(size: 13, weight: .medium))
-                                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                                        .foregroundColor(Color.appTextSecondary)
                                 }
                                 .padding(.vertical, 12)
                             }
 
                             Divider()
-                                .background(Color(red: 0.17, green: 0.17, blue: 0.18))
+                                .background(Color.appBorder)
 
                             Button {
                                 Task {
@@ -100,7 +100,7 @@ struct ProBenefitsView: View {
                                 HStack {
                                     Text("Restore Purchases")
                                         .font(.system(size: 16))
-                                        .foregroundColor(.white)
+                                        .foregroundColor(.appTextPrimary)
                                     Spacer()
                                     if revenueCatService.isLoading {
                                         ProgressView()
@@ -112,11 +112,11 @@ struct ProBenefitsView: View {
                             .disabled(revenueCatService.isLoading)
                         }
                         .padding(.horizontal, 16)
-                        .background(Color(red: 0.11, green: 0.11, blue: 0.12))
-                        .cornerRadius(12)
+                        .background(Color.appSurface)
+                        .cornerRadius(AppDesign.cardRadius)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color(red: 0.17, green: 0.17, blue: 0.18), lineWidth: 1)
+                            RoundedRectangle(cornerRadius: AppDesign.cardRadius)
+                                .stroke(Color.appBorder, lineWidth: 1)
                         )
                     }
                     .padding(.horizontal, 20)

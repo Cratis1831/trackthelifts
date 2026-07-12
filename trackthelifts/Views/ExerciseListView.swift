@@ -103,7 +103,7 @@ struct ExerciseListView: View {
     private var navigationContent: some View {
         NavigationStack {
             ZStack {
-                Color.black
+                Color.appCanvas
                     .ignoresSafeArea()
                 
                 if filteredExercises.isEmpty && exercises.isEmpty {
@@ -207,18 +207,18 @@ struct ExerciseListView: View {
                 IconTile(color: BodypartPalette.color(for: exercise.bodypart?.name), size: 34) {
                     Text(exerciseInitials(exercise.name))
                         .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundColor(.appTextPrimary)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(exercise.name)
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white)
+                        .foregroundColor(.appTextPrimary)
 
                     if let bodypart = exercise.bodypart {
                         Text(bodypart.name)
                             .font(.system(size: 14))
-                            .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                            .foregroundColor(Color.appTextSecondary)
                     }
                 }
 
@@ -226,7 +226,7 @@ struct ExerciseListView: View {
 
                 Image(systemName: "chevron.forward")
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                    .foregroundColor(Color.appTextSecondary)
             }
             .padding(.vertical, 4)
         }
@@ -237,7 +237,7 @@ struct ExerciseListView: View {
                 bottomTrailingRadius: isLast ? 10 : 0,
                 topTrailingRadius: isFirst ? 10 : 0
             )
-            .fill(Color(red: 0.11, green: 0.11, blue: 0.12))
+            .fill(Color.appSurface)
         )
         // Inset the row separator so it starts at the text, not under the tile (like the reference).
         .alignmentGuide(.listRowSeparatorLeading) { _ in 46 }

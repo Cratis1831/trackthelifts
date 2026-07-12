@@ -35,7 +35,7 @@ struct CreateRoutineView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.black.ignoresSafeArea()
+                Color.appCanvas.ignoresSafeArea()
 
                 VStack(alignment: .leading, spacing: 0) {
                     TextField("Routine Name", text: $name)
@@ -50,10 +50,10 @@ struct CreateRoutineView: View {
                         VStack(spacing: 12) {
                             Image(systemName: "list.bullet.rectangle")
                                 .font(.system(size: 44))
-                                .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                                .foregroundColor(Color.appTextSecondary)
                             Text("Add exercises to build this routine.")
                                 .font(.system(size: 15))
-                                .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                                .foregroundColor(Color.appTextSecondary)
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal, 40)
                         }
@@ -65,7 +65,7 @@ struct CreateRoutineView: View {
                                 HStack {
                                     Text(entry.exercise.name)
                                         .font(.system(size: 16, weight: .medium))
-                                        .foregroundColor(.white)
+                                        .foregroundColor(.appTextPrimary)
 
                                     Spacer()
 
@@ -75,7 +75,7 @@ struct CreateRoutineView: View {
                                         in: 1...10
                                     )
                                     .fixedSize()
-                                    .foregroundColor(Color(red: 0.76, green: 0.76, blue: 0.78))
+                                    .foregroundColor(Color.appTextPrimary.opacity(0.78))
                                 }
                                 .padding(.vertical, 4)
                                 .listRowBackground(Color.clear)

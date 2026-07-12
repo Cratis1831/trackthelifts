@@ -31,7 +31,9 @@ struct HistoryView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.black
+                Color.appCanvas
+                    .ignoresSafeArea()
+                PrecisionGridBackground()
                     .ignoresSafeArea()
 
                 if completedWorkouts.isEmpty {
@@ -157,13 +159,13 @@ struct WorkoutHistoryCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(workout.title)
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(.appTextPrimary)
                         .lineLimit(1)
                     
                     if let completedAt = workout.completedAt {
                         Text(completedAt.formatted(date: .abbreviated, time: .shortened))
-                            .font(.system(size: 14))
-                            .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                            .font(.appUtility)
+                            .foregroundColor(Color.appTextSecondary)
                     }
                 }
                 
@@ -171,12 +173,12 @@ struct WorkoutHistoryCard: View {
 
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("\(completedSets)/\(totalSets) sets")
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.appUtility)
                         .foregroundColor(.appAccent)
 
                     Text("\(groups.count) exercises")
-                        .font(.system(size: 12))
-                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                        .font(.appUtility)
+                        .foregroundColor(Color.appTextSecondary)
                 }
 
                 Menu {
@@ -197,21 +199,21 @@ struct WorkoutHistoryCard: View {
                         HStack {
                             Text("• \(exerciseName)")
                                 .font(.system(size: 14))
-                                .foregroundColor(Color(red: 0.76, green: 0.76, blue: 0.78))
+                                .foregroundColor(Color.appTextPrimary.opacity(0.78))
                                 .lineLimit(1)
                             
                             Spacer()
                             
                             Text("\(sets.count) set\(sets.count == 1 ? "" : "s")")
                                 .font(.system(size: 12))
-                                .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                                .foregroundColor(Color.appTextSecondary)
                         }
                     }
                     
                     if groups.count > 3 {
                         Text("and \(groups.count - 3) more...")
                             .font(.system(size: 12))
-                            .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                            .foregroundColor(Color.appTextSecondary)
                             .padding(.top, 2)
                     }
                 }
@@ -221,17 +223,17 @@ struct WorkoutHistoryCard: View {
             if let notes = workout.notes, !notes.isEmpty {
                 Text(notes)
                     .font(.system(size: 13))
-                    .foregroundColor(Color(red: 0.66, green: 0.66, blue: 0.68))
+                    .foregroundColor(Color.appTextSecondary)
                     .lineLimit(2)
                     .padding(.top, 4)
             }
         }
         .padding(16)
-        .background(Color(red: 0.11, green: 0.11, blue: 0.12))
-        .cornerRadius(12)
+        .background(Color.appSurface)
+        .cornerRadius(AppDesign.cardRadius)
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color(red: 0.17, green: 0.17, blue: 0.18), lineWidth: 1)
+            RoundedRectangle(cornerRadius: AppDesign.cardRadius)
+                .stroke(Color.appBorder, lineWidth: 1)
         )
         .contextMenu {
             cardMenuActions

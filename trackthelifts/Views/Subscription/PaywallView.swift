@@ -19,7 +19,7 @@ struct PaywallView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.black
+                Color.appCanvas
                     .ignoresSafeArea()
                 
                 ScrollView {
@@ -29,7 +29,7 @@ struct PaywallView: View {
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Upgrade to Premium")
                                 .font(.system(size: 20, weight: .semibold))
-                                .foregroundColor(.white)
+                                .foregroundColor(.appTextPrimary)
                                 .frame(maxWidth: .infinity)
                                 .multilineTextAlignment(.center)
 
@@ -68,7 +68,7 @@ struct PaywallView: View {
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Choose Your Plan")
                                 .font(.system(size: 20, weight: .semibold))
-                                .foregroundColor(.white)
+                                .foregroundColor(.appTextPrimary)
                             
                             if revenueCatService.availablePackages.isEmpty {
                                 if let lastError = revenueCatService.lastError {
@@ -90,7 +90,7 @@ struct PaywallView: View {
                                             .tint(.appAccent)
                                         Text("Loading subscription plans...")
                                             .font(.system(size: 14))
-                                            .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                                            .foregroundColor(Color.appTextSecondary)
                                     }
                                     .frame(maxWidth: .infinity)
                                     .padding(40)
@@ -127,25 +127,21 @@ struct PaywallView: View {
                                 if revenueCatService.isLoading {
                                     ProgressView()
                                         .scaleEffect(0.9)
-                                        .tint(selectedPackage != nil ? .onAppAccent : .white)
+                                        .tint(selectedPackage != nil ? .onAppAction : .appTextSecondary)
                                 } else {
                                     Text(purchaseButtonText)
-                                        .font(.system(size: 16, weight: .semibold))
-                                        .foregroundColor(selectedPackage != nil ? .onAppAccent : .white)
                                 }
                             }
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 56)
-                            .background(selectedPackage != nil ? Color.appAccent : Color.gray)
-                            .cornerRadius(12)
                         }
+                        .buttonStyle(AppPrimaryButtonStyle())
+                        .opacity(selectedPackage == nil ? 0.42 : 1)
                         .disabled(revenueCatService.isLoading || selectedPackage == nil)
                         
                         // Footer
                         VStack(spacing: 8) {
                             Text("Subscription automatically renews unless canceled at least 24 hours before the end of the current period.")
                                 .font(.system(size: 11))
-                                .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                                .foregroundColor(Color.appTextSecondary)
                                 .multilineTextAlignment(.center)
                                 .lineLimit(2)
 
@@ -195,17 +191,17 @@ struct FeatureRow: View {
             IconTile(color: iconColor, size: 32) {
                 Image(systemName: icon)
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(.appTextPrimary)
             }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(.appTextPrimary)
 
                 Text(description)
                     .font(.system(size: 12))
-                    .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                    .foregroundColor(Color.appTextSecondary)
                     .lineLimit(nil)
             }
             
@@ -257,7 +253,7 @@ struct PackageCard: View {
                     HStack {
                         Text(planType)
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white)
+                            .foregroundColor(.appTextPrimary)
                         
                         if let savings = savings {
                             Text(savings)
@@ -272,7 +268,7 @@ struct PackageCard: View {
                     
                     Text(description)
                         .font(.system(size: 12))
-                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                        .foregroundColor(Color.appTextSecondary)
                 }
                 
                 Spacer()
@@ -280,19 +276,19 @@ struct PackageCard: View {
                 VStack(alignment: .trailing) {
                     Text(package.storeProduct.localizedPriceString)
                         .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundColor(.appTextPrimary)
                 }
                 
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(isSelected ? .appAccent : Color(red: 0.56, green: 0.56, blue: 0.58))
+                    .foregroundColor(isSelected ? .appAccent : Color.appTextSecondary)
                     .font(.system(size: 24))
             }
             .padding(16)
-            .background(Color(red: 0.11, green: 0.11, blue: 0.12))
-            .cornerRadius(12)
+            .background(Color.appSurface)
+            .cornerRadius(AppDesign.cardRadius)
             .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? Color.appAccent : Color(red: 0.17, green: 0.17, blue: 0.18), lineWidth: isSelected ? 2 : 1)
+                RoundedRectangle(cornerRadius: AppDesign.cardRadius)
+                    .stroke(isSelected ? Color.appAccent : Color.appBorder, lineWidth: isSelected ? 2 : 1)
             )
         }
         .buttonStyle(PlainButtonStyle())

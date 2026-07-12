@@ -37,15 +37,22 @@ struct ExerciseSetView: View {
             // sets or other exercises.
             ZStack(alignment: .topTrailing) {
                 Text("\(exerciseSet.order + 1)")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.appUtility)
                     .frame(width: 30, height: 32)
-                    .background(isPersonalRecord ? Color.yellow.opacity(0.4) : (isCompleted ? Color.appAccent.opacity(0.3) : Color.gray.opacity(0.3)))
+                    .background(Color.appElevatedSurface)
                     .cornerRadius(6)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .strokeBorder(
+                                isPersonalRecord ? Color.yellow : (isCompleted ? Color.appAccent : Color.appBorder),
+                                lineWidth: 1
+                            )
+                    }
 
                 if let badgeText = exerciseSet.classification.badgeText {
                     Text(badgeText)
                         .font(.system(size: 9, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundColor(.appTextPrimary)
                         .frame(width: 14, height: 14)
                         .background(exerciseSet.classification == .warmup ? Color.blue : Color.red)
                         .clipShape(Circle())
@@ -72,15 +79,21 @@ struct ExerciseSetView: View {
 
             // Column 2 & 3: Previous summary (last time this exercise/set-number was logged)
             Text(previousSummary)
-                .font(.system(size: 14))
+                .font(.appUtility)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .foregroundColor(Color.secondary)
 
             // Column 4: weight
             TextField("0", text: $weight)
-                .font(.system(size: 14, weight: .medium))
+                .font(.appUtility)
                 .frame(width: 68, height: 32)
-                .textFieldStyle(.roundedBorder)
+                .textFieldStyle(.plain)
+                .background(Color.appElevatedSurface)
+                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .strokeBorder(isWeightFocused ? Color.appAccent : Color.appBorder, lineWidth: 1)
+                }
                 .keyboardType(.decimalPad)
                 .multilineTextAlignment(.center)
                 .disabled(isCompleted)
@@ -99,9 +112,15 @@ struct ExerciseSetView: View {
 
             // Column 5: reps
             TextField("0", text: $reps)
-                .font(.system(size: 14, weight: .medium))
+                .font(.appUtility)
                 .frame(width: 68, height: 32)
-                .textFieldStyle(.roundedBorder)
+                .textFieldStyle(.plain)
+                .background(Color.appElevatedSurface)
+                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .strokeBorder(isRepsFocused ? Color.appAccent : Color.appBorder, lineWidth: 1)
+                }
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.center)
                 .disabled(isCompleted)
@@ -125,9 +144,9 @@ struct ExerciseSetView: View {
                 toggleCompletion()
             } label: {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    RoundedRectangle(cornerRadius: AppDesign.compactRadius, style: .continuous)
                         .fill(isCompleted ? Color.appAccent : Color.clear)
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    RoundedRectangle(cornerRadius: AppDesign.compactRadius, style: .continuous)
                         .strokeBorder(isCompleted ? Color.clear : Color.secondary, lineWidth: 1.5)
                     if isCompleted {
                         Image(systemName: "checkmark")

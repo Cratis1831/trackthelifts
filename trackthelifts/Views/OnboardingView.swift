@@ -19,14 +19,8 @@ struct OnboardingView: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
-
-            // Soft accent wash behind the content so the black canvas doesn't read flat.
-            Circle()
-                .fill(Color.appAccent.opacity(0.14))
-                .frame(width: 420, height: 420)
-                .blur(radius: 100)
-                .offset(y: -240)
+            Color.appCanvas.ignoresSafeArea()
+            PrecisionGridBackground()
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -36,7 +30,7 @@ struct OnboardingView: View {
                         hasCompletedOnboarding = true
                     }
                     .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                    .foregroundColor(Color.appTextSecondary)
                     .padding(.trailing, 24)
                     .padding(.top, 8)
                     // Keep the layout stable on the last page; just fade the button away.
@@ -67,14 +61,8 @@ struct OnboardingView: View {
                     }
                 } label: {
                     Text(currentPage == Self.pageCount - 1 ? "Start Lifting" : "Continue")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.onAppAccent)
-                        .frame(maxWidth: .infinity, minHeight: 54)
-                        .background(
-                            Capsule().fill(Color.appAccent)
-                        )
-                        .shadow(color: Color.appAccent.opacity(0.35), radius: 12, y: 6)
                 }
+                .buttonStyle(AppPrimaryButtonStyle())
                 .padding(.horizontal, 24)
                 .padding(.bottom, 16)
             }
@@ -86,8 +74,8 @@ struct OnboardingView: View {
         HStack(spacing: 8) {
             ForEach(0..<Self.pageCount, id: \.self) { index in
                 Capsule()
-                    .fill(index == currentPage ? Color.appAccent : Color(red: 0.25, green: 0.25, blue: 0.27))
-                    .frame(width: index == currentPage ? 24 : 8, height: 8)
+                    .fill(index == currentPage ? Color.appAccent : Color.appBorder)
+                    .frame(width: index == currentPage ? 22 : 6, height: 6)
             }
         }
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: currentPage)
@@ -98,6 +86,7 @@ struct OnboardingView: View {
 
 private struct WelcomePage: View {
     let isActive: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var showMark = false
     @State private var showText = false
 
@@ -112,9 +101,8 @@ private struct WelcomePage: View {
                 .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
                 .overlay(
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        .stroke(Color.appBorder, lineWidth: 1)
                 )
-                .shadow(color: Color.appAccent.opacity(0.45), radius: 24, y: 10)
                 .scaleEffect(showMark ? 1 : 0.5)
                 .opacity(showMark ? 1 : 0)
 
@@ -123,15 +111,15 @@ private struct WelcomePage: View {
                     .font(.system(size: 15, weight: .semibold))
                     .tracking(2)
                     .textCase(.uppercase)
-                    .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                    .foregroundColor(Color.appTextSecondary)
 
                 Text("Track The Lifts")
                     .font(.system(size: 34, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundColor(.appTextPrimary)
 
                 Text("The fastest way to log your lifts and watch your strength grow.")
                     .font(.system(size: 16))
-                    .foregroundColor(Color(red: 0.66, green: 0.66, blue: 0.68))
+                    .foregroundColor(Color.appTextSecondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 44)
             }
@@ -149,6 +137,11 @@ private struct WelcomePage: View {
     }
 
     private func animateIn() {
+        guard !reduceMotion else {
+            showMark = true
+            showText = true
+            return
+        }
         withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
             showMark = true
         }
@@ -176,6 +169,7 @@ private struct OnboardingFeature: Identifiable {
 
 private struct FeaturesPage: View {
     let isActive: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var showHeader = false
     @State private var visibleRows = 0
 
@@ -227,11 +221,11 @@ private struct FeaturesPage: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Built for the way you train")
                     .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundColor(.appTextPrimary)
 
                 Text("Everything below is already in the app, ready on day one.")
                     .font(.system(size: 15))
-                    .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                    .foregroundColor(Color.appTextSecondary)
             }
             .padding(.horizontal, 28)
             .opacity(showHeader ? 1 : 0)
@@ -260,25 +254,31 @@ private struct FeaturesPage: View {
             IconTile(color: feature.color, size: 40, cornerRadius: 11) {
                 Image(systemName: feature.symbol)
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(.appTextPrimary)
             }
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(feature.title)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(.appTextPrimary)
 
                 Text(feature.detail)
                     .font(.system(size: 13))
-                    .foregroundColor(Color(red: 0.62, green: 0.62, blue: 0.64))
+                    .foregroundColor(.appTextSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             Spacer(minLength: 0)
         }
+        .appCard(padding: 12)
     }
 
     private func animateIn() {
+        guard !reduceMotion else {
+            showHeader = true
+            visibleRows = Self.features.count
+            return
+        }
         withAnimation(.easeOut(duration: 0.4)) {
             showHeader = true
         }
@@ -299,6 +299,7 @@ private struct FeaturesPage: View {
 
 private struct ReadyPage: View {
     let isActive: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var showSeal = false
     @State private var showText = false
     @State private var ringExpanded = false
@@ -317,7 +318,6 @@ private struct ReadyPage: View {
                 Image(systemName: "checkmark.seal.fill")
                     .font(.system(size: 72))
                     .foregroundColor(.appAccent)
-                    .shadow(color: Color.appAccent.opacity(0.4), radius: 20, y: 8)
                     .scaleEffect(showSeal ? 1 : 0.4)
                     .opacity(showSeal ? 1 : 0)
             }
@@ -325,11 +325,11 @@ private struct ReadyPage: View {
             VStack(spacing: 14) {
                 Text("You're All Set")
                     .font(.system(size: 30, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundColor(.appTextPrimary)
 
                 Text("Your first workout is one tap away. Every set you log makes the picture of your progress sharper.")
                     .font(.system(size: 16))
-                    .foregroundColor(Color(red: 0.66, green: 0.66, blue: 0.68))
+                    .foregroundColor(Color.appTextSecondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 44)
             }
@@ -347,6 +347,12 @@ private struct ReadyPage: View {
     }
 
     private func animateIn() {
+        guard !reduceMotion else {
+            showSeal = true
+            showText = true
+            ringExpanded = true
+            return
+        }
         withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
             showSeal = true
         }

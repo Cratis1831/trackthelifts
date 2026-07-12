@@ -40,32 +40,32 @@ struct ExerciseDetailView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.black
+                Color.appCanvas
                     .ignoresSafeArea()
                 
                 VStack(spacing: 24) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Exercise Name")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.white)
+                            .foregroundColor(.appTextPrimary)
 
                         TextField("Enter exercise name", text: $exerciseName)
                             .font(.system(size: 16))
                             .textFieldStyle(.plain)
                             .focused($isNameFieldFocused)
                             .padding(12)
-                            .background(Color(red: 0.11, green: 0.11, blue: 0.12))
+                            .background(Color.appSurface)
                             .cornerRadius(10)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 10)
-                                    .stroke(Color(red: 0.17, green: 0.17, blue: 0.18), lineWidth: 1)
+                                    .stroke(Color.appBorder, lineWidth: 1)
                             )
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Body Part")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.white)
+                            .foregroundColor(.appTextPrimary)
 
                         Menu {
                             Button("None") {
@@ -81,20 +81,20 @@ struct ExerciseDetailView: View {
                             HStack {
                                 Text(selectedBodypart?.name ?? "Select body part")
                                     .font(.system(size: 16))
-                                    .foregroundColor(selectedBodypart == nil ? Color(red: 0.56, green: 0.56, blue: 0.58) : .white)
+                                    .foregroundColor(selectedBodypart == nil ? Color.appTextSecondary : .appTextPrimary)
 
                                 Spacer()
 
                                 Image(systemName: "chevron.up.chevron.down")
                                     .font(.system(size: 12, weight: .medium))
-                                    .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                                    .foregroundColor(Color.appTextSecondary)
                             }
                             .padding(12)
-                            .background(Color(red: 0.11, green: 0.11, blue: 0.12))
+                            .background(Color.appSurface)
                             .cornerRadius(10)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 10)
-                                    .stroke(Color(red: 0.17, green: 0.17, blue: 0.18), lineWidth: 1)
+                                    .stroke(Color.appBorder, lineWidth: 1)
                             )
                         }
                         .buttonStyle(.plain)

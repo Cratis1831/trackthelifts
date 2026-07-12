@@ -155,7 +155,7 @@ struct CreateWorkoutView: View {
                 .foregroundColor(.appAccent)
                 .textCase(nil)
         }
-        .listRowBackground(Color(red: 0.11, green: 0.11, blue: 0.12))
+        .listRowBackground(Color.appSurface)
     }
 
     private var columnHeader: some View {
@@ -182,7 +182,7 @@ struct CreateWorkoutView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.black.ignoresSafeArea()
+                Color.appCanvas.ignoresSafeArea()
 
                 VStack(spacing: 0) {
                     ScrollViewReader { scrollProxy in
@@ -212,7 +212,7 @@ struct CreateWorkoutView: View {
                                 IconTile(color: Color(red: 0.36, green: 0.42, blue: 0.90), size: 28) {
                                     Image(systemName: "calendar")
                                         .font(.system(size: 13, weight: .semibold))
-                                        .foregroundColor(.white)
+                                        .foregroundColor(.appTextPrimary)
                                 }
                                 Text(
                                     (savedWorkout?.date ?? Date()).formatted(
@@ -226,12 +226,12 @@ struct CreateWorkoutView: View {
                                 IconTile(color: Color(red: 0.95, green: 0.55, blue: 0.19), size: 28) {
                                     Image(systemName: "clock")
                                         .font(.system(size: 13, weight: .semibold))
-                                        .foregroundColor(.white)
+                                        .foregroundColor(.appTextPrimary)
                                 }
                                 TimerView(startDate: savedWorkout?.createdAt ?? sessionStartDate)
                             }
                         }
-                        .listRowBackground(Color.black)
+                        .listRowBackground(Color.appCanvas)
                         .listRowSeparator(.hidden)
 
                         if let workout = savedWorkout, !groups.isEmpty {
@@ -266,7 +266,7 @@ struct CreateWorkoutView: View {
                                     }
                                     .buttonStyle(WorkoutActionButtonStyle(tint: .appAccent, prominence: .plain))
                                 }
-                                .listRowBackground(Color.black)
+                                .listRowBackground(Color.appCanvas)
                                 .listRowSeparator(.hidden)
                             }
                         } else {
@@ -275,7 +275,7 @@ struct CreateWorkoutView: View {
                                     .font(.system(size: 14))
                                     .foregroundColor(Color(.secondaryLabel))
                             }
-                            .listRowBackground(Color.black)
+                            .listRowBackground(Color.appCanvas)
                             .listRowSeparator(.hidden)
                         }
 
@@ -297,7 +297,7 @@ struct CreateWorkoutView: View {
                             }
                             .buttonStyle(WorkoutActionButtonStyle(tint: .red, prominence: .plain))
                         }
-                        .listRowBackground(Color.black)
+                        .listRowBackground(Color.appCanvas)
                         .listRowSeparator(.hidden)
                         }
                     }
@@ -388,7 +388,7 @@ struct CreateWorkoutView: View {
                         } label: {
                             Image(systemName: "checkmark")
                                 .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(.white)
+                                .foregroundColor(.appTextPrimary)
                                 .frame(width: 36, height: 36)
                                 .background(Color.green)
                                 .clipShape(Circle())
@@ -675,22 +675,23 @@ struct WorkoutActionButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 16, weight: .semibold))
-            .foregroundStyle(prominence == .filled ? Color.onAppAccent : tint)
+            .foregroundStyle(prominence == .filled ? Color.onAppAction : tint)
             .frame(maxWidth: .infinity, minHeight: prominence == .plain ? 44 : 50)
             .background {
                 if prominence == .filled {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous).fill(tint)
+                    RoundedRectangle(cornerRadius: AppDesign.compactRadius, style: .continuous)
+                        .fill(Color.appAction)
                 } else if prominence == .tinted {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous).fill(tint.opacity(0.15))
+                    RoundedRectangle(cornerRadius: AppDesign.compactRadius, style: .continuous)
+                        .fill(Color.appElevatedSurface)
                 }
             }
             .overlay {
                 if prominence == .tinted {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .strokeBorder(tint.opacity(0.4), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: AppDesign.compactRadius, style: .continuous)
+                        .strokeBorder(Color.appBorder, lineWidth: 1)
                 }
             }
-            .shadow(color: prominence == .filled ? tint.opacity(0.35) : .clear, radius: 10, y: 4)
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
             .opacity(configuration.isPressed ? 0.85 : 1)
             .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
@@ -751,7 +752,7 @@ struct RestTimerBanner: View {
                     IconTile(color: Color(red: 0.95, green: 0.55, blue: 0.19), size: 28) {
                         Image(systemName: "timer")
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(.white)
+                            .foregroundColor(.appTextPrimary)
                     }
                     Text("Rest: \(formattedTime(remainingSeconds))")
                         .font(.system(size: 14, weight: .semibold))
@@ -779,7 +780,7 @@ struct RestTimerBanner: View {
                     .buttonStyle(.borderless)
                 }
                 .padding(10)
-                .background(Color(red: 0.11, green: 0.11, blue: 0.12))
+                .background(Color.appSurface)
                 .cornerRadius(10)
             }
         }

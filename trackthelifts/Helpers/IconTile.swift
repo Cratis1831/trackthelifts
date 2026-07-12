@@ -5,9 +5,7 @@
 
 import SwiftUI
 
-/// A rounded-square icon tile (solid fill + centered content), the leading-icon style used in
-/// settings and list rows. Content is typically an SF Symbol `Image` or short initials `Text`,
-/// tinted white for contrast against the fill.
+/// A compact neutral icon tile with a restrained semantic-color edge.
 struct IconTile<Content: View>: View {
     let color: Color
     var size: CGFloat = 30
@@ -16,15 +14,18 @@ struct IconTile<Content: View>: View {
 
     var body: some View {
         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-            .fill(color)
+            .fill(Color.appElevatedSurface)
             .frame(width: size, height: size)
-            .overlay(content)
+            .overlay {
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .strokeBorder(color.opacity(0.45), lineWidth: 1)
+            }
+            .overlay(content.foregroundStyle(Color.appTextPrimary))
     }
 }
 
-/// Deterministic per-body-part tile colors, so every exercise in a group shares one color and the
-/// exercise list reads as color-coded sections. Unknown/custom body parts get a stable color
-/// derived from their name (no per-launch shuffling).
+/// Deterministic per-body-part signal colors. The tile itself stays neutral; these colors only
+/// appear as a fine edge so groups remain recognizable without turning the list into a rainbow.
 enum BodypartPalette {
     private static let palette: [Color] = [
         Color(red: 0.90, green: 0.30, blue: 0.24), // red

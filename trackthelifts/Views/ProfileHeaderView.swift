@@ -16,7 +16,7 @@ struct ProfileHeaderView: View {
     @State private var selectedItem: PhotosPickerItem?
 
     private let avatarSize: CGFloat = 76
-    private let secondaryColor = Color(red: 0.56, green: 0.56, blue: 0.58)
+    private let secondaryColor = Color.appTextSecondary
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -33,7 +33,7 @@ struct ProfileHeaderView: View {
                         prompt: Text("Your Name").foregroundColor(secondaryColor)
                     )
                     .font(.system(size: 22, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(.appTextPrimary)
                     .textInputAutocapitalization(.words)
                     .submitLabel(.done)
 
@@ -60,7 +60,7 @@ struct ProfileHeaderView: View {
     private var avatar: some View {
         ZStack {
             Circle()
-                .fill(Color(red: 0.17, green: 0.17, blue: 0.18))
+                .fill(Color.appBorder)
 
             if let image = profile.avatarImage {
                 Image(uiImage: image)
@@ -69,7 +69,7 @@ struct ProfileHeaderView: View {
             } else if let initials = profile.initials {
                 Text(initials)
                     .font(.system(size: 28, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(.appTextPrimary)
             } else {
                 Image(systemName: "person.fill")
                     .font(.system(size: 32))
@@ -88,14 +88,14 @@ struct ProfileHeaderView: View {
                 .padding(6)
                 .background(Color.appAccent)
                 .clipShape(Circle())
-                .overlay(Circle().stroke(Color.black, lineWidth: 2))
+                .overlay(Circle().stroke(Color.appCanvas, lineWidth: 2))
         }
     }
 }
 
 #Preview {
     ZStack {
-        Color.black.ignoresSafeArea()
+        Color.appCanvas.ignoresSafeArea()
         ProfileHeaderView(totalWorkouts: 1500)
             .padding(20)
     }

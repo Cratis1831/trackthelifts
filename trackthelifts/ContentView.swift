@@ -36,6 +36,8 @@ struct ContentView: View {
             }
             .tint(.appAccent)
             .toolbarColorScheme(.dark, for: .tabBar)
+            .toolbarBackground(Color.appSurface, for: .tabBar)
+            .toolbarBackground(.visible, for: .tabBar)
 
             // Onboarding is a plain overlay rather than a fullScreenCover: presenting a cover
             // from a computed binding during the app's very first frame can fail and write

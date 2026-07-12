@@ -89,7 +89,7 @@ struct WorkoutDetailView: View {
                 IconTile(color: Color(red: 0.90, green: 0.30, blue: 0.24), size: 28) {
                     Image(systemName: "trash")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(.appTextPrimary)
                 }
                 .contentShape(Rectangle())
             }
@@ -129,12 +129,12 @@ struct WorkoutDetailView: View {
                 .foregroundColor(.appAccent)
                 .textCase(nil)
         }
-        .listRowBackground(Color(red: 0.11, green: 0.11, blue: 0.12))
+        .listRowBackground(Color.appSurface)
     }
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            Color.appCanvas.ignoresSafeArea()
 
             List {
                 Section {
@@ -162,7 +162,7 @@ struct WorkoutDetailView: View {
                         IconTile(color: Color(red: 0.36, green: 0.42, blue: 0.90), size: 28) {
                             Image(systemName: "calendar")
                                 .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(.white)
+                                .foregroundColor(.appTextPrimary)
                         }
                         Text(
                             workout.date.formatted(
@@ -177,14 +177,14 @@ struct WorkoutDetailView: View {
                             IconTile(color: Color(red: 0.95, green: 0.55, blue: 0.19), size: 28) {
                                 Image(systemName: "clock")
                                     .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(.white)
+                                    .foregroundColor(.appTextPrimary)
                             }
                             Text(formattedDuration(from: workout.createdAt, to: completedAt))
                                 .foregroundColor(Color(.secondaryLabel))
                         }
                     }
                 }
-                .listRowBackground(Color.black)
+                .listRowBackground(Color.appCanvas)
                 .listRowSeparator(.hidden)
 
                 // Grouping walks and sorts every set, so compute it once per render here and hand
@@ -222,7 +222,7 @@ struct WorkoutDetailView: View {
                             }
                             .buttonStyle(WorkoutActionButtonStyle(tint: .appAccent, prominence: .plain))
                         }
-                        .listRowBackground(Color.black)
+                        .listRowBackground(Color.appCanvas)
                         .listRowSeparator(.hidden)
                     }
                 }
