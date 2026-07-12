@@ -311,6 +311,7 @@ struct WorkoutDetailView: View {
                                         } label: {
                                             Image(systemName: "trash")
                                         }
+                                        .tint(.red)
                                     }
                             }
 

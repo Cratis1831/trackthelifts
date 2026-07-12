@@ -124,6 +124,7 @@ struct CreateRoutineView: View {
                                     } label: {
                                         Image(systemName: "trash")
                                     }
+                                    .tint(.red)
                                 }
                                 }
                                 }

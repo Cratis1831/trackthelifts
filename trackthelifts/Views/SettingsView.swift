@@ -371,8 +371,10 @@ struct SettingsView: View {
                     .font(.system(size: 16))
                     .foregroundColor(.appTextPrimary)
                 Text("Optional effort rating for each set")
-                    .font(.system(size: 12))
+                    .font(.system(size: 10))
                     .foregroundColor(secondaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
 
             Spacer()
@@ -397,7 +399,7 @@ struct SettingsView: View {
                 IconTile(color: themePreference.accentColor) {
                     Image(systemName: "paintpalette.fill")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.onAppAccent)
+                        .foregroundColor(.white)
                 }
                 Text("Accent Color")
                     .font(.system(size: 16))
