@@ -22,6 +22,25 @@ struct CreateRoutineView: View {
         let id = UUID()
         let exercise: Exercise
         var targetSets: Int = 3
+        var supersetGroupID: UUID?
+    }
+
+    private var entryBlocks: [[DraftExercise]] {
+        var blocks: [[DraftExercise]] = []
+        var index = 0
+        while index < entries.count {
+            let entry = entries[index]
+            if let groupID = entry.supersetGroupID,
+               index + 1 < entries.count,
+               entries[index + 1].supersetGroupID == groupID {
+                blocks.append([entry, entries[index + 1]])
+                index += 2
+            } else {
+                blocks.append([entry])
+                index += 1
+            }
+        }
+        return blocks
     }
 
     private var canSave: Bool {
@@ -61,35 +80,68 @@ struct CreateRoutineView: View {
                         Spacer()
                     } else {
                         List {
-                            ForEach($entries) { $entry in
-                                HStack {
-                                    Text(entry.exercise.name)
+                            ForEach(entryBlocks, id: \.first!.id) { block in
+                                VStack(spacing: 0) {
+                                ForEach(block) { blockEntry in
+                                    let entryIndex = entries.firstIndex(where: { $0.id == blockEntry.id })!
+                                HStack(spacing: 10) {
+                                    if let position = supersetPosition(for: blockEntry.id) {
+                                        Text("A\(position)")
+                                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                                            .foregroundColor(.onAppAccent)
+                                            .frame(width: 24, height: 24)
+                                            .background(Color.appAccent)
+                                            .clipShape(Circle())
+                                    }
+                                    Text(blockEntry.exercise.name)
                                         .font(.system(size: 16, weight: .medium))
                                         .foregroundColor(.appTextPrimary)
 
                                     Spacer()
 
                                     Stepper(
-                                        "\(entry.targetSets) set\(entry.targetSets == 1 ? "" : "s")",
-                                        value: $entry.targetSets,
+                                        "\(entries[entryIndex].targetSets) set\(entries[entryIndex].targetSets == 1 ? "" : "s")",
+                                        value: $entries[entryIndex].targetSets,
                                         in: 1...10
                                     )
                                     .fixedSize()
                                     .foregroundColor(Color.appTextPrimary.opacity(0.78))
+
+                                    Menu {
+                                        supersetMenu(for: blockEntry.id)
+                                    } label: {
+                                        Image(systemName: blockEntry.supersetGroupID == nil ? "link" : "link.circle.fill")
+                                            .foregroundColor(blockEntry.supersetGroupID == nil ? .appTextSecondary : .appAccent)
+                                            .frame(width: 30, height: 30)
+                                    }
                                 }
-                                .padding(.vertical, 4)
+                                .padding(.vertical, 6)
                                 .listRowBackground(Color.clear)
                                 .listRowSeparator(.hidden)
                                 .swipeActions(edge: .trailing) {
                                     Button(role: .destructive) {
-                                        entries.removeAll { $0.id == entry.id }
+                                        removeEntry(blockEntry.id)
                                     } label: {
                                         Image(systemName: "trash")
+                                    }
+                                    .tint(.red)
+                                }
+                                }
+                                }
+                                .overlay(alignment: .leading) {
+                                    if block.count == 2 {
+                                        Capsule()
+                                            .fill(Color.appAccent)
+                                            .frame(width: 3)
+                                            .padding(.vertical, 5)
+                                            .offset(x: -8)
                                     }
                                 }
                             }
                             .onMove { source, destination in
-                                entries.move(fromOffsets: source, toOffset: destination)
+                                var blocks = entryBlocks
+                                blocks.move(fromOffsets: source, toOffset: destination)
+                                entries = blocks.flatMap { $0 }
                             }
                         }
                         .listStyle(.plain)
@@ -139,7 +191,11 @@ struct CreateRoutineView: View {
                     name = existingTemplate.name
                     entries = existingTemplate.templateExercises
                         .sorted { $0.order < $1.order }
-                        .map { DraftExercise(exercise: $0.exercise, targetSets: $0.targetSets) }
+                        .map { DraftExercise(
+                            exercise: $0.exercise,
+                            targetSets: $0.targetSets,
+                            supersetGroupID: $0.supersetGroupID
+                        ) }
                 }
             }
         }
@@ -169,12 +225,14 @@ struct CreateRoutineView: View {
             if let match = template.templateExercises.first(where: { $0.exercise.id == entry.exercise.id }) {
                 match.order = index
                 match.targetSets = entry.targetSets
+                match.supersetGroupID = entry.supersetGroupID
             } else {
                 let templateExercise = WorkoutTemplateExercise(
                     order: index,
                     targetSets: entry.targetSets,
                     targetReps: 8,
                     targetWeight: 0,
+                    supersetGroupID: entry.supersetGroupID,
                     template: template,
                     exercise: entry.exercise
                 )
@@ -189,6 +247,62 @@ struct CreateRoutineView: View {
         } catch {
             print("Failed to save routine: \(error)")
         }
+    }
+
+    private func supersetPosition(for entryID: UUID) -> Int? {
+        guard let index = entries.firstIndex(where: { $0.id == entryID }),
+              let groupID = entries[index].supersetGroupID else { return nil }
+        let members = entries.indices.filter { entries[$0].supersetGroupID == groupID }
+        guard let memberIndex = members.firstIndex(of: index) else { return nil }
+        return memberIndex + 1
+    }
+
+    @ViewBuilder
+    private func supersetMenu(for entryID: UUID) -> some View {
+        if let index = entries.firstIndex(where: { $0.id == entryID }) {
+            if entries[index].supersetGroupID != nil {
+                Button("Remove Superset", role: .destructive) {
+                    removeSuperset(containing: entryID)
+                }
+            } else {
+                if index > 0, entries[index - 1].supersetGroupID == nil {
+                    Button("Pair with \(entries[index - 1].exercise.name)") {
+                        pairEntries(at: index - 1, and: index)
+                    }
+                }
+                if index + 1 < entries.count, entries[index + 1].supersetGroupID == nil {
+                    Button("Pair with \(entries[index + 1].exercise.name)") {
+                        pairEntries(at: index, and: index + 1)
+                    }
+                }
+                if (index == 0 || entries[index - 1].supersetGroupID != nil) &&
+                    (index + 1 >= entries.count || entries[index + 1].supersetGroupID != nil) {
+                    Text("No adjacent exercise available")
+                }
+            }
+        }
+    }
+
+    private func pairEntries(at first: Int, and second: Int) {
+        guard entries.indices.contains(first), entries.indices.contains(second), abs(first - second) == 1,
+              entries[first].supersetGroupID == nil, entries[second].supersetGroupID == nil else { return }
+        let groupID = UUID()
+        entries[first].supersetGroupID = groupID
+        entries[second].supersetGroupID = groupID
+        Haptics.selection()
+    }
+
+    private func removeSuperset(containing entryID: UUID) {
+        guard let groupID = entries.first(where: { $0.id == entryID })?.supersetGroupID else { return }
+        for index in entries.indices where entries[index].supersetGroupID == groupID {
+            entries[index].supersetGroupID = nil
+        }
+        Haptics.selection()
+    }
+
+    private func removeEntry(_ entryID: UUID) {
+        removeSuperset(containing: entryID)
+        entries.removeAll { $0.id == entryID }
     }
 }
 

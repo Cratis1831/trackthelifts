@@ -28,6 +28,7 @@ struct SettingsView: View {
 
     private var themePreference = ThemePreference.shared
     private var restTimerDurationPreference = RestTimerDurationPreference.shared
+    private var intensityPreference = IntensityPreference.shared
 
     // Shared card/typography constants so every section reads as one system.
     private let cardBorder = Color.appBorder
@@ -276,6 +277,8 @@ struct SettingsView: View {
                 rowDivider
                 timerSoundRow
                 rowDivider
+                intensityRow
+                rowDivider
                 accentColorRow
                 rowDivider
                 weightUnitRow
@@ -355,13 +358,48 @@ struct SettingsView: View {
         .tint(.appToggleTint)
     }
 
+    private var intensityRow: some View {
+        HStack(spacing: 12) {
+            IconTile(color: Color(red: 0.88, green: 0.38, blue: 0.50)) {
+                Image(systemName: "gauge.with.dots.needle.50percent")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.appTextPrimary)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Set Effort")
+                    .font(.system(size: 16))
+                    .foregroundColor(.appTextPrimary)
+                Text("Optional effort rating for each set")
+                    .font(.system(size: 10))
+                    .foregroundColor(secondaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+
+            Spacer()
+
+            Picker("Set Effort", selection: Binding(
+                get: { intensityPreference.mode },
+                set: { intensityPreference.mode = $0 }
+            )) {
+                ForEach(IntensityPreferenceMode.allCases) { mode in
+                    Text(mode.label).tag(mode)
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .tint(.appAccent)
+        }
+    }
+
     private var accentColorRow: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 12) {
                 IconTile(color: themePreference.accentColor) {
                     Image(systemName: "paintpalette.fill")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.appTextPrimary)
+                        .foregroundColor(.white)
                 }
                 Text("Accent Color")
                     .font(.system(size: 16))

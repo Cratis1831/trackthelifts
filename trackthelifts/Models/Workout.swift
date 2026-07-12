@@ -48,6 +48,43 @@ class Workout {
 }
 
 extension Workout {
+    func supersetID(for exerciseName: String) -> UUID? {
+        exerciseSets.first(where: { $0.exercise.name == exerciseName })?.supersetGroupID
+    }
+
+    func setSuperset(_ firstExerciseName: String, _ secondExerciseName: String) {
+        let groupID = UUID()
+        for set in exerciseSets where set.exercise.name == firstExerciseName || set.exercise.name == secondExerciseName {
+            set.supersetGroupID = groupID
+            set.updatedAt = .now
+        }
+        updatedAt = .now
+    }
+
+    func removeSuperset(containing exerciseName: String) {
+        guard let groupID = supersetID(for: exerciseName) else { return }
+        for set in exerciseSets where set.supersetGroupID == groupID {
+            set.supersetGroupID = nil
+            set.updatedAt = .now
+        }
+        updatedAt = .now
+    }
+
+    /// Removes group identifiers that no longer represent exactly two exercises.
+    func normalizeSupersets() {
+        let grouped = Dictionary(grouping: exerciseSets.compactMap { set in
+            set.supersetGroupID.map { ($0, set) }
+        }, by: \.0)
+        for (groupID, entries) in grouped {
+            let names = Set(entries.map { $0.1.exercise.name })
+            if names.count != 2 {
+                for set in exerciseSets where set.supersetGroupID == groupID {
+                    set.supersetGroupID = nil
+                }
+            }
+        }
+    }
+
     func addExercise(workout: Workout, exercise: Exercise, order: Int) {
         let newExercise = ExerciseSet(weight: 0, reps: 0, order: order, exercise: exercise, workout: workout)
         exerciseSets.append(newExercise)
@@ -117,6 +154,7 @@ extension Workout {
             return earliest1 < earliest2
         }
 
+        var copiedSupersetIDs: [UUID: UUID] = [:]
         for (exerciseIndex, name) in sortedNames.enumerated() {
             guard let group = grouped[name] else { continue }
             let sets = group.sorted { $0.order < $1.order }
@@ -131,7 +169,13 @@ extension Workout {
                     exerciseOrder: exerciseIndex,
                     exercise: exercise,
                     workout: newWorkout,
-                    exerciseNote: index == 0 ? groupNote : nil
+                    exerciseNote: index == 0 ? groupNote : nil,
+                    supersetGroupID: previousSet.supersetGroupID.map { oldID in
+                        if let existing = copiedSupersetIDs[oldID] { return existing }
+                        let fresh = UUID()
+                        copiedSupersetIDs[oldID] = fresh
+                        return fresh
+                    }
                 )
                 context.insert(newSet)
                 newWorkout.exerciseSets.append(newSet)

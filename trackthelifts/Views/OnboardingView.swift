@@ -215,7 +215,7 @@ private struct FeaturesPage: View {
     ]
 
     var body: some View {
-        ScrollView {
+        ScrollView(.vertical) {
             VStack(alignment: .leading, spacing: 0) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Built for the way you train")
@@ -243,8 +243,10 @@ private struct FeaturesPage: View {
             }
             .padding(.top, 16)
             .padding(.bottom, 20)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .scrollIndicators(.hidden)
+        .scrollBounceBehavior(.basedOnSize)
         // Page-style TabViews preload adjacent pages. Running this with `initial: true` makes the
         // entrance state deterministic whether this page is first created while inactive or only
         // mounted as the swipe reaches it.
