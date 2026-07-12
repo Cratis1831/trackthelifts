@@ -138,7 +138,7 @@ struct WorkoutView: View {
                         }
                         .padding(.horizontal, 20)
                     }
-                    .padding(.bottom, 100) // Space for floating action button
+                    .padding(.bottom, sessionManager.isWorkoutMinimized ? 30 : 100)
                 }
 
                 // Empty state — centered in the screen to match the
@@ -151,30 +151,29 @@ struct WorkoutView: View {
                     )
                 }
 
-                // Floating Action Button
-                VStack {
-                    Spacer()
-                    HStack {
+                // A minimized session is resumed exclusively through the banner above. Keeping
+                // the floating action only for starting a new workout avoids two competing resume
+                // controls and removes the unrelated green treatment from this screen.
+                if !sessionManager.isWorkoutMinimized {
+                    VStack {
                         Spacer()
-                        Button(action: {
-                            if sessionManager.isWorkoutMinimized {
-                                resumingWorkout = activeWorkout
-                                sessionManager.resumeWorkout()
-                            } else {
+                        HStack {
+                            Spacer()
+                            Button(action: {
                                 resumingWorkout = nil
+                                isCreateWorkoutPresented = true
+                            }) {
+                                Image(systemName: "plus")
+                                    .font(.system(size: 24, weight: .medium))
+                                    .foregroundColor(.onAppAction)
+                                    .frame(width: 56, height: 56)
+                                    .background(Color.appAction)
+                                    .clipShape(Circle())
+                                    .overlay(Circle().strokeBorder(Color.appBorder, lineWidth: 1))
                             }
-                            isCreateWorkoutPresented = true
-                        }) {
-                            Image(systemName: sessionManager.isWorkoutMinimized ? "play.fill" : "plus")
-                                .font(.system(size: 24, weight: .medium))
-                                .foregroundColor(sessionManager.isWorkoutMinimized ? .appTextPrimary : .onAppAction)
-                                .frame(width: 56, height: 56)
-                                .background(sessionManager.isWorkoutMinimized ? Color.green : Color.appAction)
-                                .clipShape(Circle())
-                                .overlay(Circle().strokeBorder(Color.appBorder, lineWidth: 1))
+                            .padding(.trailing, 20)
+                            .padding(.bottom, 30)
                         }
-                        .padding(.trailing, 20)
-                        .padding(.bottom, 30)
                     }
                 }
             }
