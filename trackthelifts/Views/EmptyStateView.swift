@@ -15,35 +15,35 @@ struct EmptyStateView: View {
 
     var body: some View {
         VStack(spacing: 16) {
+            AppStatusBadge(text: "Ready when you are")
+
             Image(systemName: systemImage)
-                .font(.system(size: 60))
-                .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                .font(.system(size: 42, weight: .light))
+                .foregroundColor(Color.appTextSecondary)
 
             Text(title)
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.white)
+                .foregroundColor(.appTextPrimary)
 
             Text(message)
                 .font(.system(size: 16))
-                .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                .foregroundColor(Color.appTextSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
 
             if let actionTitle, let action {
                 Button(actionTitle, action: action)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 10)
-                    .background(Color.appAccent)
-                    .foregroundColor(.onAppAccent)
-                    .cornerRadius(8)
+                    .buttonStyle(AppPrimaryButtonStyle())
+                    .padding(.horizontal, 40)
             }
         }
+        .padding(.vertical, 24)
     }
 }
 
 #Preview {
     ZStack {
-        Color.black.ignoresSafeArea()
+        Color.appCanvas.ignoresSafeArea()
         EmptyStateView(
             systemImage: "clock.badge.checkmark",
             title: "No Completed Workouts",

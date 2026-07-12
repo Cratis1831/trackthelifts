@@ -14,27 +14,27 @@ struct ChartCalloutView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(title)
-                .font(.system(size: 11))
-                .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                .font(.appUtility)
+                .foregroundColor(Color.appTextSecondary)
 
             Text(value)
-                .font(.system(size: 14, weight: .semibold))
+                .font(.appMetric)
                 .foregroundColor(.appAccent)
 
             if let detail {
                 Text(detail)
                     .font(.system(size: 12))
-                    .foregroundColor(.white)
+                    .foregroundColor(.appTextPrimary)
             }
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
-        .background(Color(red: 0.11, green: 0.11, blue: 0.12))
-        .cornerRadius(8)
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(Color(red: 0.17, green: 0.17, blue: 0.18), lineWidth: 1)
-        )
+        .background(Color.appSurface)
+        .clipShape(RoundedRectangle(cornerRadius: AppDesign.compactRadius, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: AppDesign.compactRadius, style: .continuous)
+                .strokeBorder(Color.appBorder, lineWidth: 1)
+        }
     }
 }
 

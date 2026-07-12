@@ -34,7 +34,7 @@ struct ExerciseProgressView: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            Color.appCanvas.ignoresSafeArea()
 
             if history.isEmpty {
                 if hasLoadedHistory {
@@ -48,7 +48,7 @@ struct ExerciseProgressView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Estimated 1RM Over Time")
                                 .font(.system(size: 18, weight: .semibold))
-                                .foregroundColor(.white)
+                                .foregroundColor(.appTextPrimary)
 
                             Chart {
                                 ForEach(history) { point in
@@ -68,7 +68,7 @@ struct ExerciseProgressView: View {
 
                                 if let sel = selectedPoint {
                                     RuleMark(x: .value("Date", sel.date))
-                                        .foregroundStyle(Color.white.opacity(0.25))
+                                        .foregroundStyle(Color.appTextPrimary.opacity(0.25))
                                         .lineStyle(StrokeStyle(lineWidth: 1))
                                         .annotation(
                                             position: .top,
@@ -116,7 +116,7 @@ struct ExerciseProgressView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("History")
                                 .font(.system(size: 18, weight: .semibold))
-                                .foregroundColor(.white)
+                                .foregroundColor(.appTextPrimary)
 
                             VStack(spacing: 8) {
                                 ForEach(history.reversed()) { point in
@@ -153,29 +153,29 @@ struct ExerciseProgressView: View {
                 .foregroundColor(.appAccent)
             Text(title)
                 .font(.system(size: 12))
-                .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                .foregroundColor(Color.appTextSecondary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
-        .background(Color(red: 0.11, green: 0.11, blue: 0.12))
-        .cornerRadius(12)
+        .background(Color.appSurface)
+        .cornerRadius(AppDesign.cardRadius)
     }
 
     private func historyRow(_ point: ProgressStatsService.ExerciseHistoryPoint) -> some View {
         HStack {
             Text(point.date.formatted(date: .abbreviated, time: .omitted))
                 .font(.system(size: 14))
-                .foregroundColor(Color(red: 0.76, green: 0.76, blue: 0.78))
+                .foregroundColor(Color.appTextPrimary.opacity(0.78))
 
             Spacer()
 
             Text("\(point.weight.formattedWeight) \(WeightUnitPreference.shared.unit.label) \u{00D7} \(point.reps)")
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white)
+                .foregroundColor(.appTextPrimary)
         }
         .padding(.vertical, 10)
         .padding(.horizontal, 14)
-        .background(Color(red: 0.11, green: 0.11, blue: 0.12))
+        .background(Color.appSurface)
         .cornerRadius(10)
     }
 

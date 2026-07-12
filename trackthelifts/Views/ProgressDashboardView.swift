@@ -42,7 +42,9 @@ struct ProgressDashboardView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.black.ignoresSafeArea()
+                Color.appCanvas.ignoresSafeArea()
+                PrecisionGridBackground()
+                    .ignoresSafeArea()
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 28) {
@@ -54,8 +56,8 @@ struct ProgressDashboardView: View {
                                 .padding(.top, 40)
                         } else {
                             Text("Progress")
-                                .font(.system(size: 24, weight: .bold))
-                                .foregroundColor(.white)
+                                .font(.appSectionTitle)
+                                .foregroundColor(.appTextPrimary)
                                 .padding(.top, 4)
 
                             consistencySection
@@ -102,10 +104,11 @@ struct ProgressDashboardView: View {
             HStack(spacing: 6) {
                 ForEach(weeklyCounts) { week in
                     RoundedRectangle(cornerRadius: 5)
-                        .fill(week.count > 0 ? Color.appAccent : Color(red: 0.17, green: 0.17, blue: 0.18))
+                        .fill(week.count > 0 ? Color.appAccent : Color.appBorder)
                         .frame(height: 28)
                 }
             }
+            .appCard(padding: 12)
         }
     }
 
@@ -177,7 +180,7 @@ struct ProgressDashboardView: View {
             if volume.points.isEmpty {
                 Text("No completed sets yet.")
                     .font(.system(size: 14))
-                    .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                    .foregroundColor(Color.appTextSecondary)
             } else {
                 Chart {
                     ForEach(volume.points) { point in
@@ -197,7 +200,7 @@ struct ProgressDashboardView: View {
 
                     if let sel = selectedVolumePoint {
                         RuleMark(x: .value("Date", sel.date, unit: axisUnit))
-                            .foregroundStyle(Color.white.opacity(0.25))
+                            .foregroundStyle(Color.appTextPrimary.opacity(0.25))
                             .lineStyle(StrokeStyle(lineWidth: 1))
                             .annotation(
                                 position: .top,
@@ -270,7 +273,7 @@ struct ProgressDashboardView: View {
             if records.isEmpty {
                 Text("No personal records yet.")
                     .font(.system(size: 14))
-                    .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                    .foregroundColor(Color.appTextSecondary)
             } else {
                 VStack(spacing: 10) {
                     ForEach(records) { record in
@@ -289,11 +292,11 @@ struct ProgressDashboardView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(record.exercise.name)
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.white)
+                    .foregroundColor(.appTextPrimary)
 
                 Text("Best: \(record.bestWeight.formattedWeight) \(WeightUnitPreference.shared.unit.label) \u{00D7} \(record.bestWeightReps)")
                     .font(.system(size: 13))
-                    .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                    .foregroundColor(Color.appTextSecondary)
             }
 
             Spacer()
@@ -304,21 +307,21 @@ struct ProgressDashboardView: View {
                     .foregroundColor(.appAccent)
                 Text("est. 1RM")
                     .font(.system(size: 11))
-                    .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                    .foregroundColor(Color.appTextSecondary)
             }
 
             Image(systemName: "chevron.forward")
                 .font(.system(size: 12, weight: .medium))
-                .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                .foregroundColor(Color.appTextSecondary)
                 .padding(.leading, 6)
         }
         .padding(14)
-        .background(Color(red: 0.11, green: 0.11, blue: 0.12))
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color(red: 0.17, green: 0.17, blue: 0.18), lineWidth: 1)
-        )
+        .background(Color.appSurface)
+        .clipShape(RoundedRectangle(cornerRadius: AppDesign.cardRadius, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: AppDesign.cardRadius, style: .continuous)
+                .strokeBorder(Color.appBorder, lineWidth: 1)
+        }
     }
 
 }
@@ -336,30 +339,30 @@ private struct SectionHeaderView: View {
             HStack(spacing: 6) {
                 Text(title)
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(.appTextPrimary)
 
                 Button {
                     showInfo = true
                 } label: {
                     Image(systemName: "info.circle")
                         .font(.system(size: 15))
-                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                        .foregroundColor(Color.appTextSecondary)
                 }
                 .buttonStyle(.plain)
                 .popover(isPresented: $showInfo) {
                     Text(info)
                         .font(.system(size: 14))
-                        .foregroundColor(.white)
+                        .foregroundColor(.appTextPrimary)
                         .padding()
                         .frame(minWidth: 240, idealWidth: 280)
                         .presentationCompactAdaptation(.popover)
-                        .background(Color(red: 0.11, green: 0.11, blue: 0.12))
+                        .background(Color.appSurface)
                 }
             }
             if let subtitle {
                 Text(subtitle)
                     .font(.system(size: 13))
-                    .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                    .foregroundColor(Color.appTextSecondary)
             }
         }
     }

@@ -21,8 +21,9 @@ struct TimerView: View {
 
     var body: some View {
         Text(formattedElapsedTime)
+            .font(.appUtility)
             .monospacedDigit()
-            .foregroundColor(Color(.secondaryLabel))
+            .foregroundColor(.appTextSecondary)
             .onReceive(timer) { value in
                 now = value
             }

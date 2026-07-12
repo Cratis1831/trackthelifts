@@ -30,9 +30,8 @@ struct SettingsView: View {
     private var restTimerDurationPreference = RestTimerDurationPreference.shared
 
     // Shared card/typography constants so every section reads as one system.
-    private let cardBackground = Color(red: 0.11, green: 0.11, blue: 0.12)
-    private let cardBorder = Color(red: 0.17, green: 0.17, blue: 0.18)
-    private let secondaryText = Color(red: 0.56, green: 0.56, blue: 0.58)
+    private let cardBorder = Color.appBorder
+    private let secondaryText = Color.appTextSecondary
 
     private var remindersToggleBinding: Binding<Bool> {
         Binding(
@@ -86,7 +85,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.black
+                Color.appCanvas
                     .ignoresSafeArea()
 
                 ScrollView {
@@ -170,7 +169,7 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Track The Lifts Pro")
                         .font(.system(size: 16))
-                        .foregroundColor(.white)
+                        .foregroundColor(.appTextPrimary)
                     Text("Tap to view your benefits")
                         .font(.system(size: 13))
                         .foregroundColor(secondaryText)
@@ -196,7 +195,7 @@ struct SettingsView: View {
 
                 Text(revenueCatService.currentTier.displayName)
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(.appTextPrimary)
             }
 
             VStack(alignment: .leading, spacing: 8) {
@@ -225,11 +224,9 @@ struct SettingsView: View {
                     Image(systemName: "arrow.right")
                         .font(.system(size: 14, weight: .medium))
                 }
-                .foregroundStyle(Color.onAppAccent)
+                .foregroundStyle(Color.onAppAction)
             }
-            .buttonStyle(.borderedProminent)
-            .buttonBorderShape(.roundedRectangle(radius: 12))
-            .tint(.appAccent)
+            .buttonStyle(AppPrimaryButtonStyle())
             .padding(.top, 8)
         }
         .settingsCard()
@@ -260,9 +257,7 @@ struct SettingsView: View {
                 }
             }
         }
-        .buttonStyle(.bordered)
-        .buttonBorderShape(.roundedRectangle(radius: 12))
-        .tint(.appAccent)
+        .buttonStyle(AppSecondaryButtonStyle())
         .disabled(revenueCatService.isLoading)
     }
 
@@ -300,11 +295,11 @@ struct SettingsView: View {
                     IconTile(color: Color(red: 0.90, green: 0.30, blue: 0.24)) {
                         Image(systemName: "bell.fill")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white)
+                            .foregroundColor(.appTextPrimary)
                     }
                     Text("Daily Workout Reminder")
                         .font(.system(size: 16))
-                        .foregroundColor(.white)
+                        .foregroundColor(.appTextPrimary)
                 }
             }
             .tint(.appToggleTint)
@@ -316,7 +311,7 @@ struct SettingsView: View {
                     displayedComponents: .hourAndMinute
                 )
                 .tint(.appAccent)
-                .foregroundColor(.white)
+                .foregroundColor(.appTextPrimary)
             }
         }
     }
@@ -326,11 +321,11 @@ struct SettingsView: View {
             IconTile(color: Color(red: 0.95, green: 0.55, blue: 0.19)) {
                 Image(systemName: "timer")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(.appTextPrimary)
             }
             Text("Rest Timer Duration")
                 .font(.system(size: 16))
-                .foregroundColor(.white)
+                .foregroundColor(.appTextPrimary)
             Spacer()
 
             Picker("Rest Timer Duration", selection: restTimerDurationBinding) {
@@ -350,11 +345,11 @@ struct SettingsView: View {
                 IconTile(color: Color(red: 0.58, green: 0.36, blue: 0.90)) {
                     Image(systemName: "speaker.wave.2.fill")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(.appTextPrimary)
                 }
                 Text("Set Timer Sound")
                     .font(.system(size: 16))
-                    .foregroundColor(.white)
+                    .foregroundColor(.appTextPrimary)
             }
         }
         .tint(.appToggleTint)
@@ -370,7 +365,7 @@ struct SettingsView: View {
                 }
                 Text("Accent Color")
                     .font(.system(size: 16))
-                    .foregroundColor(.white)
+                    .foregroundColor(.appTextPrimary)
                 Spacer()
             }
 
@@ -415,11 +410,11 @@ struct SettingsView: View {
                 IconTile(color: Color(red: 0.20, green: 0.48, blue: 0.96)) {
                     Image(systemName: "scalemass.fill")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(.appTextPrimary)
                 }
                 Text("Weight Unit")
                     .font(.system(size: 16))
-                    .foregroundColor(.white)
+                    .foregroundColor(.appTextPrimary)
                 Spacer()
             }
 
@@ -447,11 +442,11 @@ struct SettingsView: View {
                 IconTile(color: Color(red: 0.30, green: 0.72, blue: 0.40)) {
                     Image(systemName: "square.and.arrow.up")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(.appTextPrimary)
                 }
                 Text("Export Workout History (CSV)")
                     .font(.system(size: 16))
-                    .foregroundColor(.white)
+                    .foregroundColor(.appTextPrimary)
 
                 Spacer()
             }
@@ -467,11 +462,11 @@ struct SettingsView: View {
                 IconTile(color: Color(red: 0.40, green: 0.40, blue: 0.43)) {
                     Image(systemName: "arrow.counterclockwise")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(.appTextPrimary)
                 }
                 Text("Reset Onboarding")
                     .font(.system(size: 16))
-                    .foregroundColor(.white)
+                    .foregroundColor(.appTextPrimary)
 
                 Spacer()
             }
@@ -483,8 +478,10 @@ struct SettingsView: View {
 
     private func sectionHeader(_ title: String) -> some View {
         Text(title)
-            .font(.system(size: 24, weight: .semibold))
-            .foregroundColor(.white)
+            .font(.appUtility)
+            .tracking(1.2)
+            .textCase(.uppercase)
+            .foregroundColor(.appTextSecondary)
     }
 
     private var rowDivider: some View {
@@ -516,12 +513,12 @@ private extension View {
     func settingsCard() -> some View {
         self
             .padding(16)
-            .background(Color(red: 0.11, green: 0.11, blue: 0.12))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color(red: 0.17, green: 0.17, blue: 0.18), lineWidth: 1)
-            )
+            .background(Color.appSurface)
+            .clipShape(RoundedRectangle(cornerRadius: AppDesign.cardRadius, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: AppDesign.cardRadius, style: .continuous)
+                    .strokeBorder(Color.appBorder, lineWidth: 1)
+            }
     }
 }
 

@@ -45,7 +45,9 @@ struct WorkoutView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.black
+                Color.appCanvas
+                    .ignoresSafeArea()
+                PrecisionGridBackground()
                     .ignoresSafeArea()
                 
                 ScrollView {
@@ -67,8 +69,8 @@ struct WorkoutView: View {
                             // Templates Header
                             HStack {
                                 Text("Routines")
-                                    .font(.system(size: 24, weight: .semibold))
-                                    .foregroundColor(.white)
+                                    .font(.appSectionTitle)
+                                    .foregroundColor(.appTextPrimary)
                                 
                                 Spacer()
                                 
@@ -92,15 +94,17 @@ struct WorkoutView: View {
                                     }
                                 }
                                 .buttonStyle(.bordered)
-                                .buttonBorderShape(.roundedRectangle(radius: 8))
-                                .tint(.appAccent)
+                                .buttonBorderShape(.roundedRectangle(radius: AppDesign.compactRadius))
+                                .tint(.appTextSecondary)
                             }
 
                             // My Templates Header
                             HStack {
                                 Text("My Routines (\(templates.count))")
-                                    .font(.system(size: 20, weight: .semibold))
-                                    .foregroundColor(.white)
+                                    .font(.appUtility)
+                                    .tracking(0.6)
+                                    .textCase(.uppercase)
+                                    .foregroundColor(.appTextPrimary)
 
                                 Spacer()
 
@@ -134,7 +138,7 @@ struct WorkoutView: View {
                         }
                         .padding(.horizontal, 20)
                     }
-                    .padding(.bottom, 100) // Space for floating action button
+                    .padding(.bottom, sessionManager.isWorkoutMinimized ? 30 : 100)
                 }
 
                 // Empty state — centered in the screen to match the
@@ -147,30 +151,29 @@ struct WorkoutView: View {
                     )
                 }
 
-                // Floating Action Button
-                VStack {
-                    Spacer()
-                    HStack {
+                // A minimized session is resumed exclusively through the banner above. Keeping
+                // the floating action only for starting a new workout avoids two competing resume
+                // controls and removes the unrelated green treatment from this screen.
+                if !sessionManager.isWorkoutMinimized {
+                    VStack {
                         Spacer()
-                        Button(action: {
-                            if sessionManager.isWorkoutMinimized {
-                                resumingWorkout = activeWorkout
-                                sessionManager.resumeWorkout()
-                            } else {
+                        HStack {
+                            Spacer()
+                            Button(action: {
                                 resumingWorkout = nil
+                                isCreateWorkoutPresented = true
+                            }) {
+                                Image(systemName: "plus")
+                                    .font(.system(size: 24, weight: .medium))
+                                    .foregroundColor(.onAppAction)
+                                    .frame(width: 56, height: 56)
+                                    .background(Color.appAction)
+                                    .clipShape(Circle())
+                                    .overlay(Circle().strokeBorder(Color.appBorder, lineWidth: 1))
                             }
-                            isCreateWorkoutPresented = true
-                        }) {
-                            Image(systemName: sessionManager.isWorkoutMinimized ? "play.fill" : "plus")
-                                .font(.system(size: 24, weight: .medium))
-                                .foregroundColor(sessionManager.isWorkoutMinimized ? .white : .onAppAccent)
-                                .frame(width: 56, height: 56)
-                                .background(sessionManager.isWorkoutMinimized ? Color.green : Color.appAccent)
-                                .clipShape(Circle())
-                                .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
+                            .padding(.trailing, 20)
+                            .padding(.bottom, 30)
                         }
-                        .padding(.trailing, 20)
-                        .padding(.bottom, 30)
                     }
                 }
             }
@@ -249,7 +252,7 @@ struct TemplateCard: View {
                 HStack {
                     Text(template.name)
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(.appTextPrimary)
                         .lineLimit(1)
 
                     Spacer()
@@ -278,17 +281,17 @@ struct TemplateCard: View {
 
                 Text(exercisesSummary)
                     .font(.system(size: 14))
-                    .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                    .foregroundColor(Color.appTextSecondary)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
             }
             .padding(16)
             .frame(maxWidth: .infinity, minHeight: 100, alignment: .topLeading)
-            .background(Color(red: 0.11, green: 0.11, blue: 0.12))
-            .cornerRadius(12)
+            .background(Color.appSurface)
+            .cornerRadius(AppDesign.cardRadius)
             .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color(red: 0.17, green: 0.17, blue: 0.18), lineWidth: 1)
+                RoundedRectangle(cornerRadius: AppDesign.cardRadius)
+                    .stroke(Color.appBorder, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -322,30 +325,29 @@ struct ResumeWorkoutBanner: View {
                         
                         Text("Resume Workout")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white)
+                            .foregroundColor(.appTextPrimary)
                     }
                     
                     Text(workout.title)
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white)
+                        .foregroundColor(.appTextPrimary)
                         .lineLimit(1)
                     
                     Text("\(completedSets)/\(totalSets) sets • \(uniqueExercises) exercises")
-                        .font(.system(size: 12))
-                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                        .font(.appUtility)
+                        .foregroundColor(Color.appTextSecondary)
                 }
                 
                 Spacer()
                 
                 Image(systemName: "chevron.right")
-                    .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58))
+                    .foregroundColor(Color.appTextSecondary)
                     .font(.system(size: 14))
             }
             .padding(16)
         }
-        .buttonStyle(.bordered)
-        .buttonBorderShape(.roundedRectangle(radius: 8))
-        .tint(.green)
+        .buttonStyle(.plain)
+        .appCard(padding: 4)
     }
 }
 
