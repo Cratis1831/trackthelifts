@@ -164,7 +164,7 @@ struct SettingsView: View {
                 IconTile(color: .appAccent) {
                     Image(systemName: "checkmark.seal.fill")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.onAppAccent)
+                        .foregroundColor(.appTextPrimary)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {

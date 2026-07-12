@@ -230,17 +230,19 @@ private struct FeaturesPage: View {
                 .opacity(showHeader ? 1 : 0)
                 .offset(y: showHeader ? 0 : 12)
 
-                VStack(spacing: 14) {
+                LazyVStack(spacing: 12) {
                     ForEach(Self.features) { feature in
                         featureRow(feature)
                     }
                 }
                 .padding(.horizontal, 24)
-                .padding(.top, 24)
+                .padding(.top, 20)
                 .opacity(showFeatures ? 1 : 0)
                 .offset(y: showFeatures ? 0 : 12)
+
             }
-            .padding(.vertical, 12)
+            .padding(.top, 16)
+            .padding(.bottom, 20)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .scrollIndicators(.hidden)
