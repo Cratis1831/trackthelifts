@@ -171,7 +171,7 @@ private struct FeaturesPage: View {
     let isActive: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var showHeader = false
-    @State private var visibleRows = 0
+    @State private var showFeatures = false
 
     // The app's current core features, in the order a new lifter meets them. Update this list
     // when a headline feature ships so onboarding never drifts out of date again.
@@ -232,19 +232,21 @@ private struct FeaturesPage: View {
             .offset(y: showHeader ? 0 : 12)
 
             VStack(spacing: 14) {
-                ForEach(Array(Self.features.enumerated()), id: \.element.id) { index, feature in
+                ForEach(Self.features) { feature in
                     featureRow(feature)
-                        .opacity(index < visibleRows ? 1 : 0)
-                        .offset(x: index < visibleRows ? 0 : 28)
                 }
             }
             .padding(.horizontal, 24)
             .padding(.top, 24)
+            .opacity(showFeatures ? 1 : 0)
+            .offset(y: showFeatures ? 0 : 12)
 
             Spacer(minLength: 12)
         }
-        .onAppear { if isActive { animateIn() } }
-        .onChange(of: isActive) { _, active in
+        // Page-style TabViews preload adjacent pages. Running this with `initial: true` makes the
+        // entrance state deterministic whether this page is first created while inactive or only
+        // mounted as the swipe reaches it.
+        .onChange(of: isActive, initial: true) { _, active in
             if active { animateIn() } else { reset() }
         }
     }
@@ -276,22 +278,20 @@ private struct FeaturesPage: View {
     private func animateIn() {
         guard !reduceMotion else {
             showHeader = true
-            visibleRows = Self.features.count
+            showFeatures = true
             return
         }
         withAnimation(.easeOut(duration: 0.4)) {
             showHeader = true
         }
-        for index in 0..<Self.features.count {
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.15 + Double(index) * 0.09)) {
-                visibleRows = max(visibleRows, index + 1)
-            }
+        withAnimation(.easeOut(duration: 0.4).delay(0.08)) {
+            showFeatures = true
         }
     }
 
     private func reset() {
         showHeader = false
-        visibleRows = 0
+        showFeatures = false
     }
 }
 
