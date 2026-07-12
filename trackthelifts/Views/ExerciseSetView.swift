@@ -20,6 +20,9 @@ struct ExerciseSetView: View {
     @State private var reps: String = ""
     @State private var isCompleted: Bool = false
     @State private var showClassificationDialog: Bool = false
+    @State private var intensityPreference = IntensityPreference.shared
+    @State private var isShakingCompletion = false
+    @State private var completionShakeOffset: CGFloat = 0
     @FocusState private var isWeightFocused: Bool
     @FocusState private var isRepsFocused: Bool
 
@@ -31,6 +34,7 @@ struct ExerciseSetView: View {
     @State private var isPersonalRecord: Bool = false
 
     var body: some View {
+        VStack(alignment: .trailing, spacing: 5) {
         HStack {
             // Column 1: Set number. Long-press to classify this set (warm-up/working/failure) -
             // the classification is stored on this exerciseSet only, so it never affects other
@@ -157,6 +161,12 @@ struct ExerciseSetView: View {
                 .frame(width: 30, height: 30)
             }
             .buttonStyle(PlainButtonStyle())
+            .offset(x: completionShakeOffset)
+        }
+
+            if let metric = displayedIntensityMetric {
+                intensityMenu(for: metric)
+            }
         }
         .onAppear {
             loadExerciseSetData()
@@ -172,6 +182,53 @@ struct ExerciseSetView: View {
         .onChange(of: WeightUnitPreference.shared.unit) { _, _ in
             loadExerciseSetData()
         }
+    }
+
+    private var displayedIntensityMetric: IntensityMetric? {
+        exerciseSet.intensityMetric ?? intensityPreference.mode.metric
+    }
+
+    private func intensityMenu(for metric: IntensityMetric) -> some View {
+        Menu {
+            ForEach(metric.values, id: \.self) { value in
+                Button {
+                    setIntensity(metric: metric, value: value)
+                } label: {
+                    if exerciseSet.intensityMetric == metric && exerciseSet.intensityValue == value {
+                        Label(metric.formatted(value), systemImage: "checkmark")
+                    } else {
+                        Text(metric.formatted(value))
+                    }
+                }
+            }
+
+            if exerciseSet.intensityValue != nil {
+                Divider()
+                Button("Clear", role: .destructive) {
+                    clearIntensity()
+                }
+            }
+        } label: {
+            HStack(spacing: 5) {
+                Text(metric.label)
+                Text(exerciseSet.intensityValue.map(metric.formatted) ?? "–")
+                    .foregroundColor(exerciseSet.intensityValue == nil ? .appTextSecondary : .appTextPrimary)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 8, weight: .bold))
+            }
+            .font(.system(size: 11, weight: .semibold, design: .rounded))
+            .foregroundColor(.appAccent)
+            .padding(.horizontal, 9)
+            .frame(height: 24)
+            .background(Color.appElevatedSurface)
+            .clipShape(Capsule())
+            .overlay {
+                Capsule().strokeBorder(Color.appAccent.opacity(0.35), lineWidth: 1)
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(metric.label) effort")
+        .accessibilityValue(exerciseSet.intensityValue.map(metric.formatted) ?? "Not set")
     }
     
     /// Selects the full text of whichever weight/reps field just gained focus, so tapping into a
@@ -259,10 +316,52 @@ struct ExerciseSetView: View {
         Haptics.selection()
     }
 
+    private func setIntensity(metric: IntensityMetric, value: Double) {
+        exerciseSet.intensityMetric = metric
+        exerciseSet.intensityValue = value
+        exerciseSet.updatedAt = .now
+        do {
+            try modelContext.save()
+            Haptics.selection()
+        } catch {
+            print("Failed to save set intensity: \(error)")
+        }
+    }
+
+    private func clearIntensity() {
+        exerciseSet.intensityMetric = nil
+        exerciseSet.intensityValue = nil
+        exerciseSet.updatedAt = .now
+        do {
+            try modelContext.save()
+            Haptics.selection()
+        } catch {
+            print("Failed to clear set intensity: \(error)")
+        }
+    }
+
+    @MainActor
+    private func shakeInvalidCompletion() {
+        guard !isShakingCompletion else { return }
+        isShakingCompletion = true
+        Haptics.error()
+
+        Task { @MainActor in
+            for offset: CGFloat in [-6, 6, -4, 4, -2, 2, 0] {
+                withAnimation(.easeInOut(duration: 0.055)) {
+                    completionShakeOffset = offset
+                }
+                try? await Task.sleep(for: .milliseconds(55))
+            }
+            isShakingCompletion = false
+        }
+    }
+
     private func toggleCompletion() {
         // Weight is optional (defaults to 0, e.g. for bodyweight exercises), but reps are required.
         let weightValue = Double(weight) ?? 0
         guard let repsValue = Int(reps), repsValue > 0 else {
+            shakeInvalidCompletion()
             return
         }
 

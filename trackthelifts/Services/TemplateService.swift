@@ -15,7 +15,11 @@ enum TemplateService {
         context.insert(template)
 
         let grouped = Dictionary(grouping: workout.exerciseSets, by: \.exercise.name)
-        let sortedGroups = grouped.sorted { $0.key < $1.key }
+        let sortedGroups = grouped.sorted { lhs, rhs in
+            (lhs.value.map(\.exerciseOrder).min() ?? .max) < (rhs.value.map(\.exerciseOrder).min() ?? .max)
+        }
+
+        var copiedSupersetIDs: [UUID: UUID] = [:]
 
         for (index, group) in sortedGroups.enumerated() {
             let sets = group.value.sorted { $0.order < $1.order }
@@ -26,6 +30,12 @@ enum TemplateService {
                 targetSets: sets.count,
                 targetReps: lastSet.reps,
                 targetWeight: lastSet.weight,
+                supersetGroupID: lastSet.supersetGroupID.map { oldID in
+                    if let existing = copiedSupersetIDs[oldID] { return existing }
+                    let fresh = UUID()
+                    copiedSupersetIDs[oldID] = fresh
+                    return fresh
+                },
                 template: template,
                 exercise: exercise
             )

@@ -50,6 +50,8 @@ extension WorkoutTemplate {
         let workout = Workout(title: name, date: .now)
         context.insert(workout)
 
+        var copiedSupersetIDs: [UUID: UUID] = [:]
+
         for (exerciseIndex, templateExercise) in templateExercises.sorted(by: { $0.order < $1.order }).enumerated() {
             for setIndex in 0..<max(templateExercise.targetSets, 1) {
                 let set = ExerciseSet(
@@ -58,7 +60,13 @@ extension WorkoutTemplate {
                     order: setIndex,
                     exerciseOrder: exerciseIndex,
                     exercise: templateExercise.exercise,
-                    workout: workout
+                    workout: workout,
+                    supersetGroupID: templateExercise.supersetGroupID.map { oldID in
+                        if let existing = copiedSupersetIDs[oldID] { return existing }
+                        let fresh = UUID()
+                        copiedSupersetIDs[oldID] = fresh
+                        return fresh
+                    }
                 )
                 context.insert(set)
                 workout.exerciseSets.append(set)
@@ -79,12 +87,20 @@ extension WorkoutTemplate {
         let copy = WorkoutTemplate(name: "\(name) Copy", notes: notes)
         context.insert(copy)
 
+        var copiedSupersetIDs: [UUID: UUID] = [:]
+
         for templateExercise in templateExercises.sorted(by: { $0.order < $1.order }) {
             let newTemplateExercise = WorkoutTemplateExercise(
                 order: templateExercise.order,
                 targetSets: templateExercise.targetSets,
                 targetReps: templateExercise.targetReps,
                 targetWeight: templateExercise.targetWeight,
+                supersetGroupID: templateExercise.supersetGroupID.map { oldID in
+                    if let existing = copiedSupersetIDs[oldID] { return existing }
+                    let fresh = UUID()
+                    copiedSupersetIDs[oldID] = fresh
+                    return fresh
+                },
                 template: copy,
                 exercise: templateExercise.exercise
             )

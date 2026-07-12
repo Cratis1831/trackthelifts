@@ -13,6 +13,7 @@ class WorkoutTemplateExercise {
     var targetSets: Int
     var targetReps: Int
     var targetWeight: Double
+    var supersetGroupID: UUID?
 
     // CloudKit sync properties
     var createdAt: Date
@@ -30,6 +31,7 @@ class WorkoutTemplateExercise {
         targetSets: Int,
         targetReps: Int,
         targetWeight: Double,
+        supersetGroupID: UUID? = nil,
         template: WorkoutTemplate,
         exercise: Exercise,
         createdAt: Date = .now,
@@ -43,6 +45,7 @@ class WorkoutTemplateExercise {
         self.targetSets = targetSets
         self.targetReps = targetReps
         self.targetWeight = targetWeight
+        self.supersetGroupID = supersetGroupID
         self.template = template
         self.exercise = exercise
         self.createdAt = createdAt

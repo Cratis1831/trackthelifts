@@ -22,6 +22,7 @@ struct CreateWorkoutView: View {
     @State private var pendingAutoFocusSetID: UUID?
     @State private var sessionStartDate = Date()
     @State private var isReorderingExercises = false
+    @State private var completionSummary: WorkoutCompletionSummary?
     private let sessionManager = WorkoutSessionManager.shared
     @FocusState private var focusWorkoutName: Bool
     
@@ -57,17 +58,36 @@ struct CreateWorkoutView: View {
             }
     }
 
+    private var exerciseBlocks: [[(name: String, sets: [ExerciseSet])]] {
+        let groups = exerciseGroups
+        var blocks: [[(name: String, sets: [ExerciseSet])]] = []
+        var index = 0
+        while index < groups.count {
+            let group = groups[index]
+            if let supersetID = group.sets.first?.supersetGroupID,
+               index + 1 < groups.count,
+               groups[index + 1].sets.first?.supersetGroupID == supersetID {
+                blocks.append([group, groups[index + 1]])
+                index += 2
+            } else {
+                blocks.append([group])
+                index += 1
+            }
+        }
+        return blocks
+    }
+
     /// Reassigns sequential `exerciseOrder` values to every set after a drag-reorder, so the new
     /// order persists. Only called from reorder mode, where the ForEach is a flat one-row-per-
     /// exercise list — the sole `.onMove` configuration List supports reliably (moving multi-row
     /// Sections crashes the List's index mapping, which is why reordering collapses to compact
     /// rows first).
-    private func moveExercises(from source: IndexSet, to destination: Int) {
-        var groups = exerciseGroups
-        guard source.allSatisfy({ $0 < groups.count }), destination <= groups.count else { return }
-        groups.move(fromOffsets: source, toOffset: destination)
+    private func moveExerciseBlocks(from source: IndexSet, to destination: Int) {
+        var blocks = exerciseBlocks
+        guard source.allSatisfy({ $0 < blocks.count }), destination <= blocks.count else { return }
+        blocks.move(fromOffsets: source, toOffset: destination)
 
-        for (index, group) in groups.enumerated() {
+        for (index, group) in blocks.flatMap({ $0 }).enumerated() {
             for set in group.sets {
                 set.exerciseOrder = index
             }
@@ -93,13 +113,45 @@ struct CreateWorkoutView: View {
     }
 
     /// Exercise name row: long-press it (or tap its grip icon) to enter reorder mode.
-    private func exerciseTitleRow(_ exerciseName: String, canReorder: Bool) -> some View {
+    private func exerciseTitleRow(
+        _ exerciseName: String,
+        groups: [(name: String, sets: [ExerciseSet])],
+        canReorder: Bool
+    ) -> some View {
         HStack {
+            if let position = supersetPosition(for: exerciseName, in: groups) {
+                Text("A\(position)")
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundColor(.onAppAccent)
+                    .frame(width: 24, height: 24)
+                    .background(Color.appAccent)
+                    .clipShape(Circle())
+            }
+
             Text(exerciseName)
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.primary)
 
             Spacer()
+
+            if savedWorkout?.supersetID(for: exerciseName) != nil {
+                Text("SUPERSET")
+                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                    .tracking(1)
+                    .foregroundColor(.appAccent)
+            }
+
+            if groups.count > 1 {
+                Menu {
+                    supersetMenu(for: exerciseName, in: groups)
+                } label: {
+                    Image(systemName: savedWorkout?.supersetID(for: exerciseName) == nil ? "link" : "link.circle.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(savedWorkout?.supersetID(for: exerciseName) == nil ? .appTextSecondary : .appAccent)
+                        .frame(width: 32, height: 32)
+                }
+                .buttonStyle(.plain)
+            }
 
             if canReorder {
                 Button {
@@ -134,21 +186,21 @@ struct CreateWorkoutView: View {
     /// `.onMove` configuration List supports reliably (dragging multi-row Sections crashes the
     /// List's internal index mapping). Edit mode is forced active so drag handles show instantly.
     @ViewBuilder
-    private func reorderModeContent(groups: [(name: String, sets: [ExerciseSet])]) -> some View {
+    private func reorderModeContent(blocks: [[(name: String, sets: [ExerciseSet])]]) -> some View {
         Section {
-            ForEach(groups, id: \.name) { group in
+            ForEach(blocks, id: \.first!.name) { block in
                 HStack(spacing: 12) {
-                    Text(group.name)
+                    Text(block.map(\.name).joined(separator: " + "))
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.primary)
                     Spacer()
-                    Text("\(group.sets.count) set\(group.sets.count == 1 ? "" : "s")")
+                    Text(block.count == 2 ? "Superset" : "\(block[0].sets.count) sets")
                         .font(.system(size: 14))
                         .foregroundColor(Color(.secondaryLabel))
                 }
                 .padding(.vertical, 4)
             }
-            .onMove(perform: moveExercises)
+            .onMove(perform: moveExerciseBlocks)
         } header: {
             Text("Drag to reorder exercises")
                 .font(.system(size: 14, weight: .semibold))
@@ -156,6 +208,66 @@ struct CreateWorkoutView: View {
                 .textCase(nil)
         }
         .listRowBackground(Color.appSurface)
+    }
+
+    private func supersetPosition(
+        for exerciseName: String,
+        in groups: [(name: String, sets: [ExerciseSet])]
+    ) -> Int? {
+        guard let index = groups.firstIndex(where: { $0.name == exerciseName }),
+              let groupID = groups[index].sets.first?.supersetGroupID else { return nil }
+        let members = groups.indices.filter { groups[$0].sets.first?.supersetGroupID == groupID }
+        guard let memberIndex = members.firstIndex(of: index) else { return nil }
+        return memberIndex + 1
+    }
+
+    @ViewBuilder
+    private func supersetMenu(
+        for exerciseName: String,
+        in groups: [(name: String, sets: [ExerciseSet])]
+    ) -> some View {
+        if let workout = savedWorkout,
+           let index = groups.firstIndex(where: { $0.name == exerciseName }) {
+            if workout.supersetID(for: exerciseName) != nil {
+                Button("Remove Superset", role: .destructive) {
+                    workout.removeSuperset(containing: exerciseName)
+                    persistSupersetChange()
+                }
+            } else {
+                if index > 0, workout.supersetID(for: groups[index - 1].name) == nil {
+                    Button("Pair with \(groups[index - 1].name)") {
+                        workout.setSuperset(groups[index - 1].name, exerciseName)
+                        persistSupersetChange()
+                    }
+                }
+                if index + 1 < groups.count, workout.supersetID(for: groups[index + 1].name) == nil {
+                    Button("Pair with \(groups[index + 1].name)") {
+                        workout.setSuperset(exerciseName, groups[index + 1].name)
+                        persistSupersetChange()
+                    }
+                }
+            }
+        }
+    }
+
+    private func persistSupersetChange() {
+        do {
+            try modelContext.save()
+            Haptics.selection()
+        } catch {
+            print("Failed to update superset: \(error)")
+        }
+    }
+
+    private func rowBackground(for group: (name: String, sets: [ExerciseSet])) -> some View {
+        ZStack(alignment: .leading) {
+            Color.appCanvas
+            if group.sets.first?.supersetGroupID != nil {
+                Rectangle()
+                    .fill(Color.appAccent)
+                    .frame(width: 3)
+            }
+        }
     }
 
     private var columnHeader: some View {
@@ -191,7 +303,7 @@ struct CreateWorkoutView: View {
                         // and hand the result down instead of re-deriving it per exercise row.
                         let groups = exerciseGroups
                         if isReorderingExercises {
-                            reorderModeContent(groups: groups)
+                            reorderModeContent(blocks: exerciseBlocks)
                         } else {
                         Section {
                             TextField("Workout Name", text: $workoutName)
@@ -239,7 +351,7 @@ struct CreateWorkoutView: View {
                                 Section {
                                     RestTimerBanner(exerciseName: group.name)
 
-                                    exerciseTitleRow(group.name, canReorder: groups.count > 1)
+                                    exerciseTitleRow(group.name, groups: groups, canReorder: groups.count > 1)
 
                                     ExerciseNoteField(workout: workout, exerciseName: group.name)
 
@@ -266,7 +378,7 @@ struct CreateWorkoutView: View {
                                     }
                                     .buttonStyle(WorkoutActionButtonStyle(tint: .appAccent, prominence: .plain))
                                 }
-                                .listRowBackground(Color.appCanvas)
+                                .listRowBackground(rowBackground(for: group))
                                 .listRowSeparator(.hidden)
                             }
                         } else {
@@ -444,6 +556,14 @@ struct CreateWorkoutView: View {
                     .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
+        .overlay {
+            if let completionSummary {
+                WorkoutCompletionView(summary: completionSummary) {
+                    dismiss()
+                }
+                .zIndex(100)
+            }
+        }
     }
 
     private func showPersonalRecord(for set: ExerciseSet, kind: PRKind) {
@@ -603,7 +723,9 @@ struct CreateWorkoutView: View {
             sessionManager.completeWorkout()
             RestTimerManager.shared.cancel()
             Haptics.success()
-            dismiss()
+            withAnimation(.easeOut(duration: 0.22)) {
+                completionSummary = WorkoutCompletionSummary(workout: workout)
+            }
         } catch {
             print("Failed to complete workout: \(error)")
             saveErrorMessage = "Your workout couldn't be finished. Please try again."
@@ -623,7 +745,8 @@ struct CreateWorkoutView: View {
             order: newOrder + 1,
             exerciseOrder: lastSet?.exerciseOrder ?? 0,
             exercise: exercise,
-            workout: workout
+            workout: workout,
+            supersetGroupID: lastSet?.supersetGroupID
         )
 
         workout.exerciseSets.append(newExerciseSet)
@@ -649,6 +772,7 @@ struct CreateWorkoutView: View {
         for (index, remainingSet) in remaining.enumerated() {
             remainingSet.order = index
         }
+        workout.normalizeSupersets()
 
         do {
             try modelContext.save()

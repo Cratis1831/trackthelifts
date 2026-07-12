@@ -246,6 +246,10 @@ struct TemplateCard: View {
             .joined(separator: ", ")
     }
 
+    private var supersetCount: Int {
+        Set(template.templateExercises.compactMap(\.supersetGroupID)).count
+    }
+
     var body: some View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 8) {
@@ -284,6 +288,15 @@ struct TemplateCard: View {
                     .foregroundColor(Color.appTextSecondary)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
+
+                if supersetCount > 0 {
+                    Label(
+                        "\(supersetCount) superset\(supersetCount == 1 ? "" : "s")",
+                        systemImage: "link"
+                    )
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .foregroundColor(.appAccent)
+                }
             }
             .padding(16)
             .frame(maxWidth: .infinity, minHeight: 100, alignment: .topLeading)

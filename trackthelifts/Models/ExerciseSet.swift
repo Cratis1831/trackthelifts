@@ -41,6 +41,19 @@ class ExerciseSet {
     /// (no note) instead of crashing.
     var exerciseNote: String?
 
+    /// Optional per-set effort measurement. Raw storage keeps lightweight migration safe and
+    /// preserves the meaning of old entries when the app-wide entry preference changes.
+    var intensityMetricRaw: String?
+    var intensityValue: Double?
+
+    /// Shared by every set belonging to the two exercises in a superset.
+    var supersetGroupID: UUID?
+
+    var intensityMetric: IntensityMetric? {
+        get { intensityMetricRaw.flatMap(IntensityMetric.init(rawValue:)) }
+        set { intensityMetricRaw = newValue?.rawValue }
+    }
+
     // CloudKit sync properties
     var createdAt: Date
     var updatedAt: Date
@@ -62,6 +75,9 @@ class ExerciseSet {
         isCompleted: Bool = false,
         setType: SetClassification = .working,
         exerciseNote: String? = nil,
+        intensityMetric: IntensityMetric? = nil,
+        intensityValue: Double? = nil,
+        supersetGroupID: UUID? = nil,
         createdAt: Date = .now,
         updatedAt: Date = .now,
         isDeleted: Bool = false,
@@ -78,6 +94,9 @@ class ExerciseSet {
         self.isCompleted = isCompleted
         self.setType = setType
         self.exerciseNote = exerciseNote
+        self.intensityMetricRaw = intensityMetric?.rawValue
+        self.intensityValue = intensityValue
+        self.supersetGroupID = supersetGroupID
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.isDeleted = isDeleted
@@ -85,4 +104,3 @@ class ExerciseSet {
         self.lastSyncDate = lastSyncDate
     }
 }
-

@@ -7,7 +7,10 @@ import Foundation
 import SwiftData
 
 enum WorkoutExportService {
-    private static let columns = ["Date", "Workout Title", "Exercise", "Body Part", "Set", "Set Type", "Weight", "Unit", "Reps", "Notes", "Exercise Note"]
+    private static let columns = [
+        "Date", "Workout Title", "Exercise", "Body Part", "Set", "Set Type",
+        "Weight", "Unit", "Reps", "Effort Metric", "Effort", "Superset", "Notes", "Exercise Note",
+    ]
 
     private static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -31,6 +34,8 @@ enum WorkoutExportService {
         for workout in workouts {
             let dateString = dateFormatter.string(from: workout.completedAt ?? workout.date)
             let notes = workout.notes ?? ""
+            var supersetLabels: [UUID: String] = [:]
+            var nextSupersetNumber = 1
 
             let grouped = Dictionary(grouping: workout.exerciseSets.filter { $0.isCompleted }, by: \.exercise.name)
             let orderedNames = grouped.keys.sorted { name1, name2 in
@@ -50,6 +55,19 @@ enum WorkoutExportService {
                 let exerciseNote = workout.exerciseNote(for: name)
 
                 for (index, set) in sets.enumerated() {
+                    let supersetLabel: String
+                    if let groupID = set.supersetGroupID {
+                        if let existing = supersetLabels[groupID] {
+                            supersetLabel = existing
+                        } else {
+                            supersetLabel = "Superset \(nextSupersetNumber)"
+                            supersetLabels[groupID] = supersetLabel
+                            nextSupersetNumber += 1
+                        }
+                    } else {
+                        supersetLabel = ""
+                    }
+                    let metric = set.intensityMetric
                     rows.append([
                         dateString,
                         workout.title,
@@ -60,6 +78,9 @@ enum WorkoutExportService {
                         set.weight.formattedWeight,
                         unitLabel,
                         String(set.reps),
+                        metric?.label ?? "",
+                        set.intensityValue.map { metric?.formatted($0) ?? String($0) } ?? "",
+                        supersetLabel,
                         notes,
                         exerciseNote,
                     ])

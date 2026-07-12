@@ -138,7 +138,11 @@ struct WorkoutHistoryCard: View {
 
     private var exerciseGroups: [(String, [ExerciseSet])] {
         let grouped = Dictionary(grouping: workout.exerciseSets, by: \.exercise.name)
-        return grouped.sorted { $0.key < $1.key }
+        return grouped.sorted { lhs, rhs in
+            let lhsOrder = lhs.value.map(\.exerciseOrder).min() ?? .max
+            let rhsOrder = rhs.value.map(\.exerciseOrder).min() ?? .max
+            return lhsOrder == rhsOrder ? lhs.key < rhs.key : lhsOrder < rhsOrder
+        }
     }
     
     private var totalSets: Int {
@@ -197,7 +201,19 @@ struct WorkoutHistoryCard: View {
                 VStack(alignment: .leading, spacing: 6) {
                     ForEach(Array(groups.prefix(3)), id: \.0) { exerciseName, sets in
                         HStack {
-                            Text("• \(exerciseName)")
+                            if let position = supersetPosition(for: exerciseName, in: groups) {
+                                Text("A\(position)")
+                                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                                    .foregroundColor(.onAppAccent)
+                                    .frame(width: 20, height: 20)
+                                    .background(Color.appAccent)
+                                    .clipShape(Circle())
+                            } else {
+                                Text("•")
+                                    .foregroundColor(Color.appTextSecondary)
+                            }
+
+                            Text(exerciseName)
                                 .font(.system(size: 14))
                                 .foregroundColor(Color.appTextPrimary.opacity(0.78))
                                 .lineLimit(1)
@@ -238,6 +254,17 @@ struct WorkoutHistoryCard: View {
         .contextMenu {
             cardMenuActions
         }
+    }
+
+    private func supersetPosition(
+        for exerciseName: String,
+        in groups: [(String, [ExerciseSet])]
+    ) -> Int? {
+        guard let index = groups.firstIndex(where: { $0.0 == exerciseName }),
+              let groupID = groups[index].1.first?.supersetGroupID else { return nil }
+        let members = groups.indices.filter { groups[$0].1.first?.supersetGroupID == groupID }
+        guard let memberIndex = members.firstIndex(of: index) else { return nil }
+        return memberIndex + 1
     }
 
     @ViewBuilder
