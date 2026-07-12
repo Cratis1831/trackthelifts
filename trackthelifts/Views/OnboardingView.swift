@@ -215,34 +215,36 @@ private struct FeaturesPage: View {
     ]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Spacer(minLength: 12)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Built for the way you train")
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundColor(.appTextPrimary)
 
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Built for the way you train")
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(.appTextPrimary)
-
-                Text("Everything below is already in the app, ready on day one.")
-                    .font(.system(size: 15))
-                    .foregroundColor(Color.appTextSecondary)
-            }
-            .padding(.horizontal, 28)
-            .opacity(showHeader ? 1 : 0)
-            .offset(y: showHeader ? 0 : 12)
-
-            VStack(spacing: 14) {
-                ForEach(Self.features) { feature in
-                    featureRow(feature)
+                    Text("Everything below is already in the app, ready on day one.")
+                        .font(.system(size: 15))
+                        .foregroundColor(Color.appTextSecondary)
                 }
-            }
-            .padding(.horizontal, 24)
-            .padding(.top, 24)
-            .opacity(showFeatures ? 1 : 0)
-            .offset(y: showFeatures ? 0 : 12)
+                .padding(.horizontal, 28)
+                .opacity(showHeader ? 1 : 0)
+                .offset(y: showHeader ? 0 : 12)
 
-            Spacer(minLength: 12)
+                LazyVStack(spacing: 12) {
+                    ForEach(Self.features) { feature in
+                        featureRow(feature)
+                    }
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 20)
+                .opacity(showFeatures ? 1 : 0)
+                .offset(y: showFeatures ? 0 : 12)
+
+            }
+            .padding(.top, 16)
+            .padding(.bottom, 20)
         }
+        .scrollIndicators(.hidden)
         // Page-style TabViews preload adjacent pages. Running this with `initial: true` makes the
         // entrance state deterministic whether this page is first created while inactive or only
         // mounted as the swipe reaches it.
