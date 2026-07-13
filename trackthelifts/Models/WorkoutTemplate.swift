@@ -44,6 +44,10 @@ class WorkoutTemplate {
 }
 
 extension WorkoutTemplate {
+    var containsSupersets: Bool {
+        templateExercises.contains { $0.supersetGroupID != nil }
+    }
+
     /// Creates a new in-progress `Workout` pre-seeded with this template's exercises,
     /// each given `targetSets` empty `ExerciseSet`s at the template's target weight/reps.
     func instantiateWorkout(in context: ModelContext) -> Workout {

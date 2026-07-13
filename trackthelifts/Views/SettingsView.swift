@@ -13,6 +13,7 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var isPaywallPresented = false
     @State private var isProBenefitsPresented = false
+    @State private var selectedProFeature: ProFeature?
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = true
     private let notificationService = NotificationService.shared
     @State private var showNotificationDeniedAlert = false
@@ -106,6 +107,7 @@ struct SettingsView: View {
         .fullScreenCover(isPresented: $isProBenefitsPresented) {
             ProBenefitsView()
         }
+        .proPaywall(feature: $selectedProFeature)
         .alert("Notifications Disabled", isPresented: $showNotificationDeniedAlert) {
             Button("OK") { }
         } message: {
@@ -145,7 +147,7 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 16) {
             sectionHeader("Subscription")
 
-            if revenueCatService.currentTier == .premium {
+            if revenueCatService.currentTier == .pro {
                 proMemberRow
             } else {
                 freeTierCard
@@ -217,7 +219,7 @@ struct SettingsView: View {
                 isPaywallPresented = true
             } label: {
                 HStack {
-                    Text("Upgrade to Premium")
+                    Text("Upgrade to Pro")
                         .font(.system(size: 16, weight: .semibold))
 
                     Spacer()
@@ -238,8 +240,8 @@ struct SettingsView: View {
             Task {
                 let success = await revenueCatService.restorePurchases()
                 if success {
-                    restoreResultMessage = revenueCatService.currentTier == .premium
-                        ? "Your premium subscription has been restored."
+                    restoreResultMessage = revenueCatService.currentTier == .pro
+                        ? "Your Pro subscription has been restored."
                         : "No active purchases were found to restore."
                     showRestoreResultAlert = true
                 } else {
@@ -286,6 +288,10 @@ struct SettingsView: View {
                 exportRow
                 rowDivider
                 resetOnboardingRow
+                #if DEBUG
+                rowDivider
+                debugSubscriptionRow
+                #endif
             }
             .settingsCard()
         }
@@ -379,17 +385,36 @@ struct SettingsView: View {
 
             Spacer()
 
-            Picker("Set Effort", selection: Binding(
-                get: { intensityPreference.mode },
-                set: { intensityPreference.mode = $0 }
-            )) {
-                ForEach(IntensityPreferenceMode.allCases) { mode in
-                    Text(mode.label).tag(mode)
+            if revenueCatService.canAccess(.effortTracking) {
+                Picker("Set Effort", selection: Binding(
+                    get: { intensityPreference.mode },
+                    set: { intensityPreference.mode = $0 }
+                )) {
+                    ForEach(IntensityPreferenceMode.allCases) { mode in
+                        Text(mode.label).tag(mode)
+                    }
                 }
+                .labelsHidden()
+                .pickerStyle(.menu)
+                .tint(.appAccent)
+            } else {
+                Button {
+                    selectedProFeature = .effortTracking
+                } label: {
+                    HStack(spacing: 7) {
+                        Text(IntensityAccessPolicy.effectiveMode(
+                            selectedMode: intensityPreference.mode,
+                            hasProAccess: false
+                        ).label)
+                            .foregroundColor(secondaryText)
+                        ProBadge()
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(secondaryText)
+                    }
+                }
+                .buttonStyle(.plain)
             }
-            .labelsHidden()
-            .pickerStyle(.menu)
-            .tint(.appAccent)
         }
     }
 
@@ -405,14 +430,21 @@ struct SettingsView: View {
                     .font(.system(size: 16))
                     .foregroundColor(.appTextPrimary)
                 Spacer()
+                if !revenueCatService.canAccess(.accentThemes) {
+                    ProBadge()
+                }
             }
 
             HStack(spacing: 0) {
                 ForEach(AppTheme.allCases) { theme in
                     Button {
-                        Haptics.selection()
-                        withAnimation(.easeInOut(duration: 0.15)) {
-                            themePreference.theme = theme
+                        if theme == .indigo || revenueCatService.canAccess(.accentThemes) {
+                            Haptics.selection()
+                            withAnimation(.easeInOut(duration: 0.15)) {
+                                themePreference.select(theme)
+                            }
+                        } else {
+                            selectedProFeature = .accentThemes
                         }
                     } label: {
                         accentSwatch(for: theme)
@@ -435,6 +467,11 @@ struct SettingsView: View {
                 Circle()
                     .stroke(Color.white, lineWidth: 2)
                     .frame(width: 38, height: 38)
+            }
+            if theme != .indigo && !revenueCatService.canAccess(.accentThemes) {
+                Image(systemName: "lock.fill")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundColor(theme.contrastingForeground)
             }
         }
         .frame(maxWidth: .infinity)
@@ -512,6 +549,38 @@ struct SettingsView: View {
         .buttonStyle(.plain)
     }
 
+    #if DEBUG
+    private var debugSubscriptionRow: some View {
+        HStack(spacing: 12) {
+            IconTile(color: Color(red: 0.40, green: 0.40, blue: 0.43)) {
+                Image(systemName: "hammer.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.appTextPrimary)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Debug Subscription Tier")
+                    .font(.system(size: 16))
+                    .foregroundColor(.appTextPrimary)
+                Text("Overrides RevenueCat in Debug builds only")
+                    .font(.system(size: 10))
+                    .foregroundColor(secondaryText)
+            }
+
+            Spacer()
+
+            Picker("Debug Subscription Tier", selection: $revenueCatService.debugTierOverride) {
+                Text("Auto").tag(Optional<SubscriptionTier>.none)
+                Text("Free").tag(Optional(SubscriptionTier.free))
+                Text("Pro").tag(Optional(SubscriptionTier.pro))
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .tint(.appAccent)
+        }
+    }
+    #endif
+
     // MARK: - Shared building blocks
 
     private func sectionHeader(_ title: String) -> some View {
@@ -562,4 +631,6 @@ private extension View {
 
 #Preview {
     SettingsView()
+        .environmentObject(RevenueCatService.shared)
+        .modelContainer(for: [Workout.self, Exercise.self, ExerciseSet.self, WorkoutTemplateExercise.self])
 }

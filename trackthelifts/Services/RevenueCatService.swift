@@ -12,18 +12,35 @@ struct PurchaseResultData {
 class RevenueCatService: ObservableObject {
     static let shared = RevenueCatService()
     
-    @Published var currentTier: SubscriptionTier = .free
+    @Published private(set) var entitlementTier: SubscriptionTier = .free
     @Published var isConfigured = false
     @Published var isLoading = false
     @Published var lastError: RevenueCatError?
     @Published var availablePackages: [Package] = []
-    @Published var isTestingMode = false
+    #if DEBUG
+    @Published var debugTierOverride: SubscriptionTier? {
+        didSet { synchronizeThemeAccess() }
+    }
+    #endif
+
+    var currentTier: SubscriptionTier {
+        #if DEBUG
+        SubscriptionAccessPolicy.effectiveTier(
+            entitlementTier: entitlementTier,
+            debugOverride: debugTierOverride
+        )
+        #else
+        entitlementTier
+        #endif
+    }
     
     private var cancellables = Set<AnyCancellable>()
     
     private init() {
-        // Start with free tier until RevenueCat is properly configured
-        currentTier = .free
+        #if DEBUG
+        debugTierOverride = nil
+        #endif
+        synchronizeThemeAccess()
     }
     
     func configure(apiKey: String) async {
@@ -221,22 +238,12 @@ class RevenueCatService: ObservableObject {
     
     // MARK: - Feature Access Methods
     
-    func canAccessFeature(_ feature: String) -> Bool {
-        switch feature {
-        case PremiumFeature.iCloudSync:
-            return currentTier.canUseiCloudSync
-        default:
-            return true // All other features are free for now
-        }
+    func canAccess(_ feature: ProFeature) -> Bool {
+        SubscriptionAccessPolicy.canAccess(feature, tier: currentTier)
     }
     
-    func requiresPremium(for feature: String) -> Bool {
-        switch feature {
-        case PremiumFeature.iCloudSync:
-            return !currentTier.canUseiCloudSync
-        default:
-            return false
-        }
+    func requiresPro(_ feature: ProFeature) -> Bool {
+        !canAccess(feature)
     }
     
     // MARK: - Private Methods
@@ -244,15 +251,21 @@ class RevenueCatService: ObservableObject {
     private func updateSubscriptionStatus(from customerInfo: CustomerInfo) {
         // Check if user has active Pro entitlement
         if customerInfo.entitlements["Pro"]?.isActive == true {
-            currentTier = .premium
+            entitlementTier = .pro
         } else {
-            currentTier = .free
+            entitlementTier = .free
         }
+
+        synchronizeThemeAccess()
         
         // The user's tier and entitlements are account state; only log them in debug builds.
         #if DEBUG
         print("Updated subscription status - Current tier: \(currentTier.displayName)")
         print("Active entitlements: \(customerInfo.entitlements.active.keys)")
         #endif
+    }
+
+    private func synchronizeThemeAccess() {
+        ThemePreference.shared.updateProAccess(currentTier == .pro)
     }
 }

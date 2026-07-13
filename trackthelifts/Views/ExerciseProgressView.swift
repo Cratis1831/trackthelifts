@@ -10,6 +10,7 @@ import Charts
 struct ExerciseProgressView: View {
     let exercise: Exercise
 
+    @EnvironmentObject private var revenueCatService: RevenueCatService
     @Environment(\.modelContext) private var modelContext
 
     // Cached in @State and fetched on appear rather than computed in `body`: the history backs a
@@ -23,6 +24,7 @@ struct ExerciseProgressView: View {
     // snapped point that keeps the callout visible after the gesture ends.
     @State private var rawSelectedDate: Date?
     @State private var selectedPoint: ProgressStatsService.ExerciseHistoryPoint?
+    @State private var selectedProFeature: ProFeature?
 
     private var bestWeight: Double {
         history.map(\.weight).max() ?? 0
@@ -36,7 +38,12 @@ struct ExerciseProgressView: View {
         ZStack {
             Color.appCanvas.ignoresSafeArea()
 
-            if history.isEmpty {
+            if !revenueCatService.canAccess(.advancedProgress) {
+                LockedProFeatureCard(feature: .advancedProgress) {
+                    selectedProFeature = .advancedProgress
+                }
+                .padding(20)
+            } else if history.isEmpty {
                 if hasLoadedHistory {
                     emptyState
                 }
@@ -132,10 +139,12 @@ struct ExerciseProgressView: View {
         .navigationTitle(exercise.name)
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
+            guard revenueCatService.canAccess(.advancedProgress) else { return }
             selectedPoint = nil
             history = ProgressStatsService.history(for: exercise, in: modelContext)
             hasLoadedHistory = true
         }
+        .proPaywall(feature: $selectedProFeature)
     }
 
     private var summaryRow: some View {
@@ -205,4 +214,5 @@ struct ExerciseProgressView: View {
         ExerciseProgressView(exercise: exercise)
     }
     .modelContainer(container)
+    .environmentObject(RevenueCatService.shared)
 }

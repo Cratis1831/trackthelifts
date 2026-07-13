@@ -9,6 +9,7 @@ import SwiftUI
 import SwiftData
 
 struct WorkoutView: View {
+    @EnvironmentObject private var revenueCatService: RevenueCatService
     @Query(sort: \Workout.updatedAt, order: .reverse) private var workouts: [Workout]
     @Query private var templates: [WorkoutTemplate]
     @Environment(\.modelContext) private var modelContext
@@ -21,6 +22,7 @@ struct WorkoutView: View {
     @State private var newTemplateName: String = ""
     @State private var sortBy: SortOption = .name
     @State private var resumingWorkout: Workout? = nil
+    @State private var selectedProFeature: ProFeature?
 
     private let sessionManager = WorkoutSessionManager.shared
 
@@ -35,6 +37,13 @@ struct WorkoutView: View {
         case .recent:
             return templates.sorted { $0.updatedAt > $1.updatedAt }
         }
+    }
+
+    private var canCreateRoutine: Bool {
+        SubscriptionAccessPolicy.canCreateRoutine(
+            existingCount: templates.count,
+            tier: revenueCatService.currentTier
+        )
     }
 
     enum SortOption: String, CaseIterable {
@@ -76,12 +85,20 @@ struct WorkoutView: View {
                                 
                                 Menu {
                                     Button {
-                                        isCreateRoutinePresented = true
+                                        if canCreateRoutine {
+                                            isCreateRoutinePresented = true
+                                        } else {
+                                            selectedProFeature = .unlimitedRoutines
+                                        }
                                     } label: {
                                         Label("New Blank Routine", systemImage: "square.and.pencil")
                                     }
                                     Button {
-                                        isChooseWorkoutForRoutinePresented = true
+                                        if canCreateRoutine {
+                                            isChooseWorkoutForRoutinePresented = true
+                                        } else {
+                                            selectedProFeature = .unlimitedRoutines
+                                        }
                                     } label: {
                                         Label("From a Past Workout", systemImage: "clock.arrow.circlepath")
                                     }
@@ -91,6 +108,9 @@ struct WorkoutView: View {
                                             .font(.system(size: 16))
                                         Text("Add Routine")
                                             .font(.system(size: 16))
+                                        if !canCreateRoutine {
+                                            ProBadge()
+                                        }
                                     }
                                 }
                                 .buttonStyle(.bordered)
@@ -131,6 +151,8 @@ struct WorkoutView: View {
                                             startWorkout(from: template)
                                         }, onEdit: {
                                             templateToEdit = template
+                                        }, onDuplicate: {
+                                            duplicateRoutine(template)
                                         })
                                     }
                                 }
@@ -192,8 +214,7 @@ struct WorkoutView: View {
         }
         .sheet(isPresented: $isChooseWorkoutForRoutinePresented) {
             ChooseWorkoutForTemplateView { workout in
-                newTemplateName = workout.title
-                workoutToNameAsTemplate = workout
+                beginSavingRoutine(from: workout)
             }
         }
         .alert("Save as Routine", isPresented: Binding(
@@ -203,7 +224,11 @@ struct WorkoutView: View {
             TextField("Routine Name", text: $newTemplateName)
             Button("Save") {
                 if let workout = workoutToNameAsTemplate {
-                    _ = TemplateService.makeTemplate(from: workout, name: newTemplateName, in: modelContext)
+                    if let blockedFeature = blockedFeatureForNewRoutine(from: workout) {
+                        selectedProFeature = blockedFeature
+                    } else {
+                        _ = TemplateService.makeTemplate(from: workout, name: newTemplateName, in: modelContext)
+                    }
                 }
                 workoutToNameAsTemplate = nil
             }
@@ -218,6 +243,7 @@ struct WorkoutView: View {
         } message: {
             Text("Finish or discard your current workout before starting another one.")
         }
+        .proPaywall(feature: $selectedProFeature)
     }
 
     private func startWorkout(from template: WorkoutTemplate) {
@@ -230,12 +256,42 @@ struct WorkoutView: View {
         sessionManager.startWorkout(workoutID: workout.id)
         isCreateWorkoutPresented = true
     }
+
+    private func beginSavingRoutine(from workout: Workout) {
+        if let blockedFeature = blockedFeatureForNewRoutine(from: workout) {
+            selectedProFeature = blockedFeature
+            return
+        }
+        newTemplateName = workout.title
+        workoutToNameAsTemplate = workout
+    }
+
+    private func blockedFeatureForNewRoutine(from workout: Workout) -> ProFeature? {
+        guard canCreateRoutine else { return .unlimitedRoutines }
+        if workout.containsSupersets && !revenueCatService.canAccess(.supersets) {
+            return .supersets
+        }
+        return nil
+    }
+
+    private func duplicateRoutine(_ template: WorkoutTemplate) {
+        guard canCreateRoutine else {
+            selectedProFeature = .unlimitedRoutines
+            return
+        }
+        guard !template.containsSupersets || revenueCatService.canAccess(.supersets) else {
+            selectedProFeature = .supersets
+            return
+        }
+        _ = template.duplicateTemplate(in: modelContext)
+    }
 }
 
 struct TemplateCard: View {
     let template: WorkoutTemplate
     let onTap: () -> Void
     let onEdit: () -> Void
+    let onDuplicate: () -> Void
 
     @Environment(\.modelContext) private var modelContext
 
@@ -266,7 +322,7 @@ struct TemplateCard: View {
                             onEdit()
                         }
                         Button("Duplicate Template") {
-                            _ = template.duplicateTemplate(in: modelContext)
+                            onDuplicate()
                         }
                         Divider()
                         Button("Delete Template", role: .destructive) {
@@ -366,6 +422,7 @@ struct ResumeWorkoutBanner: View {
 
 #Preview {
     WorkoutView()
+        .environmentObject(RevenueCatService.shared)
         .modelContainer(for: [
             Workout.self, Exercise.self, ExerciseSet.self,
             WorkoutTemplate.self, WorkoutTemplateExercise.self,

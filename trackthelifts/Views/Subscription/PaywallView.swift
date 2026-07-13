@@ -2,6 +2,8 @@ import SwiftUI
 import RevenueCat
 
 struct PaywallView: View {
+    var focusedFeature: ProFeature? = nil
+
     @EnvironmentObject var revenueCatService: RevenueCatService
     @Environment(\.dismiss) private var dismiss
     @State private var selectedPackage: Package?
@@ -10,10 +12,15 @@ struct PaywallView: View {
     
     var purchaseButtonText: String {
         if let package = selectedPackage {
-            return "Start Premium - \(package.storeProduct.localizedPriceString)"
+            return "Start Pro - \(package.storeProduct.localizedPriceString)"
         } else {
             return "Select a Plan"
         }
+    }
+
+    private var displayedFeatures: [ProFeature] {
+        guard let focusedFeature else { return ProFeature.allCases }
+        return [focusedFeature] + ProFeature.allCases.filter { $0 != focusedFeature }
     }
     
     var body: some View {
@@ -27,40 +34,21 @@ struct PaywallView: View {
                         
                         // Features Section
                         VStack(alignment: .leading, spacing: 16) {
-                            Text("Upgrade to Premium")
+                            Text(focusedFeature.map { "Unlock \($0.title)" } ?? "Upgrade to Track The Lifts Pro")
                                 .font(.system(size: 20, weight: .semibold))
                                 .foregroundColor(.appTextPrimary)
                                 .frame(maxWidth: .infinity)
                                 .multilineTextAlignment(.center)
 
                             VStack(alignment: .leading, spacing: 12) {
-                                FeatureRow(
-                                    icon: "icloud.and.arrow.up",
-                                    iconColor: Color(red: 0.20, green: 0.48, blue: 0.96),
-                                    title: "iCloud Sync",
-                                    description: "Automatically sync your workouts across iPhone, iPad, and Mac"
-                                )
-
-                                FeatureRow(
-                                    icon: "arrow.clockwise.icloud",
-                                    iconColor: Color(red: 0.36, green: 0.42, blue: 0.90),
-                                    title: "Automatic Backup",
-                                    description: "Never lose your workout data with secure cloud backup"
-                                )
-
-                                FeatureRow(
-                                    icon: "smartphone",
-                                    iconColor: Color(red: 0.30, green: 0.72, blue: 0.40),
-                                    title: "Multi-Device Access",
-                                    description: "Access your workouts from any of your Apple devices"
-                                )
-
-                                FeatureRow(
-                                    icon: "lock.shield",
-                                    iconColor: Color(red: 0.58, green: 0.36, blue: 0.90),
-                                    title: "Secure & Private",
-                                    description: "Your data is encrypted and stored securely in your iCloud"
-                                )
+                                ForEach(displayedFeatures) { feature in
+                                    FeatureRow(
+                                        icon: feature.systemImage,
+                                        iconColor: feature.iconColor,
+                                        title: feature.title,
+                                        description: feature.description
+                                    )
+                                }
                             }
                         }
                         
@@ -155,7 +143,7 @@ struct PaywallView: View {
                     .padding(.bottom, 30)
                 }
             }
-            .navigationTitle("Premium")
+            .navigationTitle("Track The Lifts Pro")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -222,7 +210,7 @@ struct PackageCard: View {
         } else if identifier.contains("annual") || identifier.contains("year") {
             return "Yearly"
         } else {
-            return "Premium"
+            return "Pro"
         }
     }
     
@@ -233,7 +221,7 @@ struct PackageCard: View {
         } else if identifier.contains("annual") || identifier.contains("year") {
             return "Billed yearly, best value"
         } else {
-            return "Premium subscription"
+            return "Pro subscription"
         }
     }
     
@@ -292,6 +280,81 @@ struct PackageCard: View {
             )
         }
         .buttonStyle(PlainButtonStyle())
+    }
+}
+
+extension ProFeature {
+    var iconColor: Color {
+        switch self {
+        case .unlimitedRoutines: return Color(red: 0.95, green: 0.55, blue: 0.19)
+        case .advancedProgress: return Color(red: 0.20, green: 0.48, blue: 0.96)
+        case .effortTracking: return Color(red: 0.88, green: 0.38, blue: 0.50)
+        case .supersets: return Color(red: 0.30, green: 0.72, blue: 0.40)
+        case .accentThemes: return Color(red: 0.58, green: 0.36, blue: 0.90)
+        }
+    }
+}
+
+struct ProBadge: View {
+    var body: some View {
+        Text("PRO")
+            .font(.system(size: 9, weight: .bold, design: .rounded))
+            .tracking(0.7)
+            .foregroundColor(.onAppAccent)
+            .padding(.horizontal, 6)
+            .frame(height: 18)
+            .background(Color.appAccent)
+            .clipShape(Capsule())
+    }
+}
+
+struct LockedProFeatureCard: View {
+    let feature: ProFeature
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                IconTile(color: feature.iconColor) {
+                    Image(systemName: feature.systemImage)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.appTextPrimary)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 8) {
+                        Text(feature.title)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.appTextPrimary)
+                        ProBadge()
+                    }
+                    Text(feature.description)
+                        .font(.system(size: 12))
+                        .foregroundColor(.appTextSecondary)
+                        .multilineTextAlignment(.leading)
+                }
+
+                Spacer(minLength: 0)
+                Image(systemName: "lock.fill")
+                    .foregroundColor(.appTextSecondary)
+            }
+            .padding(14)
+            .background(Color.appSurface)
+            .clipShape(RoundedRectangle(cornerRadius: AppDesign.cardRadius, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: AppDesign.cardRadius, style: .continuous)
+                    .strokeBorder(Color.appBorder, lineWidth: 1)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+extension View {
+    func proPaywall(feature: Binding<ProFeature?>) -> some View {
+        fullScreenCover(item: feature) { selectedFeature in
+            PaywallView(focusedFeature: selectedFeature)
+        }
     }
 }
 

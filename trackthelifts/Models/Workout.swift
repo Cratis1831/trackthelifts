@@ -48,6 +48,10 @@ class Workout {
 }
 
 extension Workout {
+    var containsSupersets: Bool {
+        exerciseSets.contains { $0.supersetGroupID != nil }
+    }
+
     func supersetID(for exerciseName: String) -> UUID? {
         exerciseSets.first(where: { $0.exercise.name == exerciseName })?.supersetGroupID
     }
