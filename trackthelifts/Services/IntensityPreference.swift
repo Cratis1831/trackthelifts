@@ -24,6 +24,15 @@ enum IntensityPreferenceMode: String, CaseIterable, Identifiable {
     }
 }
 
+enum IntensityAccessPolicy {
+    static func effectiveMode(
+        selectedMode: IntensityPreferenceMode,
+        hasProAccess: Bool
+    ) -> IntensityPreferenceMode {
+        hasProAccess ? selectedMode : .none
+    }
+}
+
 @Observable
 final class IntensityPreference {
     static let shared = IntensityPreference()

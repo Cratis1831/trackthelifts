@@ -9,6 +9,7 @@ import SwiftData
 import SwiftUI
 
 struct CreateWorkoutView: View {
+    @EnvironmentObject private var revenueCatService: RevenueCatService
     @State private var workoutName: String = ""
     @State private var workoutNotes: String = ""
     @State private var showExerciseList: Bool = false
@@ -23,6 +24,7 @@ struct CreateWorkoutView: View {
     @State private var sessionStartDate = Date()
     @State private var isReorderingExercises = false
     @State private var completionSummary: WorkoutCompletionSummary?
+    @State private var selectedProFeature: ProFeature?
     private let sessionManager = WorkoutSessionManager.shared
     @FocusState private var focusWorkoutName: Bool
     
@@ -149,6 +151,14 @@ struct CreateWorkoutView: View {
                         .font(.system(size: 14))
                         .foregroundColor(savedWorkout?.supersetID(for: exerciseName) == nil ? .appTextSecondary : .appAccent)
                         .frame(width: 32, height: 32)
+                        .overlay(alignment: .topTrailing) {
+                            if savedWorkout?.supersetID(for: exerciseName) == nil
+                                && !revenueCatService.canAccess(.supersets) {
+                                Image(systemName: "lock.fill")
+                                    .font(.system(size: 7, weight: .bold))
+                                    .foregroundColor(.appTextSecondary)
+                            }
+                        }
                 }
                 .buttonStyle(.plain)
             }
@@ -236,14 +246,12 @@ struct CreateWorkoutView: View {
             } else {
                 if index > 0, workout.supersetID(for: groups[index - 1].name) == nil {
                     Button("Pair with \(groups[index - 1].name)") {
-                        workout.setSuperset(groups[index - 1].name, exerciseName)
-                        persistSupersetChange()
+                        createSuperset(workout, groups[index - 1].name, exerciseName)
                     }
                 }
                 if index + 1 < groups.count, workout.supersetID(for: groups[index + 1].name) == nil {
                     Button("Pair with \(groups[index + 1].name)") {
-                        workout.setSuperset(exerciseName, groups[index + 1].name)
-                        persistSupersetChange()
+                        createSuperset(workout, exerciseName, groups[index + 1].name)
                     }
                 }
             }
@@ -257,6 +265,15 @@ struct CreateWorkoutView: View {
         } catch {
             print("Failed to update superset: \(error)")
         }
+    }
+
+    private func createSuperset(_ workout: Workout, _ firstExercise: String, _ secondExercise: String) {
+        guard revenueCatService.canAccess(.supersets) else {
+            selectedProFeature = .supersets
+            return
+        }
+        workout.setSuperset(firstExercise, secondExercise)
+        persistSupersetChange()
     }
 
     private func rowBackground(for group: (name: String, sets: [ExerciseSet])) -> some View {
@@ -543,6 +560,7 @@ struct CreateWorkoutView: View {
             } message: {
                 Text(saveErrorMessage ?? "Something went wrong. Please try again.")
             }
+            .proPaywall(feature: $selectedProFeature)
         }
         .overlay(alignment: .top) {
             if let prAnnouncement {
@@ -918,5 +936,6 @@ struct RestTimerBanner: View {
 
 #Preview {
     CreateWorkoutView()
+        .environmentObject(RevenueCatService.shared)
         .modelContainer(for: [Workout.self, Exercise.self, ExerciseSet.self])
 }

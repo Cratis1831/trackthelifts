@@ -7,13 +7,26 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7A10000130A0000100000001 /* SubscriptionAccessPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A10000330A0000100000001 /* SubscriptionAccessPolicyTests.swift */; };
 		41E8F9B52E57805500D8D36F /* IAP.md in Resources */ = {isa = PBXBuildFile; fileRef = 41E8F9B32E57805500D8D36F /* IAP.md */; };
 		41E8F9B62E57805500D8D36F /* TrackTheLifts.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 41E8F9B42E57805500D8D36F /* TrackTheLifts.storekit */; };
 		41E8F9E62E5780B200D8D36F /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 41E8F9E52E5780B200D8D36F /* RevenueCat */; };
 		41E8F9E82E5780B200D8D36F /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 41E8F9E72E5780B200D8D36F /* RevenueCatUI */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		7A10000230A0000100000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41E8F99D2E57804200D8D36F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41E8F9A42E57804200D8D36F;
+			remoteInfo = trackthelifts;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		7A10000330A0000100000001 /* SubscriptionAccessPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionAccessPolicyTests.swift; sourceTree = "<group>"; };
+		7A10000430A0000100000001 /* tracktheliftsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = tracktheliftsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		41E8F9A52E57804200D8D36F /* trackthelifts.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = trackthelifts.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		41E8F9B32E57805500D8D36F /* IAP.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = IAP.md; sourceTree = "<group>"; };
 		41E8F9B42E57805500D8D36F /* TrackTheLifts.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = TrackTheLifts.storekit; sourceTree = "<group>"; };
@@ -35,12 +48,20 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+				Tests/SubscriptionAccessPolicyTests.swift,
 			);
 			target = 41E8F9A42E57804200D8D36F /* trackthelifts */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		7A10000630A0000100000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		41E8F9A22E57804200D8D36F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -57,6 +78,7 @@
 			isa = PBXGroup;
 			children = (
 				41E8F9A72E57804200D8D36F /* trackthelifts */,
+				7A10000530A0000100000001 /* Tests */,
 				41E8F9A62E57804200D8D36F /* Products */,
 				41E8F9B32E57805500D8D36F /* IAP.md */,
 				41E8F9B42E57805500D8D36F /* TrackTheLifts.storekit */,
@@ -67,13 +89,42 @@
 			isa = PBXGroup;
 			children = (
 				41E8F9A52E57804200D8D36F /* trackthelifts.app */,
+				7A10000430A0000100000001 /* tracktheliftsTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		7A10000530A0000100000001 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				7A10000330A0000100000001 /* SubscriptionAccessPolicyTests.swift */,
+			);
+			path = trackthelifts/Tests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		7A10000930A0000100000001 /* tracktheliftsTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7A10000D30A0000100000001 /* Build configuration list for PBXNativeTarget "tracktheliftsTests" */;
+			buildPhases = (
+				7A10000830A0000100000001 /* Sources */,
+				7A10000630A0000100000001 /* Frameworks */,
+				7A10000730A0000100000001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				7A10000A30A0000100000001 /* PBXTargetDependency */,
+			);
+			name = tracktheliftsTests;
+			packageProductDependencies = (
+			);
+			productName = tracktheliftsTests;
+			productReference = 7A10000430A0000100000001 /* tracktheliftsTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		41E8F9A42E57804200D8D36F /* trackthelifts */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 41E8F9B02E57804300D8D36F /* Build configuration list for PBXNativeTarget "trackthelifts" */;
@@ -108,6 +159,10 @@
 				LastSwiftUpdateCheck = 1640;
 				LastUpgradeCheck = 1640;
 				TargetAttributes = {
+					7A10000930A0000100000001 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 41E8F9A42E57804200D8D36F;
+					};
 					41E8F9A42E57804200D8D36F = {
 						CreatedOnToolsVersion = 16.4;
 					};
@@ -131,11 +186,19 @@
 			projectRoot = "";
 			targets = (
 				41E8F9A42E57804200D8D36F /* trackthelifts */,
+				7A10000930A0000100000001 /* tracktheliftsTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		7A10000730A0000100000001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		41E8F9A32E57804200D8D36F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -148,6 +211,14 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		7A10000830A0000100000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7A10000130A0000100000001 /* SubscriptionAccessPolicyTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		41E8F9A12E57804200D8D36F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -157,7 +228,61 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		7A10000A30A0000100000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41E8F9A42E57804200D8D36F /* trackthelifts */;
+			targetProxy = 7A10000230A0000100000001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		7A10000B30A0000100000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = X4Y9269GC5;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ashkansdev.track-the-liftsTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/trackthelifts.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/trackthelifts";
+			};
+			name = Debug;
+		};
+		7A10000C30A0000100000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = X4Y9269GC5;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ashkansdev.track-the-liftsTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/trackthelifts.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/trackthelifts";
+			};
+			name = Release;
+		};
 		41E8F9AE2E57804300D8D36F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -356,6 +481,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		7A10000D30A0000100000001 /* Build configuration list for PBXNativeTarget "tracktheliftsTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7A10000B30A0000100000001 /* Debug */,
+				7A10000C30A0000100000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		41E8F9A02E57804200D8D36F /* Build configuration list for PBXProject "trackthelifts" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

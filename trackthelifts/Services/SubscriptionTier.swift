@@ -1,49 +1,108 @@
 import Foundation
 
-enum SubscriptionTier: String, CaseIterable {
-    case free = "free"
-    case premium = "premium"
-    
+enum SubscriptionTier: String, CaseIterable, Identifiable {
+    case free
+    case pro
+
+    var id: String { rawValue }
+
     var displayName: String {
         switch self {
-        case .free:
-            return "Free"
-        case .premium:
-            return "Premium"
+        case .free: return "Free"
+        case .pro: return "Pro"
         }
     }
-    
+
     var features: [String] {
         switch self {
         case .free:
             return [
-                "Basic workout tracking",
-                "Exercise library",
-                "Local data storage",
-                "Workout history"
+                "Unlimited workout logging",
+                "Complete workout history",
+                "Built-in exercise library",
+                "Previous-session values",
+                "Automatic rest timer",
+                "Basic PR detection and celebrations",
+                "Basic progress dashboard",
+                "Pounds/kilograms, reminders, and CSV export",
             ]
-        case .premium:
-            return [
-                "Everything in Free",
-                "iCloud sync across devices",
-                "Automatic backup",
-                "Data restoration"
-            ]
-        }
-    }
-    
-    var canUseiCloudSync: Bool {
-        switch self {
-        case .free:
-            return false
-        case .premium:
-            return true
+        case .pro:
+            return ["Everything in Free"] + ProFeature.allCases.map(\.title)
         }
     }
 }
 
-struct PremiumFeature {
-    static let iCloudSync = "icloud_sync"
+enum ProFeature: String, CaseIterable, Identifiable {
+    case unlimitedRoutines
+    case advancedProgress
+    case effortTracking
+    case supersets
+    case accentThemes
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .unlimitedRoutines: return "Unlimited Routines"
+        case .advancedProgress: return "Advanced Progress Analytics"
+        case .effortTracking: return "RPE and RIR Tracking"
+        case .supersets: return "Supersets"
+        case .accentThemes: return "Every Accent Theme"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .unlimitedRoutines:
+            return "Create as many reusable workout routines as you need. Free includes up to three."
+        case .advancedProgress:
+            return "See detailed volume and estimated one-rep-max trends over time."
+        case .effortTracking:
+            return "Track how hard each set feels with optional RPE or reps-in-reserve ratings."
+        case .supersets:
+            return "Pair exercises into supersets while building routines or logging workouts."
+        case .accentThemes:
+            return "Personalize Track The Lifts with every available accent color."
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .unlimitedRoutines: return "list.bullet.rectangle.portrait"
+        case .advancedProgress: return "chart.xyaxis.line"
+        case .effortTracking: return "gauge.with.dots.needle.50percent"
+        case .supersets: return "link"
+        case .accentThemes: return "paintpalette.fill"
+        }
+    }
+}
+
+enum SubscriptionAccessPolicy {
+    static let freeRoutineLimit = 3
+
+    static func canAccess(_ feature: ProFeature, tier: SubscriptionTier) -> Bool {
+        tier == .pro
+    }
+
+    static func effectiveTier(
+        entitlementTier: SubscriptionTier,
+        debugOverride: SubscriptionTier?
+    ) -> SubscriptionTier {
+        debugOverride ?? entitlementTier
+    }
+
+    static func canCreateRoutine(existingCount: Int, tier: SubscriptionTier) -> Bool {
+        tier == .pro || existingCount < freeRoutineLimit
+    }
+
+    static func canCopyRoutineSource(
+        existingCount: Int,
+        sourceContainsSupersets: Bool,
+        tier: SubscriptionTier
+    ) -> Bool {
+        canCreateRoutine(existingCount: existingCount, tier: tier)
+            && (tier == .pro || !sourceContainsSupersets)
+    }
 }
 
 enum RevenueCatError: Error, LocalizedError {

@@ -37,33 +37,14 @@ struct ProBenefitsView: View {
                                 .foregroundColor(.appTextPrimary)
 
                             VStack(alignment: .leading, spacing: 12) {
-                                FeatureRow(
-                                    icon: "icloud.and.arrow.up",
-                                    iconColor: Color(red: 0.20, green: 0.48, blue: 0.96),
-                                    title: "iCloud Sync",
-                                    description: "Automatically sync your workouts across iPhone, iPad, and Mac"
-                                )
-
-                                FeatureRow(
-                                    icon: "arrow.clockwise.icloud",
-                                    iconColor: Color(red: 0.36, green: 0.42, blue: 0.90),
-                                    title: "Automatic Backup",
-                                    description: "Never lose your workout data with secure cloud backup"
-                                )
-
-                                FeatureRow(
-                                    icon: "smartphone",
-                                    iconColor: Color(red: 0.30, green: 0.72, blue: 0.40),
-                                    title: "Multi-Device Access",
-                                    description: "Access your workouts from any of your Apple devices"
-                                )
-
-                                FeatureRow(
-                                    icon: "lock.shield",
-                                    iconColor: Color(red: 0.58, green: 0.36, blue: 0.90),
-                                    title: "Secure & Private",
-                                    description: "Your data is encrypted and stored securely in your iCloud"
-                                )
+                                ForEach(ProFeature.allCases) { feature in
+                                    FeatureRow(
+                                        icon: feature.systemImage,
+                                        iconColor: feature.iconColor,
+                                        title: feature.title,
+                                        description: feature.description
+                                    )
+                                }
                             }
                         }
 
@@ -88,8 +69,8 @@ struct ProBenefitsView: View {
                                 Task {
                                     let success = await revenueCatService.restorePurchases()
                                     if success {
-                                        restoreResultMessage = revenueCatService.currentTier == .premium
-                                            ? "Your premium subscription has been restored."
+                                        restoreResultMessage = revenueCatService.currentTier == .pro
+                                            ? "Your Pro subscription has been restored."
                                             : "No active purchases were found to restore."
                                         showRestoreResultAlert = true
                                     } else {
