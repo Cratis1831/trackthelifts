@@ -36,10 +36,10 @@ extension Color {
 }
 
 extension Font {
-    static let appScreenTitle = Font.system(.largeTitle, design: .default, weight: .semibold)
-    static let appSectionTitle = Font.system(.title3, design: .default, weight: .semibold)
-    static let appBody = Font.system(.body, design: .default, weight: .regular)
-    static let appCaption = Font.system(.caption, design: .default, weight: .medium)
+    static let appScreenTitle = Font.system(.largeTitle, design: .monospaced, weight: .semibold)
+    static let appSectionTitle = Font.system(.title3, design: .monospaced, weight: .semibold)
+    static let appBody = Font.system(.body, design: .monospaced, weight: .regular)
+    static let appCaption = Font.system(.caption, design: .monospaced, weight: .medium)
     static let appUtility = Font.system(.caption, design: .monospaced, weight: .medium)
     static let appMetric = Font.system(.body, design: .monospaced, weight: .semibold)
 }
@@ -111,7 +111,7 @@ extension View {
 struct AppPrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(.body, design: .default, weight: .semibold))
+            .font(.system(.body, design: .monospaced, weight: .semibold))
             .foregroundStyle(Color.onAppAction)
             .frame(maxWidth: .infinity, minHeight: AppDesign.controlHeight)
             .padding(.horizontal, 14)
@@ -125,7 +125,7 @@ struct AppPrimaryButtonStyle: ButtonStyle {
 struct AppSecondaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(.body, design: .default, weight: .medium))
+            .font(.system(.body, design: .monospaced, weight: .medium))
             .foregroundStyle(Color.appTextPrimary)
             .frame(maxWidth: .infinity, minHeight: AppDesign.controlHeight)
             .padding(.horizontal, 14)

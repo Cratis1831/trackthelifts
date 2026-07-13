@@ -121,7 +121,7 @@ struct CreateWorkoutView: View {
         HStack {
             if let position = supersetPosition(for: exerciseName, in: groups) {
                 Text("A\(position)")
-                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .font(.system(size: 10, weight: .bold, design: .monospaced))
                     .foregroundColor(.onAppAccent)
                     .frame(width: 24, height: 24)
                     .background(Color.appAccent)
@@ -136,7 +136,7 @@ struct CreateWorkoutView: View {
 
             if savedWorkout?.supersetID(for: exerciseName) != nil {
                 Text("SUPERSET")
-                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                    .font(.system(size: 9, weight: .bold, design: .monospaced))
                     .tracking(1)
                     .foregroundColor(.appAccent)
             }

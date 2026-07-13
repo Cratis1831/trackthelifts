@@ -203,7 +203,7 @@ struct WorkoutHistoryCard: View {
                         HStack {
                             if let position = supersetPosition(for: exerciseName, in: groups) {
                                 Text("A\(position)")
-                                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                                    .font(.system(size: 9, weight: .bold, design: .monospaced))
                                     .foregroundColor(.onAppAccent)
                                     .frame(width: 20, height: 20)
                                     .background(Color.appAccent)

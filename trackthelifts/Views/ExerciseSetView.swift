@@ -216,7 +216,7 @@ struct ExerciseSetView: View {
                 Image(systemName: "chevron.down")
                     .font(.system(size: 8, weight: .bold))
             }
-            .font(.system(size: 11, weight: .semibold, design: .rounded))
+            .font(.system(size: 11, weight: .semibold, design: .monospaced))
             .foregroundColor(.appAccent)
             .padding(.horizontal, 9)
             .frame(height: 24)

@@ -53,12 +53,12 @@ struct WorkoutCompletionView: View {
                 .padding(.bottom, 18)
 
                 Text("WORKOUT COMPLETE")
-                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .font(.system(size: 12, weight: .bold, design: .monospaced))
                     .tracking(2.2)
                     .foregroundColor(.appAccent)
 
                 Text(summary.workoutName)
-                    .font(.system(size: 27, weight: .bold, design: .rounded))
+                    .font(.system(size: 27, weight: .bold, design: .monospaced))
                     .foregroundColor(.appTextPrimary)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
@@ -77,11 +77,11 @@ struct WorkoutCompletionView: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("TOTAL VOLUME")
-                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                            .font(.system(size: 10, weight: .bold, design: .monospaced))
                             .tracking(1.3)
                             .foregroundColor(.appTextSecondary)
                         Text("\(summary.totalVolume.formattedWeight) \(WeightUnitPreference.shared.unit.label)")
-                            .font(.system(size: 23, weight: .bold, design: .rounded))
+                            .font(.system(size: 23, weight: .bold, design: .monospaced))
                             .foregroundColor(.appTextPrimary)
                     }
                     Spacer()
@@ -115,10 +115,10 @@ struct WorkoutCompletionView: View {
     private func completionStat(_ label: String, _ value: String) -> some View {
         VStack(spacing: 4) {
             Text(value)
-                .font(.system(size: 21, weight: .bold, design: .rounded))
+                .font(.system(size: 21, weight: .bold, design: .monospaced))
                 .foregroundColor(.appTextPrimary)
             Text(label.uppercased())
-                .font(.system(size: 9, weight: .bold, design: .rounded))
+                .font(.system(size: 9, weight: .bold, design: .monospaced))
                 .tracking(1)
                 .foregroundColor(.appTextSecondary)
         }

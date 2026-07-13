@@ -49,6 +49,7 @@ struct ContentView: View {
                     .transition(.opacity)
             }
         }
+        .fontDesign(.monospaced)
         .animation(.easeOut(duration: 0.3), value: hasCompletedOnboarding)
         .watchesRestTimerCompletion()
         .onAppear {

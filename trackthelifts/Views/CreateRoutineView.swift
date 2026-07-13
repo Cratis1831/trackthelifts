@@ -87,7 +87,7 @@ struct CreateRoutineView: View {
                                 HStack(spacing: 10) {
                                     if let position = supersetPosition(for: blockEntry.id) {
                                         Text("A\(position)")
-                                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                                            .font(.system(size: 10, weight: .bold, design: .monospaced))
                                             .foregroundColor(.onAppAccent)
                                             .frame(width: 24, height: 24)
                                             .background(Color.appAccent)

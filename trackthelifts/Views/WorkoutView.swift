@@ -294,7 +294,7 @@ struct TemplateCard: View {
                         "\(supersetCount) superset\(supersetCount == 1 ? "" : "s")",
                         systemImage: "link"
                     )
-                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
                     .foregroundColor(.appAccent)
                 }
             }
