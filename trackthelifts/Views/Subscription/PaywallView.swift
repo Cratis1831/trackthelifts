@@ -11,11 +11,25 @@ struct PaywallView: View {
     @State private var errorMessage = ""
     
     var purchaseButtonText: String {
-        if let package = selectedPackage {
-            return "Start Pro - \(package.storeProduct.localizedPriceString)"
-        } else {
+        guard let package = selectedPackage else {
             return "Select a Plan"
         }
+        let price = package.storeProduct.localizedPriceString
+        if package.packageType == .lifetime {
+            return "Get Lifetime Access - \(price)"
+        } else {
+            return "Start Pro - \(price)"
+        }
+    }
+
+    /// The monthly package from the current offering, used to compute annual savings.
+    private var monthlyPackage: Package? {
+        revenueCatService.availablePackages.first { $0.packageType == .monthly }
+    }
+
+    /// Whether the currently selected plan is a one-time (non-subscription) purchase.
+    private var isLifetimeSelected: Bool {
+        selectedPackage?.packageType == .lifetime
     }
 
     private var displayedFeatures: [ProFeature] {
@@ -88,7 +102,8 @@ struct PaywallView: View {
                                     ForEach(revenueCatService.availablePackages, id: \.identifier) { package in
                                         PackageCard(
                                             package: package,
-                                            isSelected: selectedPackage?.identifier == package.identifier
+                                            isSelected: selectedPackage?.identifier == package.identifier,
+                                            monthlyPackage: monthlyPackage
                                         ) {
                                             selectedPackage = package
                                         }
@@ -127,15 +142,24 @@ struct PaywallView: View {
                         
                         // Footer
                         VStack(spacing: 8) {
-                            Text("Subscription automatically renews unless canceled at least 24 hours before the end of the current period.")
+                            Text(isLifetimeSelected
+                                 ? "One-time purchase. No subscription, no renewals."
+                                 : "Subscription automatically renews unless canceled at least 24 hours before the end of the current period.")
                                 .font(.system(size: 11))
                                 .foregroundColor(Color.appTextSecondary)
                                 .multilineTextAlignment(.center)
                                 .lineLimit(2)
 
-                            Link("Terms of Service", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
-                                .font(.system(size: 11))
-                                .foregroundColor(.appAccent)
+                            HStack(spacing: 6) {
+                                Link("Terms of Service", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+
+                                Text("·")
+                                    .foregroundColor(Color.appTextSecondary)
+
+                                Link("Privacy Policy", destination: URL(string: "https://www.forgelyte.com/apps/TrackTheLifts/privacy-policy")!)
+                            }
+                            .font(.system(size: 11))
+                            .foregroundColor(.appAccent)
                         }
                         .frame(maxWidth: .infinity)
                     }
@@ -201,37 +225,58 @@ struct FeatureRow: View {
 struct PackageCard: View {
     let package: Package
     let isSelected: Bool
+    /// The monthly package, when present, so annual savings can be computed from real store prices.
+    var monthlyPackage: Package? = nil
     let action: () -> Void
-    
+
+    /// Falls back to matching the product identifier for custom/unknown package types.
+    private var identifier: String {
+        package.storeProduct.productIdentifier.lowercased()
+    }
+
     var planType: String {
-        let identifier = package.storeProduct.productIdentifier.lowercased()
-        if identifier.contains("month") {
+        switch package.packageType {
+        case .monthly:
             return "Monthly"
-        } else if identifier.contains("annual") || identifier.contains("year") {
+        case .annual:
             return "Yearly"
-        } else {
-            return "Pro"
+        case .lifetime:
+            return "Lifetime"
+        default:
+            if identifier.contains("month") {
+                return "Monthly"
+            } else if identifier.contains("annual") || identifier.contains("year") {
+                return "Yearly"
+            } else if identifier.contains("lifetime") || identifier.contains("life") {
+                return "Lifetime"
+            } else {
+                return "Pro"
+            }
         }
     }
-    
+
     var description: String {
-        let identifier = package.storeProduct.productIdentifier.lowercased()
-        if identifier.contains("month") {
+        switch planType {
+        case "Monthly":
             return "Billed monthly, cancel anytime"
-        } else if identifier.contains("annual") || identifier.contains("year") {
+        case "Yearly":
             return "Billed yearly, best value"
-        } else {
+        case "Lifetime":
+            return "One-time payment, yours forever"
+        default:
             return "Pro subscription"
         }
     }
-    
+
     var savings: String? {
-        let identifier = package.storeProduct.productIdentifier.lowercased()
-        if identifier.contains("annual") || identifier.contains("year") {
-            return "Save 33%"
-        } else {
-            return nil
-        }
+        guard planType == "Yearly", let monthlyPackage else { return nil }
+        let yearlyPrice = package.storeProduct.price
+        let annualizedMonthly = monthlyPackage.storeProduct.price * 12
+        guard annualizedMonthly > 0, yearlyPrice < annualizedMonthly else { return nil }
+        let fraction = (annualizedMonthly - yearlyPrice) / annualizedMonthly
+        let percent = NSDecimalNumber(decimal: fraction * 100).intValue
+        guard percent > 0 else { return nil }
+        return "Save \(percent)%"
     }
     
     var body: some View {
