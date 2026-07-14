@@ -168,7 +168,7 @@ struct WelcomeOnboardingPage: View {
 
     var body: some View {
         OnboardingPageLayout(
-            eyebrow: "Track The Lifts",
+            eyebrow: "ForgeLyte Lift",
             title: "Training, clearly logged.",
             detail: "Capture every set without breaking your rhythm, then see what consistent work builds.",
             phase: phase

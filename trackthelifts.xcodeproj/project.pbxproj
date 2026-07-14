@@ -415,7 +415,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = trackthelifts/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Track The Lifts";
+				INFOPLIST_KEY_CFBundleDisplayName = "ForgeLyte Lift";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Choose a profile photo. Your photo stays on this device and is never uploaded.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -452,7 +452,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = trackthelifts/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Track The Lifts";
+				INFOPLIST_KEY_CFBundleDisplayName = "ForgeLyte Lift";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Choose a profile photo. Your photo stays on this device and is never uploaded.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

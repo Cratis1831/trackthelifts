@@ -62,7 +62,7 @@ enum ProFeature: String, CaseIterable, Identifiable {
         case .supersets:
             return "Pair exercises into supersets while building routines or logging workouts."
         case .accentThemes:
-            return "Personalize Track The Lifts with every available accent color."
+            return "Personalize ForgeLyte Lift with every available accent color."
         }
     }
 
