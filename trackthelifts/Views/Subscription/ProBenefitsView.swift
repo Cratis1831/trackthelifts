@@ -49,7 +49,7 @@ struct ProBenefitsView: View {
                         }
 
                         VStack(alignment: .leading, spacing: 0) {
-                            Link(destination: URL(string: "https://apps.apple.com/account/subscriptions")!) {
+                            Link(destination: AppLinks.manageSubscription) {
                                 HStack {
                                     Text("Manage Subscription")
                                         .font(.system(size: 16))
