@@ -309,6 +309,16 @@ struct PackageCard: View {
         return "SAVE \(savingsPercent)%"
     }
 
+    #if DEBUG
+    /// Temporary on-card diagnostic to explain why the savings badge may not compute.
+    private var debugInfo: String {
+        let type = String(describing: package.packageType)
+        let price = "\(package.storeProduct.price)"
+        let monthly = monthlyPackage.map { "\($0.storeProduct.price)" } ?? "nil"
+        return "type:\(type)\nprice:\(price)\nmonthly:\(monthly)"
+    }
+    #endif
+
     var body: some View {
         Button(action: action) {
             VStack(spacing: 8) {
@@ -347,6 +357,15 @@ struct PackageCard: View {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .foregroundColor(isSelected ? .appAccent : Color.appTextSecondary)
                     .font(.system(size: 20))
+
+                #if DEBUG
+                Text(verbatim: debugInfo)
+                    .font(.system(size: 7))
+                    .foregroundColor(.appTextSecondary)
+                    .lineLimit(3)
+                    .minimumScaleFactor(0.5)
+                    .multilineTextAlignment(.center)
+                #endif
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
