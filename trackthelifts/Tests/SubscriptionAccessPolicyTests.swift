@@ -77,6 +77,20 @@ final class SubscriptionAccessPolicyTests: XCTestCase {
         )
     }
 
+    func testRestTimerFormattingClampsAndPadsSeconds() {
+        XCTAssertEqual(RestTimerPresentation.formattedTime(-1), "0:00")
+        XCTAssertEqual(RestTimerPresentation.formattedTime(5), "0:05")
+        XCTAssertEqual(RestTimerPresentation.formattedTime(90), "1:30")
+        XCTAssertEqual(RestTimerPresentation.formattedTime(300), "5:00")
+    }
+
+    func testRestTimerProgressUsesConfiguredDurationAndClampsBounds() {
+        XCTAssertEqual(RestTimerPresentation.progress(remaining: 45, totalDuration: 90), 0.5)
+        XCTAssertEqual(RestTimerPresentation.progress(remaining: -1, totalDuration: 90), 0)
+        XCTAssertEqual(RestTimerPresentation.progress(remaining: 120, totalDuration: 90), 1)
+        XCTAssertEqual(RestTimerPresentation.progress(remaining: 30, totalDuration: 0), 0)
+    }
+
     func testOnboardingFlowHasSevenOrderedPages() {
         XCTAssertEqual(OnboardingPage.allCases.count, 7)
         XCTAssertEqual(OnboardingPage.welcome.next, .workouts)
