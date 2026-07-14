@@ -111,7 +111,7 @@ struct SettingsView: View {
         .alert("Notifications Disabled", isPresented: $showNotificationDeniedAlert) {
             Button("OK") { }
         } message: {
-            Text("Enable notifications for Track The Lifts in iOS Settings to turn on workout reminders.")
+            Text("Enable notifications for ForgeLyte Lift in iOS Settings to turn on workout reminders.")
         }
         .alert("Restore Failed", isPresented: $showRestoreErrorAlert) {
             Button("OK") { }
@@ -170,7 +170,7 @@ struct SettingsView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Track The Lifts Pro")
+                    Text("ForgeLyte Lift Pro")
                         .font(.system(size: 16))
                         .foregroundColor(.appTextPrimary)
                     Text("Tap to view your benefits")

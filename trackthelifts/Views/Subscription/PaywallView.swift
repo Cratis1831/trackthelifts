@@ -86,7 +86,7 @@ struct PaywallView: View {
             .safeAreaInset(edge: .bottom) {
                 purchaseFooter
             }
-            .navigationTitle("Track The Lifts Pro")
+            .navigationTitle("ForgeLyte Lift Pro")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
