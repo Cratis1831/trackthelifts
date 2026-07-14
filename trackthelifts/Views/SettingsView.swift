@@ -98,6 +98,7 @@ struct SettingsView: View {
                         subscriptionSection
                         appSettingsSection
                         supportSection
+                        legalLinksFooter
                     }
                     .padding(.horizontal, 20)
                     .padding(.bottom, 30)
@@ -727,6 +728,24 @@ struct SettingsView: View {
             }
         }
         .contentShape(Rectangle())
+    }
+
+    private var legalLinksFooter: some View {
+        HStack(spacing: 10) {
+            Spacer()
+
+            Link("Terms of Service", destination: AppLinks.termsOfService)
+
+            Text("•")
+                .accessibilityHidden(true)
+
+            Link("Privacy Policy", destination: AppLinks.privacyPolicy)
+
+            Spacer()
+        }
+        .font(.system(size: 13))
+        .foregroundColor(secondaryText)
+        .tint(secondaryText)
     }
 
     // MARK: - Shared building blocks

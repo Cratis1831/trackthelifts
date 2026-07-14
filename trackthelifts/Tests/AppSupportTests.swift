@@ -6,6 +6,14 @@ final class AppSupportTests: XCTestCase {
         XCTAssertEqual(AppLinks.manageSubscription.absoluteString, "https://apps.apple.com/account/subscriptions")
         XCTAssertEqual(AppLinks.website.absoluteString, "https://www.forgelyte.com/lift")
         XCTAssertEqual(AppLinks.feedback.absoluteString, "https://forgelyte-lift.userjot.com")
+        XCTAssertEqual(
+            AppLinks.termsOfService.absoluteString,
+            "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
+        )
+        XCTAssertEqual(
+            AppLinks.privacyPolicy.absoluteString,
+            "https://www.forgelyte.com/apps/TrackTheLifts/privacy-policy"
+        )
     }
 
     func testShareMessageIncludesBrandAndWebsite() {
