@@ -315,7 +315,7 @@ struct PackageCard: View {
         let type = String(describing: package.packageType)
         let price = "\(package.storeProduct.price)"
         let monthly = monthlyPackage.map { "\($0.storeProduct.price)" } ?? "nil"
-        return "type:\(type)\nprice:\(price)\nmonthly:\(monthly)"
+        return "type:\(type)\nprice:\(price)\nmonthly:\(monthly)\nbadge:\(badge ?? "nil")"
     }
     #endif
 
@@ -323,17 +323,14 @@ struct PackageCard: View {
         Button(action: action) {
             VStack(spacing: 8) {
                 // Badge slot — fixed height so all cards align even when only one has a badge.
-                Group {
+                ZStack {
                     if let badge {
                         Text(badge)
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(.appAccent)
+                            .font(.system(size: 10, weight: .heavy))
+                            .foregroundColor(.onAppAccent)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 3)
-                            .background(Color.appAccent.opacity(0.2))
-                            .clipShape(Capsule())
-                    } else {
-                        Color.clear
+                            .background(Color.appAccent, in: Capsule())
                     }
                 }
                 .frame(height: 20)
