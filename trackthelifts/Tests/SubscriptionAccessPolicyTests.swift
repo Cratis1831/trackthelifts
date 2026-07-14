@@ -76,4 +76,34 @@ final class SubscriptionAccessPolicyTests: XCTestCase {
             selectedMode
         )
     }
+
+    func testOnboardingFlowHasSevenOrderedPages() {
+        XCTAssertEqual(OnboardingPage.allCases.count, 7)
+        XCTAssertEqual(OnboardingPage.welcome.next, .workouts)
+        XCTAssertEqual(OnboardingPage.workouts.next, .routines)
+        XCTAssertEqual(OnboardingPage.routines.next, .progress)
+        XCTAssertEqual(OnboardingPage.progress.next, .personalization)
+        XCTAssertEqual(OnboardingPage.personalization.next, .ready)
+        XCTAssertEqual(OnboardingPage.ready.next, .profile)
+        XCTAssertNil(OnboardingPage.profile.next)
+        XCTAssertTrue(OnboardingPage.profile.isFinal)
+        XCTAssertFalse(OnboardingPage.ready.isFinal)
+    }
+
+    func testOnboardingSkipRoutesToProfileSetup() {
+        XCTAssertEqual(OnboardingPage.skipDestination, .profile)
+    }
+
+    func testProfileNamePolicyNormalizesAndValidatesNames() {
+        XCTAssertEqual(ProfileNamePolicy.normalized("  Ashkan Sotoudeh\n"), "Ashkan Sotoudeh")
+        XCTAssertTrue(ProfileNamePolicy.isValid(" Ashkan "))
+        XCTAssertFalse(ProfileNamePolicy.isValid("  \n\t "))
+    }
+
+    func testProfileNamePolicyBuildsAvatarInitials() {
+        XCTAssertEqual(ProfileNamePolicy.initials(from: "Ashkan"), "A")
+        XCTAssertEqual(ProfileNamePolicy.initials(from: "Ashkan Sotoudeh"), "AS")
+        XCTAssertEqual(ProfileNamePolicy.initials(from: "Ashkan Reza Sotoudeh"), "AS")
+        XCTAssertNil(ProfileNamePolicy.initials(from: "  "))
+    }
 }
