@@ -2,6 +2,7 @@ import SwiftUI
 
 struct WorkoutCompletionSummary: Identifiable {
     let id = UUID()
+    let earnedPersonalRecord: Bool
     let workoutName: String
     let duration: TimeInterval
     let exerciseCount: Int
@@ -9,8 +10,9 @@ struct WorkoutCompletionSummary: Identifiable {
     let totalReps: Int
     let totalVolume: Double
 
-    init(workout: Workout) {
+    init(workout: Workout, earnedPersonalRecord: Bool = false) {
         let completedSets = workout.exerciseSets.filter(\.isCompleted)
+        self.earnedPersonalRecord = earnedPersonalRecord
         workoutName = workout.title
         duration = max(0, (workout.completedAt ?? .now).timeIntervalSince(workout.createdAt))
         exerciseCount = Set(completedSets.map { $0.exercise.id }).count

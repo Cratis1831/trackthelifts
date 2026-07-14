@@ -6,10 +6,12 @@
 //
 
 import SwiftUI
+import StoreKit
 
 struct ContentView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.requestReview) private var requestReview
 
     var body: some View {
         ZStack {
@@ -55,6 +57,13 @@ struct ContentView: View {
             UIApplication.shared.enableTapToDismissKeyboard()
             ExerciseData.seedIfNeeded(in: modelContext)
             WorkoutSessionManager.shared.reconcileOrphanedActiveWorkouts(in: modelContext)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .appReviewRequestEligible)) { _ in
+            // Let the workout cover and completion celebration fully dismiss before StoreKit is
+            // asked to present its prompt from this stable root view.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                requestReview()
+            }
         }
     }
 
