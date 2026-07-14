@@ -5,6 +5,34 @@
 
 import SwiftUI
 
+enum ProfileNamePolicy {
+    static func normalized(_ name: String) -> String {
+        name.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    static func isValid(_ name: String) -> Bool {
+        !normalized(name).isEmpty
+    }
+
+    static func initials(from name: String) -> String? {
+        let words = normalized(name)
+            .split(whereSeparator: { $0.isWhitespace })
+            .map(String.init)
+        guard !words.isEmpty else { return nil }
+
+        let letters: [Character]
+        if words.count == 1 {
+            letters = Array(words[0].prefix(1))
+        } else {
+            letters = [words.first, words.last]
+                .compactMap { $0?.first }
+        }
+
+        let result = String(letters).uppercased()
+        return result.isEmpty ? nil : result
+    }
+}
+
 /// The user's profile name and avatar photo, kept entirely on device. The name lives in
 /// `UserDefaults`; the avatar is written to a file in the app's Documents directory so the
 /// (potentially large) image data never bloats `UserDefaults`. Nothing here leaves the phone.
@@ -43,21 +71,7 @@ class ProfilePreference {
     /// The user's initials for the avatar's empty state (up to two uppercase letters, like a
     /// standard avatar). Returns `nil` when no name has been entered.
     var initials: String? {
-        let words = name
-            .split(whereSeparator: { $0.isWhitespace })
-            .map(String.init)
-        guard !words.isEmpty else { return nil }
-
-        let letters: [Character]
-        if words.count == 1 {
-            letters = Array(words[0].prefix(1))
-        } else {
-            letters = [words.first, words.last]
-                .compactMap { $0?.first }
-        }
-
-        let result = String(letters).uppercased()
-        return result.isEmpty ? nil : result
+        ProfileNamePolicy.initials(from: name)
     }
 
     /// Persist a newly picked avatar (JPEG-encoded) to disk, or clear it when passed `nil`.
