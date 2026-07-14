@@ -320,7 +320,7 @@ struct PackageCard: View {
         guard yearly < annualized else { return "y>=a \(yearly)/\(annualized)" }
         let fraction = (annualized - yearly) / annualized
         let percent = NSDecimalNumber(decimal: fraction * 100).intValue
-        return "ok:\(percent)"
+        return "ok:\(percent) y=\(yearly) a=\(annualized)"
     }
     #endif
 
