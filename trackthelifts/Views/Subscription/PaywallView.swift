@@ -9,7 +9,7 @@ struct PaywallView: View {
     @State private var selectedPackage: Package?
     @State private var showingError = false
     @State private var errorMessage = ""
-    
+
     var purchaseButtonText: String {
         guard let package = selectedPackage else {
             return "Select a Plan"
@@ -23,8 +23,12 @@ struct PaywallView: View {
     }
 
     /// The monthly package from the current offering, used to compute annual savings.
+    /// Falls back to identifier matching when the package type isn't set.
     private var monthlyPackage: Package? {
         revenueCatService.availablePackages.first { $0.packageType == .monthly }
+            ?? revenueCatService.availablePackages.first {
+                $0.storeProduct.productIdentifier.lowercased().contains("month")
+            }
     }
 
     /// Whether the currently selected plan is a one-time (non-subscription) purchase.
@@ -36,136 +40,51 @@ struct PaywallView: View {
         guard let focusedFeature else { return ProFeature.allCases }
         return [focusedFeature] + ProFeature.allCases.filter { $0 != focusedFeature }
     }
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
                 Color.appCanvas
                     .ignoresSafeArea()
-                
+
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
-                        
+                    VStack(alignment: .leading, spacing: 16) {
+
                         // Features Section
-                        VStack(alignment: .leading, spacing: 16) {
-                            Text(focusedFeature.map { "Unlock \($0.title)" } ?? "Upgrade to Track The Lifts Pro")
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundColor(.appTextPrimary)
-                                .frame(maxWidth: .infinity)
-                                .multilineTextAlignment(.center)
-
-                            VStack(alignment: .leading, spacing: 12) {
-                                ForEach(displayedFeatures) { feature in
-                                    FeatureRow(
-                                        icon: feature.systemImage,
-                                        iconColor: feature.iconColor,
-                                        title: feature.title,
-                                        description: feature.description
-                                    )
-                                }
+                        VStack(alignment: .leading, spacing: 10) {
+                            ForEach(displayedFeatures) { feature in
+                                FeatureRow(
+                                    icon: feature.systemImage,
+                                    iconColor: feature.iconColor,
+                                    title: feature.title,
+                                    description: feature.description
+                                )
                             }
+
+                            FeatureRow(
+                                icon: "sparkles",
+                                iconColor: Color(red: 0.95, green: 0.72, blue: 0.20),
+                                title: "All Future Pro Features",
+                                description: "Every new Pro feature we add, included automatically"
+                            )
                         }
-                        
+
                         // Pricing Plans
-                        VStack(alignment: .leading, spacing: 16) {
+                        VStack(alignment: .leading, spacing: 12) {
                             Text("Choose Your Plan")
-                                .font(.system(size: 20, weight: .semibold))
+                                .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(.appTextPrimary)
-                            
-                            if revenueCatService.availablePackages.isEmpty {
-                                if let lastError = revenueCatService.lastError {
-                                    EmptyStateView(
-                                        systemImage: "exclamationmark.triangle",
-                                        title: "Couldn't Load Plans",
-                                        message: lastError.localizedDescription,
-                                        actionTitle: "Retry",
-                                        action: {
-                                            Task {
-                                                await revenueCatService.loadOfferings()
-                                            }
-                                        }
-                                    )
-                                    .padding(.vertical, 20)
-                                } else {
-                                    VStack(spacing: 12) {
-                                        ProgressView()
-                                            .tint(.appAccent)
-                                        Text("Loading subscription plans...")
-                                            .font(.system(size: 14))
-                                            .foregroundColor(Color.appTextSecondary)
-                                    }
-                                    .frame(maxWidth: .infinity)
-                                    .padding(40)
-                                }
-                            } else {
-                                VStack(spacing: 12) {
-                                    ForEach(revenueCatService.availablePackages, id: \.identifier) { package in
-                                        PackageCard(
-                                            package: package,
-                                            isSelected: selectedPackage?.identifier == package.identifier,
-                                            monthlyPackage: monthlyPackage
-                                        ) {
-                                            selectedPackage = package
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        
-                        // Purchase Button
-                        Button(action: {
-                            guard let package = selectedPackage else { return }
-                            
-                            Task {
-                                let success = await revenueCatService.purchasePackage(package)
-                                if success {
-                                    dismiss()
-                                } else if let error = revenueCatService.lastError {
-                                    errorMessage = error.localizedDescription
-                                    showingError = true
-                                }
-                            }
-                        }) {
-                            HStack {
-                                if revenueCatService.isLoading {
-                                    ProgressView()
-                                        .scaleEffect(0.9)
-                                        .tint(selectedPackage != nil ? .onAppAction : .appTextSecondary)
-                                } else {
-                                    Text(purchaseButtonText)
-                                }
-                            }
-                        }
-                        .buttonStyle(AppPrimaryButtonStyle())
-                        .opacity(selectedPackage == nil ? 0.42 : 1)
-                        .disabled(revenueCatService.isLoading || selectedPackage == nil)
-                        
-                        // Footer
-                        VStack(spacing: 8) {
-                            Text(isLifetimeSelected
-                                 ? "One-time purchase. No subscription, no renewals."
-                                 : "Subscription automatically renews unless canceled at least 24 hours before the end of the current period.")
-                                .font(.system(size: 11))
-                                .foregroundColor(Color.appTextSecondary)
-                                .multilineTextAlignment(.center)
-                                .lineLimit(2)
 
-                            HStack(spacing: 6) {
-                                Link("Terms of Service", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
-
-                                Text("·")
-                                    .foregroundColor(Color.appTextSecondary)
-
-                                Link("Privacy Policy", destination: URL(string: "https://www.forgelyte.com/apps/TrackTheLifts/privacy-policy")!)
-                            }
-                            .font(.system(size: 11))
-                            .foregroundColor(.appAccent)
+                            plansSection
                         }
-                        .frame(maxWidth: .infinity)
                     }
                     .padding(.horizontal, 20)
-                    .padding(.bottom, 30)
+                    .padding(.top, 8)
+                    .padding(.bottom, 16)
                 }
+            }
+            .safeAreaInset(edge: .bottom) {
+                purchaseFooter
             }
             .navigationTitle("Track The Lifts Pro")
             .navigationBarTitleDisplayMode(.inline)
@@ -189,6 +108,110 @@ struct PaywallView: View {
         } message: {
             Text(errorMessage)
         }
+    }
+
+    // MARK: - Plans
+
+    @ViewBuilder
+    private var plansSection: some View {
+        if revenueCatService.availablePackages.isEmpty {
+            if let lastError = revenueCatService.lastError {
+                EmptyStateView(
+                    systemImage: "exclamationmark.triangle",
+                    title: "Couldn't Load Plans",
+                    message: lastError.localizedDescription,
+                    actionTitle: "Retry",
+                    action: {
+                        Task {
+                            await revenueCatService.loadOfferings()
+                        }
+                    }
+                )
+                .padding(.vertical, 20)
+            } else {
+                VStack(spacing: 12) {
+                    ProgressView()
+                        .tint(.appAccent)
+                    Text("Loading subscription plans...")
+                        .font(.system(size: 14))
+                        .foregroundColor(Color.appTextSecondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(40)
+            }
+        } else {
+            HStack(alignment: .top, spacing: 10) {
+                ForEach(revenueCatService.availablePackages, id: \.identifier) { package in
+                    PackageCard(
+                        package: package,
+                        isSelected: selectedPackage?.identifier == package.identifier,
+                        monthlyPackage: monthlyPackage
+                    ) {
+                        selectedPackage = package
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Pinned purchase footer
+
+    @ViewBuilder
+    private var purchaseFooter: some View {
+        VStack(spacing: 10) {
+            Button(action: {
+                guard let package = selectedPackage else { return }
+
+                Task {
+                    let success = await revenueCatService.purchasePackage(package)
+                    if success {
+                        dismiss()
+                    } else if let error = revenueCatService.lastError {
+                        errorMessage = error.localizedDescription
+                        showingError = true
+                    }
+                }
+            }) {
+                HStack {
+                    if revenueCatService.isLoading {
+                        ProgressView()
+                            .scaleEffect(0.9)
+                            .tint(selectedPackage != nil ? .onAppAction : .appTextSecondary)
+                    } else {
+                        Text(purchaseButtonText)
+                    }
+                }
+            }
+            .buttonStyle(AppPrimaryButtonStyle())
+            .opacity(selectedPackage == nil ? 0.42 : 1)
+            .disabled(revenueCatService.isLoading || selectedPackage == nil)
+
+            VStack(spacing: 6) {
+                Text(isLifetimeSelected
+                     ? "One-time purchase. No subscription, no renewals."
+                     : "Subscription automatically renews unless canceled at least 24 hours before the end of the current period.")
+                    .font(.system(size: 11))
+                    .foregroundColor(Color.appTextSecondary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+
+                HStack(spacing: 6) {
+                    Link("Terms of Service", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+
+                    Text("·")
+                        .foregroundColor(Color.appTextSecondary)
+
+                    Link("Privacy Policy", destination: URL(string: "https://www.forgelyte.com/apps/TrackTheLifts/privacy-policy")!)
+                }
+                .font(.system(size: 11))
+                .foregroundColor(.appAccent)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 12)
+        .padding(.bottom, 12)
+        .background(Color.appCanvas)
     }
 }
 
@@ -214,9 +237,9 @@ struct FeatureRow: View {
                 Text(description)
                     .font(.system(size: 12))
                     .foregroundColor(Color.appTextSecondary)
-                    .lineLimit(nil)
+                    .lineLimit(2)
             }
-            
+
             Spacer()
         }
     }
@@ -255,68 +278,76 @@ struct PackageCard: View {
         }
     }
 
-    var description: String {
+    /// Short per-unit caption shown under the price in the compact card.
+    var unitCaption: String {
         switch planType {
         case "Monthly":
-            return "Billed monthly, cancel anytime"
+            return "per month"
         case "Yearly":
-            return "Billed yearly, best value"
+            return "per year"
         case "Lifetime":
-            return "One-time payment, yours forever"
+            return "one-time"
         default:
-            return "Pro subscription"
+            return ""
         }
     }
 
-    var savings: String? {
+    /// Percentage saved by paying yearly instead of 12× monthly, computed from real store prices.
+    /// Uses Double math — NSDecimalNumber.intValue is unreliable for values from Decimal arithmetic.
+    private var savingsPercent: Int? {
         guard planType == "Yearly", let monthlyPackage else { return nil }
-        let yearlyPrice = package.storeProduct.price
-        let annualizedMonthly = monthlyPackage.storeProduct.price * 12
-        guard annualizedMonthly > 0, yearlyPrice < annualizedMonthly else { return nil }
-        let fraction = (annualizedMonthly - yearlyPrice) / annualizedMonthly
-        let percent = NSDecimalNumber(decimal: fraction * 100).intValue
-        guard percent > 0 else { return nil }
-        return "Save \(percent)%"
+        let yearly = NSDecimalNumber(decimal: package.storeProduct.price).doubleValue
+        let annualizedMonthly = NSDecimalNumber(decimal: monthlyPackage.storeProduct.price).doubleValue * 12
+        guard annualizedMonthly > 0, yearly < annualizedMonthly else { return nil }
+        let percent = Int((((annualizedMonthly - yearly) / annualizedMonthly) * 100).rounded())
+        return percent > 0 ? percent : nil
     }
-    
+
+    /// Badge shown at the top of the card (savings on the yearly plan).
+    var badge: String? {
+        guard let savingsPercent else { return nil }
+        return "SAVE \(savingsPercent)%"
+    }
+
     var body: some View {
         Button(action: action) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text(planType)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.appTextPrimary)
-                        
-                        if let savings = savings {
-                            Text(savings)
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(.appAccent)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(Color.appAccent.opacity(0.2))
-                                .cornerRadius(4)
-                        }
+            VStack(spacing: 8) {
+                // Badge slot — fixed height so all cards align even when only one has a badge.
+                ZStack {
+                    if let badge {
+                        Text(badge)
+                            .font(.system(size: 10, weight: .heavy))
+                            .foregroundColor(.onAppAccent)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(Color.appAccent, in: Capsule())
                     }
-                    
-                    Text(description)
-                        .font(.system(size: 12))
+                }
+                .frame(height: 20)
+
+                Text(planType)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.appTextPrimary)
+
+                VStack(spacing: 2) {
+                    Text(package.storeProduct.localizedPriceString)
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundColor(.appTextPrimary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+
+                    Text(unitCaption)
+                        .font(.system(size: 11))
                         .foregroundColor(Color.appTextSecondary)
                 }
-                
-                Spacer()
-                
-                VStack(alignment: .trailing) {
-                    Text(package.storeProduct.localizedPriceString)
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(.appTextPrimary)
-                }
-                
+
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .foregroundColor(isSelected ? .appAccent : Color.appTextSecondary)
-                    .font(.system(size: 24))
+                    .font(.system(size: 20))
             }
-            .padding(16)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .padding(.horizontal, 8)
             .background(Color.appSurface)
             .cornerRadius(AppDesign.cardRadius)
             .overlay(
