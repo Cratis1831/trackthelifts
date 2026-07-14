@@ -7,10 +7,13 @@
 
 import SwiftUI
 import SwiftData
+import StoreKit
 
 struct SettingsView: View {
     @EnvironmentObject var revenueCatService: RevenueCatService
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.openURL) private var openURL
+    @Environment(\.requestReview) private var requestReview
     @State private var isPaywallPresented = false
     @State private var isProBenefitsPresented = false
     @State private var selectedProFeature: ProFeature?
@@ -94,6 +97,8 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 20) {
                         subscriptionSection
                         appSettingsSection
+                        supportSection
+                        legalLinksFooter
                     }
                     .padding(.horizontal, 20)
                     .padding(.bottom, 30)
@@ -580,6 +585,168 @@ struct SettingsView: View {
         }
     }
     #endif
+
+    // MARK: - Support
+
+    private var supportSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            sectionHeader("Support")
+
+            VStack(alignment: .leading, spacing: 16) {
+                supportLinkRow(
+                    title: "Manage Subscription",
+                    systemImage: "creditcard.fill",
+                    color: Color(red: 0.20, green: 0.48, blue: 0.96),
+                    destination: AppLinks.manageSubscription
+                )
+                rowDivider
+                supportLinkRow(
+                    title: "ForgeLyte Lift Website",
+                    systemImage: "globe",
+                    color: Color(red: 0.58, green: 0.36, blue: 0.90),
+                    destination: AppLinks.website
+                )
+                rowDivider
+                supportLinkRow(
+                    title: "Send Feedback",
+                    systemImage: "bubble.left.and.bubble.right.fill",
+                    color: Color(red: 0.90, green: 0.30, blue: 0.24),
+                    destination: AppLinks.feedback
+                )
+                rowDivider
+                shareAppRow
+                rowDivider
+                reviewAppRow
+                rowDivider
+                whatsNewRow
+                rowDivider
+                versionRow
+            }
+            .settingsCard()
+        }
+    }
+
+    private func supportLinkRow(
+        title: String,
+        systemImage: String,
+        color: Color,
+        destination: URL
+    ) -> some View {
+        Link(destination: destination) {
+            supportRowLabel(
+                title: title,
+                systemImage: systemImage,
+                color: color,
+                trailingImage: "arrow.up.right"
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var shareAppRow: some View {
+        ShareLink(item: AppLinks.shareMessage) {
+            supportRowLabel(
+                title: "Share ForgeLyte Lift",
+                systemImage: "square.and.arrow.up.fill",
+                color: Color(red: 0.30, green: 0.72, blue: 0.40)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var reviewAppRow: some View {
+        Button {
+            if let reviewURL = AppLinks.appStoreReview {
+                openURL(reviewURL)
+            } else {
+                requestReview()
+            }
+        } label: {
+            supportRowLabel(
+                title: "Review ForgeLyte Lift",
+                systemImage: "star.fill",
+                color: Color(red: 0.95, green: 0.55, blue: 0.19)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var whatsNewRow: some View {
+        NavigationLink {
+            WhatsNewView()
+        } label: {
+            supportRowLabel(
+                title: "What's New",
+                systemImage: "sparkles",
+                color: Color(red: 0.88, green: 0.38, blue: 0.50),
+                trailingImage: "chevron.right"
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var versionRow: some View {
+        HStack(spacing: 12) {
+            IconTile(color: Color(red: 0.40, green: 0.40, blue: 0.43)) {
+                Image(systemName: "info.circle.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.appTextPrimary)
+            }
+
+            Text(AppVersion.displayName)
+                .font(.system(size: 16))
+                .foregroundColor(.appTextPrimary)
+
+            Spacer()
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private func supportRowLabel(
+        title: String,
+        systemImage: String,
+        color: Color,
+        trailingImage: String? = nil
+    ) -> some View {
+        HStack(spacing: 12) {
+            IconTile(color: color) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.appTextPrimary)
+            }
+
+            Text(title)
+                .font(.system(size: 16))
+                .foregroundColor(.appTextPrimary)
+
+            Spacer()
+
+            if let trailingImage {
+                Image(systemName: trailingImage)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(secondaryText)
+            }
+        }
+        .contentShape(Rectangle())
+    }
+
+    private var legalLinksFooter: some View {
+        HStack(spacing: 10) {
+            Spacer()
+
+            Link("Terms of Service", destination: AppLinks.termsOfService)
+
+            Text("•")
+                .accessibilityHidden(true)
+
+            Link("Privacy Policy", destination: AppLinks.privacyPolicy)
+
+            Spacer()
+        }
+        .font(.system(size: 13))
+        .foregroundColor(secondaryText)
+        .tint(secondaryText)
+    }
 
     // MARK: - Shared building blocks
 

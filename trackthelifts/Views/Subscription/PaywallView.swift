@@ -196,12 +196,12 @@ struct PaywallView: View {
                     .lineLimit(2)
 
                 HStack(spacing: 6) {
-                    Link("Terms of Service", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+                    Link("Terms of Service", destination: AppLinks.termsOfService)
 
                     Text("·")
                         .foregroundColor(Color.appTextSecondary)
 
-                    Link("Privacy Policy", destination: URL(string: "https://www.forgelyte.com/apps/TrackTheLifts/privacy-policy")!)
+                    Link("Privacy Policy", destination: AppLinks.privacyPolicy)
                 }
                 .font(.system(size: 11))
                 .foregroundColor(.appAccent)

@@ -578,7 +578,7 @@ struct CreateWorkoutView: View {
         .overlay {
             if let completionSummary {
                 WorkoutCompletionView(summary: completionSummary) {
-                    dismiss()
+                    finishCompletionCelebration(completionSummary)
                 }
                 .zIndex(100)
             }
@@ -586,6 +586,8 @@ struct CreateWorkoutView: View {
     }
 
     private func showPersonalRecord(for set: ExerciseSet, kind: PRKind) {
+        AppReviewPromptController.shared.recordPersonalRecord(in: set.workout.id)
+
         let label: String
         switch kind {
         case .weight: label = "New weight PR!"
@@ -681,6 +683,7 @@ struct CreateWorkoutView: View {
         // persisted as `isActive` with `activeWorkoutID` still pointing at it: the session never
         // ended, so "Workout In Progress" kept blocking new workouts even after canceling.
         if let workout = savedWorkout {
+            AppReviewPromptController.shared.clearPendingPersonalRecord(for: workout.id)
             modelContext.delete(workout)
             try? modelContext.save()
         }
@@ -733,21 +736,44 @@ struct CreateWorkoutView: View {
     func finishWorkout() {
         guard let workout = savedWorkout else { return }
 
+        let earnedPersonalRecord = AppReviewPromptController.shared.hasPendingPersonalRecord(for: workout.id)
+
         workout.isActive = false
         workout.completedAt = .now
         workout.updatedAt = .now
 
         do {
             try modelContext.save()
+            AppReviewPromptController.shared.clearPendingPersonalRecord(for: workout.id)
             sessionManager.completeWorkout()
             RestTimerManager.shared.cancel()
             Haptics.success()
             withAnimation(.easeOut(duration: 0.22)) {
-                completionSummary = WorkoutCompletionSummary(workout: workout)
+                completionSummary = WorkoutCompletionSummary(
+                    workout: workout,
+                    earnedPersonalRecord: earnedPersonalRecord
+                )
             }
         } catch {
             print("Failed to complete workout: \(error)")
             saveErrorMessage = "Your workout couldn't be finished. Please try again."
+        }
+    }
+
+    private func finishCompletionCelebration(_ summary: WorkoutCompletionSummary) {
+        let descriptor = FetchDescriptor<Workout>(
+            predicate: #Predicate { $0.completedAt != nil && !$0.isDeleted }
+        )
+        let completedWorkoutCount = (try? modelContext.fetchCount(descriptor)) ?? 0
+        let shouldRequestReview = AppReviewPromptController.shared.registerCompletion(
+            completedWorkoutCount: completedWorkoutCount,
+            currentWorkoutEarnedPersonalRecord: summary.earnedPersonalRecord
+        )
+
+        dismiss()
+
+        if shouldRequestReview {
+            NotificationCenter.default.post(name: .appReviewRequestEligible, object: nil)
         }
     }
     
