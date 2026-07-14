@@ -4,7 +4,21 @@
 
   ],
   "products" : [
-
+    {
+      "displayPrice" : "24.99",
+      "familyShareable" : false,
+      "internalID" : "6720144200",
+      "localizations" : [
+        {
+          "description" : "Unlock all Pro features forever with a one-time purchase",
+          "displayName" : "Track The Lifts Lifetime",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.ashkansdev.track_the_lifts.Lifetime",
+      "referenceName" : "Lifetime",
+      "type" : "NonConsumable"
+    }
   ],
   "settings" : {
     "_applicationInternalID" : "6720143840",
@@ -76,7 +90,7 @@
           "codeOffers" : [
 
           ],
-          "displayPrice" : "4.99",
+          "displayPrice" : "1.99",
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "6720144066",
@@ -101,7 +115,7 @@
           "codeOffers" : [
 
           ],
-          "displayPrice" : "39.99",
+          "displayPrice" : "14.99",
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "6720144127",
