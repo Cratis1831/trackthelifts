@@ -873,67 +873,6 @@ struct ExerciseNoteField: View {
     }
 }
 
-/// Shows the rest countdown above the exercise whose set just started it, so it stays in view
-/// without requiring a scroll back to the top of the workout once more exercises are added.
-struct RestTimerBanner: View {
-    let exerciseName: String
-
-    private let manager = RestTimerManager.shared
-
-    var body: some View {
-        // Drive the countdown off a wall-clock schedule that re-invokes this closure every second.
-        // This is what makes the banner tick down *and* remove itself the moment the timer elapses:
-        // `manager.endDate` only changes when the timer is started/adjusted (not each second), so
-        // without a per-second re-render the `isRunning` check below would never be re-evaluated and
-        // a finished timer's banner would linger. Values are read from the live clock (see
-        // `remainingSeconds`), so the very first frame is already correct — no flash. The completion
-        // chime/haptic is handled app-wide by RestTimerCompletionWatcher, not here.
-        TimelineView(.periodic(from: .now, by: 1)) { _ in
-            if manager.isRunning && manager.activeExerciseName == exerciseName {
-                let remainingSeconds = max(0, Int(manager.remainingTime.rounded()))
-                HStack {
-                    IconTile(color: Color(red: 0.95, green: 0.55, blue: 0.19), size: 28) {
-                        Image(systemName: "timer")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(.appTextPrimary)
-                    }
-                    Text("Rest: \(formattedTime(remainingSeconds))")
-                        .font(.system(size: 14, weight: .semibold))
-                    Spacer()
-                    HStack(spacing: 16) {
-                        // Only offer -15s while there's more than 15s left, so the countdown can't be
-                        // pulled to or below zero.
-                        Button("-15s") {
-                            manager.subtractTime(15)
-                        }
-                        .font(.system(size: 13, weight: .medium))
-                        .disabled(remainingSeconds <= 15)
-                        Button("+15s") {
-                            manager.addTime(15)
-                        }
-                        .font(.system(size: 13, weight: .medium))
-                        Button("Skip") {
-                            manager.cancel()
-                        }
-                        .font(.system(size: 13, weight: .medium))
-                    }
-                    // Inside a List row, default-styled buttons share one hit target, so a tap
-                    // anywhere on the banner would fire one of them (e.g. Skip). Borderless gives each
-                    // button its own independent tap region.
-                    .buttonStyle(.borderless)
-                }
-                .padding(10)
-                .background(Color.appSurface)
-                .cornerRadius(10)
-            }
-        }
-    }
-
-    private func formattedTime(_ seconds: Int) -> String {
-        String(format: "%d:%02d", seconds / 60, seconds % 60)
-    }
-}
-
 #Preview {
     CreateWorkoutView()
         .environmentObject(RevenueCatService.shared)
