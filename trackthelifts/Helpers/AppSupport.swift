@@ -10,9 +10,8 @@ enum AppLinks {
     static let website = URL(string: "https://www.forgelyte.com/lift")!
     static let feedback = URL(string: "https://forgelyte-lift.userjot.com")!
 
-    /// Set this once ForgeLyte Lift has a numeric App Store ID. Until then, review actions use
-    /// Apple's in-app review request.
-    static let appStoreReview: URL? = nil
+    /// Opens the review composer directly once the App Store listing is available publicly.
+    static let appStoreReview = URL(string: "https://apps.apple.com/app/id6751346666?action=write-review")
 
     static let shareMessage = "Build strength and track every lift with ForgeLyte Lift: \(website.absoluteString)"
 }

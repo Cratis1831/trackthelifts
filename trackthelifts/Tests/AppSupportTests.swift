@@ -13,8 +13,11 @@ final class AppSupportTests: XCTestCase {
         XCTAssertTrue(AppLinks.shareMessage.contains(AppLinks.website.absoluteString))
     }
 
-    func testReviewUsesSystemFallbackUntilAppStoreIDIsConfigured() {
-        XCTAssertNil(AppLinks.appStoreReview)
+    func testReviewUsesConfiguredAppStoreListing() {
+        XCTAssertEqual(
+            AppLinks.appStoreReview?.absoluteString,
+            "https://apps.apple.com/app/id6751346666?action=write-review"
+        )
     }
 
     func testCurrentVersionAndChangelogMatchReleaseBuildSettings() {
