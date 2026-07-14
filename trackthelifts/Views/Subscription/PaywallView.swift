@@ -309,31 +309,21 @@ struct PackageCard: View {
         return "SAVE \(savingsPercent)%"
     }
 
-    #if DEBUG
-    /// Temporary on-card diagnostic to explain why the savings badge may not compute.
-    private var debugInfo: String {
-        let type = String(describing: package.packageType)
-        let price = "\(package.storeProduct.price)"
-        let monthly = monthlyPackage.map { "\($0.storeProduct.price)" } ?? "nil"
-        return "type:\(type)\nprice:\(price)\nmonthly:\(monthly)\nbadge:\(badge ?? "nil")"
-    }
-    #endif
 
     var body: some View {
         Button(action: action) {
             VStack(spacing: 8) {
                 // Badge slot — fixed height so all cards align even when only one has a badge.
+                // DEBUG: always render so "NIL" surfaces a nil badge vs a layout issue.
                 ZStack {
-                    if let badge {
-                        Text(badge)
-                            .font(.system(size: 10, weight: .heavy))
-                            .foregroundColor(.onAppAccent)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(Color.appAccent, in: Capsule())
-                    }
+                    Text(badge ?? "NIL")
+                        .font(.system(size: 11, weight: .heavy))
+                        .foregroundColor(.onAppAccent)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Color.appAccent, in: Capsule())
                 }
-                .frame(height: 20)
+                .frame(height: 22)
 
                 Text(planType)
                     .font(.system(size: 14, weight: .semibold))
@@ -354,15 +344,6 @@ struct PackageCard: View {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .foregroundColor(isSelected ? .appAccent : Color.appTextSecondary)
                     .font(.system(size: 20))
-
-                #if DEBUG
-                Text(verbatim: debugInfo)
-                    .font(.system(size: 7))
-                    .foregroundColor(.appTextSecondary)
-                    .lineLimit(3)
-                    .minimumScaleFactor(0.5)
-                    .multilineTextAlignment(.center)
-                #endif
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
