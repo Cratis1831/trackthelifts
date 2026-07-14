@@ -293,13 +293,13 @@ struct PackageCard: View {
     }
 
     /// Percentage saved by paying yearly instead of 12× monthly, computed from real store prices.
+    /// Uses Double math — NSDecimalNumber.intValue is unreliable for values from Decimal arithmetic.
     private var savingsPercent: Int? {
         guard planType == "Yearly", let monthlyPackage else { return nil }
-        let yearlyPrice = package.storeProduct.price
-        let annualizedMonthly = monthlyPackage.storeProduct.price * 12
-        guard annualizedMonthly > 0, yearlyPrice < annualizedMonthly else { return nil }
-        let fraction = (annualizedMonthly - yearlyPrice) / annualizedMonthly
-        let percent = NSDecimalNumber(decimal: fraction * 100).intValue
+        let yearly = NSDecimalNumber(decimal: package.storeProduct.price).doubleValue
+        let annualizedMonthly = NSDecimalNumber(decimal: monthlyPackage.storeProduct.price).doubleValue * 12
+        guard annualizedMonthly > 0, yearly < annualizedMonthly else { return nil }
+        let percent = Int((((annualizedMonthly - yearly) / annualizedMonthly) * 100).rounded())
         return percent > 0 ? percent : nil
     }
 
@@ -309,39 +309,21 @@ struct PackageCard: View {
         return "SAVE \(savingsPercent)%"
     }
 
-    #if DEBUG
-    /// Reports which step of the savings calculation fails, for the yearly card.
-    var savingsDebug: String {
-        guard planType == "Yearly" else { return "notYr:\(planType)" }
-        guard let monthlyPackage else { return "noMonthly" }
-        let yearly = package.storeProduct.price
-        let annualized = monthlyPackage.storeProduct.price * 12
-        guard annualized > 0 else { return "ann=0" }
-        guard yearly < annualized else { return "y>=a \(yearly)/\(annualized)" }
-        let fraction = (annualized - yearly) / annualized
-        let percent = NSDecimalNumber(decimal: fraction * 100).intValue
-        return "ok:\(percent) y=\(yearly) a=\(annualized)"
-    }
-    #endif
-
-
     var body: some View {
         Button(action: action) {
             VStack(spacing: 8) {
                 // Badge slot — fixed height so all cards align even when only one has a badge.
-                // DEBUG: show the savings-calc failure point so we can see why it's nil.
                 ZStack {
-                    Text(badge ?? savingsDebug)
-                        .font(.system(size: 9, weight: .heavy))
-                        .foregroundColor(.onAppAccent)
-                        .lineLimit(2)
-                        .minimumScaleFactor(0.5)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 3)
-                        .background(Color.appAccent, in: Capsule())
+                    if let badge {
+                        Text(badge)
+                            .font(.system(size: 10, weight: .heavy))
+                            .foregroundColor(.onAppAccent)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(Color.appAccent, in: Capsule())
+                    }
                 }
-                .frame(height: 30)
+                .frame(height: 20)
 
                 Text(planType)
                     .font(.system(size: 14, weight: .semibold))
