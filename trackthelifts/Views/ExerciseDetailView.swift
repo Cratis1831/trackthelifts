@@ -19,6 +19,7 @@ struct ExerciseDetailView: View {
     var onSave: ((Exercise) -> Void)? = nil
     @State private var exerciseName: String = ""
     @State private var selectedBodypart: Bodypart?
+    @State private var selectedCategory: ExerciseCategory = .other
     @State private var showingError: Bool = false
     @State private var errorMessage: String = ""
     @FocusState private var isNameFieldFocused: Bool
@@ -100,6 +101,40 @@ struct ExerciseDetailView: View {
                         .buttonStyle(.plain)
                     }
 
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Category")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.appTextPrimary)
+
+                        Menu {
+                            ForEach(ExerciseCategory.allCases) { category in
+                                Button(category.displayName) {
+                                    selectedCategory = category
+                                }
+                            }
+                        } label: {
+                            HStack {
+                                Text(selectedCategory.displayName)
+                                    .font(.system(size: 16))
+                                    .foregroundColor(.appTextPrimary)
+
+                                Spacer()
+
+                                Image(systemName: "chevron.up.chevron.down")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(Color.appTextSecondary)
+                            }
+                            .padding(12)
+                            .background(Color.appSurface)
+                            .cornerRadius(10)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color.appBorder, lineWidth: 1)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+
                     Spacer()
                 }
                 .padding(.horizontal, 20)
@@ -138,6 +173,7 @@ struct ExerciseDetailView: View {
         if let exercise = exercise {
             exerciseName = exercise.name
             selectedBodypart = exercise.bodypart
+            selectedCategory = exercise.category
         } else {
             exerciseName = initialName
             isNameFieldFocused = true
@@ -157,12 +193,14 @@ struct ExerciseDetailView: View {
         if let existingExercise = exercise {
             existingExercise.name = trimmedName
             existingExercise.bodypart = selectedBodypart
+            existingExercise.category = selectedCategory
             existingExercise.updatedAt = .now
             savedExercise = existingExercise
         } else {
             let newExercise = Exercise(
                 name: trimmedName,
-                bodypart: selectedBodypart
+                bodypart: selectedBodypart,
+                category: selectedCategory
             )
             modelContext.insert(newExercise)
             savedExercise = newExercise
