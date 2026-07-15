@@ -8,6 +8,16 @@
 import SwiftData
 import SwiftUI
 
+enum ExerciseCountText {
+    static func make(visibleCount: Int, totalCount: Int, isFiltering: Bool) -> String {
+        let totalLabel = totalCount == 1 ? "exercise" : "exercises"
+        if isFiltering {
+            return "\(visibleCount) of \(totalCount) \(totalLabel)"
+        }
+        return "\(totalCount) \(totalLabel)"
+    }
+}
+
 struct ExerciseListView: View {
     var chooseExercise: Bool = false
     var onExerciseSelected: ((Exercise) -> Void)? = nil
@@ -33,7 +43,8 @@ struct ExerciseListView: View {
         } else {
             return exercises.filter { exercise in
                 exercise.name.localizedCaseInsensitiveContains(searchText) ||
-                (exercise.bodypart?.name.localizedCaseInsensitiveContains(searchText) ?? false)
+                (exercise.bodypart?.name.localizedCaseInsensitiveContains(searchText) ?? false) ||
+                exercise.category.displayName.localizedCaseInsensitiveContains(searchText)
             }
         }
     }
@@ -127,6 +138,17 @@ struct ExerciseListView: View {
                     )
                 } else {
                     VStack(spacing: 0) {
+                        Text(ExerciseCountText.make(
+                            visibleCount: filteredExercises.count,
+                            totalCount: exercises.count,
+                            isFiltering: !searchText.isEmpty
+                        ))
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.appTextSecondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 8)
+
                         List {
                             if searchText.isEmpty && !recentExercises.isEmpty {
                                 Section {
@@ -215,11 +237,9 @@ struct ExerciseListView: View {
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.appTextPrimary)
 
-                    if let bodypart = exercise.bodypart {
-                        Text(bodypart.name)
-                            .font(.system(size: 14))
-                            .foregroundColor(Color.appTextSecondary)
-                    }
+                    Text(exerciseMetadata(exercise))
+                        .font(.system(size: 14))
+                        .foregroundColor(Color.appTextSecondary)
                 }
 
                 Spacer()
@@ -265,6 +285,13 @@ struct ExerciseListView: View {
             return String(firstWord.prefix(2)).uppercased()
         }
         return "EX"
+    }
+
+    private func exerciseMetadata(_ exercise: Exercise) -> String {
+        guard let bodypartName = exercise.bodypart?.name else {
+            return exercise.category.displayName
+        }
+        return "\(bodypartName) • \(exercise.category.displayName)"
     }
     
     private func confirmDelete() {

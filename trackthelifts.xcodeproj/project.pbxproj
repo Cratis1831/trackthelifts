@@ -16,6 +16,7 @@
 		7A10000E30A0000100000001 /* AppReviewPromptControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A10000F30A0000100000001 /* AppReviewPromptControllerTests.swift */; };
 		7A10001030A0000100000001 /* AppSupportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A10001130A0000100000001 /* AppSupportTests.swift */; };
 		7A20000430B0000100000001 /* AnalyticsEventTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A20000530B0000100000001 /* AnalyticsEventTests.swift */; };
+		7A30000130C0000100000001 /* ExerciseDataTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A30000230C0000100000001 /* ExerciseDataTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -37,6 +38,7 @@
 		7A10000F30A0000100000001 /* AppReviewPromptControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppReviewPromptControllerTests.swift; sourceTree = "<group>"; };
 		7A10001130A0000100000001 /* AppSupportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSupportTests.swift; sourceTree = "<group>"; };
 		7A20000530B0000100000001 /* AnalyticsEventTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsEventTests.swift; sourceTree = "<group>"; };
+		7A30000230C0000100000001 /* ExerciseDataTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseDataTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -47,6 +49,7 @@
 				Tests/AnalyticsEventTests.swift,
 				Tests/AppReviewPromptControllerTests.swift,
 				Tests/AppSupportTests.swift,
+				Tests/ExerciseDataTests.swift,
 				Tests/SubscriptionAccessPolicyTests.swift,
 			);
 			target = 41E8F9A42E57804200D8D36F /* trackthelifts */;
@@ -112,6 +115,7 @@
 				7A10000F30A0000100000001 /* AppReviewPromptControllerTests.swift */,
 				7A10001130A0000100000001 /* AppSupportTests.swift */,
 				7A10000330A0000100000001 /* SubscriptionAccessPolicyTests.swift */,
+				7A30000230C0000100000001 /* ExerciseDataTests.swift */,
 			);
 			path = trackthelifts/Tests;
 			sourceTree = "<group>";
@@ -242,6 +246,7 @@
 				7A10000E30A0000100000001 /* AppReviewPromptControllerTests.swift in Sources */,
 				7A10001030A0000100000001 /* AppSupportTests.swift in Sources */,
 				7A10000130A0000100000001 /* SubscriptionAccessPolicyTests.swift in Sources */,
+				7A30000130C0000100000001 /* ExerciseDataTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
