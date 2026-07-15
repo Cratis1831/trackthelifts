@@ -11,34 +11,44 @@ Track The Lifts uses RevenueCat to manage in-app purchases and subscriptions. Th
 - ✅ Exercise library
 - ✅ Local data storage
 - ✅ Workout history
-- ❌ iCloud sync
 
-### Premium Tier
+### Pro Tier
 - ✅ Everything in Free Tier
-- ✅ **iCloud sync across devices**
-- ✅ Automatic backup
-- ✅ Data restoration
+- ✅ **Unlimited routines**
+- ✅ **Advanced progress analytics**
+- ✅ **RPE and RIR effort tracking**
+- ✅ **Supersets**
+- ✅ **Every accent theme**
+- ✅ All future Pro features
 
-## Premium Feature: iCloud Sync
+## Pro Features
 
-Currently, the only premium feature is iCloud sync, which allows users to:
-- Sync workouts across iPhone, iPad, and Mac
-- Automatically backup workout data to iCloud
-- Restore data when switching devices
-- Access workouts from any Apple device
+The Pro tier is defined by the `ProFeature` enum in `Services/SubscriptionTier.swift`:
+- `unlimitedRoutines` — Unlimited Routines
+- `advancedProgress` — Advanced Progress Analytics
+- `effortTracking` — RPE and RIR Tracking
+- `supersets` — Supersets
+- `accentThemes` — Every Accent Theme
+
+Access is gated via `RevenueCatService.canAccess(_:)`, which checks the `Pro`
+entitlement. New Pro features are added by extending `ProFeature`.
 
 ## RevenueCat Products
 
 ### Product IDs
-- **Monthly Subscription**: `com.ashkansdev.trackthelifts.Monthly`
-- **Yearly Subscription**: `com.ashkansdev.trackthelifts.Annual`
+- **Monthly Subscription**: `com.ashkansdev.track_the_lifts.Monthly` (auto-renewable)
+- **Yearly Subscription**: `com.ashkansdev.track_the_lifts.Annual` (auto-renewable)
+- **Lifetime**: `com.ashkansdev.track_the_lifts.Lifetime` (non-consumable, one-time)
+
+The paywall reads packages dynamically from the current RevenueCat offering, so
+these IDs must match the products configured in App Store Connect and attached to
+the offering. See `TrackTheLifts.storekit` for the local StoreKit testing config.
 
 ### Entitlements
-- **Pro**: `Pro` - Grants access to all premium features
+- **Pro**: `Pro` - Grants access to all premium features (checked in `RevenueCatService.swift`)
 
 ### Pricing (Subject to App Store Connect configuration)
-- **Monthly**: $4.99/month
-- **Yearly**: $39.99/year (33% savings)
+- See `TrackTheLifts.storekit` for local testing prices; live prices are set in App Store Connect.
 
 ## Implementation Architecture
 
@@ -49,9 +59,10 @@ Currently, the only premium feature is iCloud sync, which allows users to:
 
 ### Key Files
 - `Services/RevenueCatService.swift` - Main subscription service
-- `Services/SubscriptionTier.swift` - Tier definitions and feature management
-- `Views/PaywallView.swift` - Subscription purchase interface
-- `Views/SettingsView.swift` - Subscription management interface
+- `Services/SubscriptionTier.swift` - Tier and `ProFeature` definitions, access policy
+- `Views/Subscription/PaywallView.swift` - Subscription purchase interface
+- `Views/Subscription/ProBenefitsView.swift` - Benefits + management for subscribers
+- `Views/SettingsView.swift` - Subscription status, upgrade entry, restore
 
 ### Integration Points
 1. **App Launch**: RevenueCat is configured in `TrackTheLiftsApp.swift`

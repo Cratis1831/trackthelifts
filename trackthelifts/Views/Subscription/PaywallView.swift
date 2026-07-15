@@ -9,6 +9,9 @@ struct PaywallView: View {
     @State private var selectedPackage: Package?
     @State private var showingError = false
     @State private var errorMessage = ""
+    @State private var showRestoreErrorAlert = false
+    @State private var showRestoreResultAlert = false
+    @State private var restoreResultMessage = ""
 
     var purchaseButtonText: String {
         guard let package = selectedPackage else {
@@ -108,6 +111,20 @@ struct PaywallView: View {
         } message: {
             Text(errorMessage)
         }
+        .alert("Restore Failed", isPresented: $showRestoreErrorAlert) {
+            Button("OK") { }
+        } message: {
+            Text(revenueCatService.lastError?.localizedDescription ?? "Couldn't restore your purchases. Please try again.")
+        }
+        .alert("Restore Purchases", isPresented: $showRestoreResultAlert) {
+            Button("OK") {
+                if revenueCatService.currentTier == .pro {
+                    dismiss()
+                }
+            }
+        } message: {
+            Text(restoreResultMessage)
+        }
     }
 
     // MARK: - Plans
@@ -196,6 +213,14 @@ struct PaywallView: View {
                     .lineLimit(2)
 
                 HStack(spacing: 6) {
+                    Button("Restore Purchases") {
+                        Task { await restorePurchases() }
+                    }
+                    .disabled(revenueCatService.isLoading)
+
+                    Text("·")
+                        .foregroundColor(Color.appTextSecondary)
+
                     Link("Terms of Service", destination: AppLinks.termsOfService)
 
                     Text("·")
@@ -212,6 +237,20 @@ struct PaywallView: View {
         .padding(.top, 12)
         .padding(.bottom, 12)
         .background(Color.appCanvas)
+    }
+
+    // MARK: - Actions
+
+    private func restorePurchases() async {
+        let success = await revenueCatService.restorePurchases()
+        if success {
+            restoreResultMessage = revenueCatService.currentTier == .pro
+                ? "Your Pro subscription has been restored."
+                : "No active purchases were found to restore."
+            showRestoreResultAlert = true
+        } else {
+            showRestoreErrorAlert = true
+        }
     }
 }
 
