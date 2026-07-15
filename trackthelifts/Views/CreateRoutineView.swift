@@ -269,6 +269,7 @@ struct CreateRoutineView: View {
 
         do {
             try modelContext.save()
+            AnalyticsService.track(.routineSaved(source: existingTemplate == nil ? .blank : .edit))
             dismiss()
         } catch {
             print("Failed to save routine: \(error)")

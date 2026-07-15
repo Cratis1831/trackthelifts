@@ -469,6 +469,9 @@ extension View {
     func proPaywall(feature: Binding<ProFeature?>) -> some View {
         fullScreenCover(item: feature) { selectedFeature in
             PaywallView(focusedFeature: selectedFeature)
+                .onAppear {
+                    AnalyticsService.track(.paywallShown(feature: AnalyticsProFeature(selectedFeature)))
+                }
         }
     }
 }

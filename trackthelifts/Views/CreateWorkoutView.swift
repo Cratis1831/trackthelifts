@@ -634,6 +634,7 @@ struct CreateWorkoutView: View {
             savedWorkout = newWorkout
             // Start tracking this workout as active
             sessionManager.startWorkout(workoutID: newWorkout.id)
+            AnalyticsService.track(.workoutStarted(source: .blank))
         } catch {
             print("Failed to save workout: \(error.localizedDescription)")
             saveErrorMessage = "Your workout couldn't be saved. Please try again."
@@ -682,13 +683,21 @@ struct CreateWorkoutView: View {
         // guard here previously only fired for empty workouts, which left a workout that had sets
         // persisted as `isActive` with `activeWorkoutID` still pointing at it: the session never
         // ended, so "Workout In Progress" kept blocking new workouts even after canceling.
+        let hadLoggedSets = savedWorkout?.exerciseSets.contains { $0.reps > 0 } ?? false
         if let workout = savedWorkout {
             AppReviewPromptController.shared.clearPendingPersonalRecord(for: workout.id)
             modelContext.delete(workout)
-            try? modelContext.save()
+            do {
+                try modelContext.save()
+            } catch {
+                print("Failed to cancel workout: \(error)")
+                saveErrorMessage = "Your workout couldn't be cancelled. Please try again."
+                return
+            }
         }
         sessionManager.completeWorkout()
         RestTimerManager.shared.cancel()
+        AnalyticsService.track(.workoutCancelled(hadLoggedSets: hadLoggedSets))
         dismiss()
     }
 
@@ -744,6 +753,13 @@ struct CreateWorkoutView: View {
 
         do {
             try modelContext.save()
+            let completedSets = workout.exerciseSets.filter(\.isCompleted)
+            AnalyticsService.track(.workoutCompleted(
+                exerciseCount: Set(completedSets.map { $0.exercise.id }).count,
+                completedSetCount: completedSets.count,
+                earnedPersonalRecord: earnedPersonalRecord,
+                containsSuperset: workout.containsSupersets
+            ))
             AppReviewPromptController.shared.clearPendingPersonalRecord(for: workout.id)
             sessionManager.completeWorkout()
             RestTimerManager.shared.cancel()
