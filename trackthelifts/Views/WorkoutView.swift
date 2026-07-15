@@ -227,7 +227,12 @@ struct WorkoutView: View {
                     if let blockedFeature = blockedFeatureForNewRoutine(from: workout) {
                         selectedProFeature = blockedFeature
                     } else {
-                        _ = TemplateService.makeTemplate(from: workout, name: newTemplateName, in: modelContext)
+                        do {
+                            _ = try TemplateService.makeTemplate(from: workout, name: newTemplateName, in: modelContext)
+                            AnalyticsService.track(.routineSaved(source: .pastWorkout))
+                        } catch {
+                            print("Failed to save routine from workout: \(error)")
+                        }
                     }
                 }
                 workoutToNameAsTemplate = nil
@@ -251,10 +256,15 @@ struct WorkoutView: View {
             showActiveWorkoutAlert = true
             return
         }
-        let workout = template.instantiateWorkout(in: modelContext)
-        resumingWorkout = workout
-        sessionManager.startWorkout(workoutID: workout.id)
-        isCreateWorkoutPresented = true
+        do {
+            let workout = try template.instantiateWorkout(in: modelContext)
+            resumingWorkout = workout
+            sessionManager.startWorkout(workoutID: workout.id)
+            AnalyticsService.track(.workoutStarted(source: .routine))
+            isCreateWorkoutPresented = true
+        } catch {
+            print("Failed to start workout from routine: \(error)")
+        }
     }
 
     private func beginSavingRoutine(from workout: Workout) {
@@ -283,7 +293,12 @@ struct WorkoutView: View {
             selectedProFeature = .supersets
             return
         }
-        _ = template.duplicateTemplate(in: modelContext)
+        do {
+            _ = try template.duplicateTemplate(in: modelContext)
+            AnalyticsService.track(.routineSaved(source: .duplicate))
+        } catch {
+            print("Failed to duplicate routine: \(error)")
+        }
     }
 }
 

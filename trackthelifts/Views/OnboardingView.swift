@@ -23,6 +23,18 @@ enum OnboardingPage: Int, CaseIterable, Identifiable {
     var isFinal: Bool { self == .profile }
 
     static let skipDestination = OnboardingPage.profile
+
+    var analyticsPage: OnboardingAnalyticsPage {
+        switch self {
+        case .welcome: return .welcome
+        case .workouts: return .workouts
+        case .routines: return .routines
+        case .progress: return .progress
+        case .personalization: return .personalization
+        case .ready: return .ready
+        case .profile: return .profile
+        }
+    }
 }
 
 /// First-launch walkthrough shown once, gated by `hasCompletedOnboarding` in `ContentView`.
@@ -31,6 +43,7 @@ struct OnboardingView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var currentPage = OnboardingPage.welcome
     @State private var nameDraft = ProfilePreference.shared.name
+    @State private var didSkip = false
 
     private var canComplete: Bool {
         !currentPage.isFinal || ProfileNamePolicy.isValid(nameDraft)
@@ -94,6 +107,8 @@ struct OnboardingView: View {
             Spacer()
 
             Button("Skip") {
+                AnalyticsService.track(.onboardingSkipped(fromPage: currentPage.analyticsPage))
+                didSkip = true
                 withAnimation(.easeInOut(duration: 0.25)) {
                     currentPage = .skipDestination
                 }
@@ -148,6 +163,7 @@ struct OnboardingView: View {
         ProfilePreference.shared.name = normalizedName
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
         hasCompletedOnboarding = true
+        AnalyticsService.track(.onboardingCompleted(skipped: didSkip))
     }
 }
 

@@ -50,7 +50,7 @@ extension WorkoutTemplate {
 
     /// Creates a new in-progress `Workout` pre-seeded with this template's exercises,
     /// each given `targetSets` empty `ExerciseSet`s at the template's target weight/reps.
-    func instantiateWorkout(in context: ModelContext) -> Workout {
+    func instantiateWorkout(in context: ModelContext) throws -> Workout {
         let workout = Workout(title: name, date: .now)
         context.insert(workout)
 
@@ -77,17 +77,13 @@ extension WorkoutTemplate {
             }
         }
 
-        do {
-            try context.save()
-        } catch {
-            print("Failed to instantiate workout from template: \(error)")
-        }
+        try context.save()
 
         return workout
     }
 
     /// Creates a copy of this template (name suffixed "Copy") with the same exercises/targets.
-    func duplicateTemplate(in context: ModelContext) -> WorkoutTemplate {
+    func duplicateTemplate(in context: ModelContext) throws -> WorkoutTemplate {
         let copy = WorkoutTemplate(name: "\(name) Copy", notes: notes)
         context.insert(copy)
 
@@ -112,11 +108,7 @@ extension WorkoutTemplate {
             copy.templateExercises.append(newTemplateExercise)
         }
 
-        do {
-            try context.save()
-        } catch {
-            print("Failed to duplicate template: \(error)")
-        }
+        try context.save()
 
         return copy
     }

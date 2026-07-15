@@ -11,9 +11,11 @@
 		41E8F9B62E57805500D8D36F /* TrackTheLifts.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 41E8F9B42E57805500D8D36F /* TrackTheLifts.storekit */; };
 		41E8F9E62E5780B200D8D36F /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 41E8F9E52E5780B200D8D36F /* RevenueCat */; };
 		41E8F9E82E5780B200D8D36F /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 41E8F9E72E5780B200D8D36F /* RevenueCatUI */; };
+		7A20000130B0000100000001 /* TelemetryDeck in Frameworks */ = {isa = PBXBuildFile; productRef = 7A20000330B0000100000001 /* TelemetryDeck */; };
 		7A10000130A0000100000001 /* SubscriptionAccessPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A10000330A0000100000001 /* SubscriptionAccessPolicyTests.swift */; };
 		7A10000E30A0000100000001 /* AppReviewPromptControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A10000F30A0000100000001 /* AppReviewPromptControllerTests.swift */; };
 		7A10001030A0000100000001 /* AppSupportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A10001130A0000100000001 /* AppSupportTests.swift */; };
+		7A20000430B0000100000001 /* AnalyticsEventTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A20000530B0000100000001 /* AnalyticsEventTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -34,6 +36,7 @@
 		7A10000430A0000100000001 /* tracktheliftsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = tracktheliftsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7A10000F30A0000100000001 /* AppReviewPromptControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppReviewPromptControllerTests.swift; sourceTree = "<group>"; };
 		7A10001130A0000100000001 /* AppSupportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSupportTests.swift; sourceTree = "<group>"; };
+		7A20000530B0000100000001 /* AnalyticsEventTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsEventTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -41,6 +44,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+				Tests/AnalyticsEventTests.swift,
 				Tests/AppReviewPromptControllerTests.swift,
 				Tests/AppSupportTests.swift,
 				Tests/SubscriptionAccessPolicyTests.swift,
@@ -65,6 +69,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7A20000130B0000100000001 /* TelemetryDeck in Frameworks */,
 				41E8F9E82E5780B200D8D36F /* RevenueCatUI in Frameworks */,
 				41E8F9E62E5780B200D8D36F /* RevenueCat in Frameworks */,
 			);
@@ -103,6 +108,7 @@
 		7A10000530A0000100000001 /* trackthelifts/Tests */ = {
 			isa = PBXGroup;
 			children = (
+				7A20000530B0000100000001 /* AnalyticsEventTests.swift */,
 				7A10000F30A0000100000001 /* AppReviewPromptControllerTests.swift */,
 				7A10001130A0000100000001 /* AppSupportTests.swift */,
 				7A10000330A0000100000001 /* SubscriptionAccessPolicyTests.swift */,
@@ -132,6 +138,7 @@
 			packageProductDependencies = (
 				41E8F9E52E5780B200D8D36F /* RevenueCat */,
 				41E8F9E72E5780B200D8D36F /* RevenueCatUI */,
+				7A20000330B0000100000001 /* TelemetryDeck */,
 			);
 			productName = trackthelifts;
 			productReference = 41E8F9A52E57804200D8D36F /* trackthelifts.app */;
@@ -187,6 +194,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				41E8F9E42E5780B200D8D36F /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
+				7A20000230B0000100000001 /* XCRemoteSwiftPackageReference "SwiftSDK" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 41E8F9A62E57804200D8D36F /* Products */;
@@ -230,6 +238,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7A20000430B0000100000001 /* AnalyticsEventTests.swift in Sources */,
 				7A10000E30A0000100000001 /* AppReviewPromptControllerTests.swift in Sources */,
 				7A10001030A0000100000001 /* AppSupportTests.swift in Sources */,
 				7A10000130A0000100000001 /* SubscriptionAccessPolicyTests.swift in Sources */,
@@ -529,6 +538,14 @@
 				minimumVersion = 5.0.0;
 			};
 		};
+		7A20000230B0000100000001 /* XCRemoteSwiftPackageReference "SwiftSDK" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/TelemetryDeck/SwiftSDK";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.14.1;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -541,6 +558,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 41E8F9E42E5780B200D8D36F /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
 			productName = RevenueCatUI;
+		};
+		7A20000330B0000100000001 /* TelemetryDeck */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7A20000230B0000100000001 /* XCRemoteSwiftPackageReference "SwiftSDK" */;
+			productName = TelemetryDeck;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -13,6 +13,8 @@ struct TrackTheLiftsApp: App {
     @StateObject private var revenueCatService = RevenueCatService.shared
     
     init() {
+        AnalyticsService.initialize()
+
         // Configure RevenueCat on app launch
         Task {
             await RevenueCatService.shared.configure(apiKey: "appl_ZGXYqMVdOsnpcpehmvbnAmriXcW")

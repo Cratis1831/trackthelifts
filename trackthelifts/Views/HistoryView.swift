@@ -96,7 +96,12 @@ struct HistoryView: View {
                     if let blockedFeature = blockedFeatureForNewRoutine(from: workout) {
                         selectedProFeature = blockedFeature
                     } else {
-                        _ = TemplateService.makeTemplate(from: workout, name: templateName, in: modelContext)
+                        do {
+                            _ = try TemplateService.makeTemplate(from: workout, name: templateName, in: modelContext)
+                            AnalyticsService.track(.routineSaved(source: .pastWorkout))
+                        } catch {
+                            print("Failed to save routine from workout: \(error)")
+                        }
                     }
                 }
                 workoutToNameTemplate = nil
@@ -130,10 +135,15 @@ struct HistoryView: View {
             showActiveWorkoutAlert = true
             return
         }
-        let newWorkout = workout.duplicate(in: modelContext)
-        resumingWorkout = newWorkout
-        sessionManager.startWorkout(workoutID: newWorkout.id)
-        isCreateWorkoutPresented = true
+        do {
+            let newWorkout = try workout.duplicate(in: modelContext)
+            resumingWorkout = newWorkout
+            sessionManager.startWorkout(workoutID: newWorkout.id)
+            AnalyticsService.track(.workoutStarted(source: .repeatWorkout))
+            isCreateWorkoutPresented = true
+        } catch {
+            print("Failed to repeat workout: \(error)")
+        }
     }
 
     private func beginSavingRoutine(from workout: Workout) {

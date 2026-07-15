@@ -115,8 +115,10 @@ class RevenueCatService: ObservableObject {
     }
     
     func purchasePackage(_ package: Package) async -> Bool {
+        let packageType = analyticsPackageType(for: package)
         guard isConfigured else {
             lastError = .notConfigured
+            AnalyticsService.track(.purchaseFailed(packageType: packageType, reason: .notConfigured))
             return false
         }
 
@@ -146,14 +148,17 @@ class RevenueCatService: ObservableObject {
             
             if !result.userCancelled {
                 print("Purchase successful: \(package.storeProduct.productIdentifier)")
+                AnalyticsService.track(.purchaseCompleted(packageType: packageType))
                 return true
             } else {
                 lastError = .userCancelled
+                AnalyticsService.track(.purchaseCancelled(packageType: packageType))
                 return false
             }
             
         } catch {
             lastError = .purchaseFailed(error)
+            AnalyticsService.track(.purchaseFailed(packageType: packageType, reason: .sdkError))
             print("Failed to purchase: \(error)")
             return false
         }
@@ -162,6 +167,7 @@ class RevenueCatService: ObservableObject {
     func restorePurchases() async -> Bool {
         guard isConfigured else {
             lastError = .notConfigured
+            AnalyticsService.track(.purchaseRestoreFailed(reason: .notConfigured))
             return false
         }
 
@@ -183,17 +189,23 @@ class RevenueCatService: ObservableObject {
             }
             
             updateSubscriptionStatus(from: customerInfo)
+            AnalyticsService.track(.purchaseRestoreCompleted(hasActiveEntitlement: currentTier == .pro))
             print("Purchases restored successfully")
             return true
             
         } catch {
             lastError = .restoreFailed(error)
+            AnalyticsService.track(.purchaseRestoreFailed(reason: .sdkError))
             print("Failed to restore purchases: \(error)")
             return false
         }
     }
     
     // MARK: - Offerings
+
+    private func analyticsPackageType(for package: Package) -> AnalyticsPackageType {
+        AnalyticsPackageType.fromRevenueCatDescription(String(describing: package.packageType))
+    }
     
     func loadOfferings() async {
         lastError = nil

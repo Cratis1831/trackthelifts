@@ -10,7 +10,7 @@ enum TemplateService {
     /// Builds a `WorkoutTemplate` from a completed workout, grouping its sets by exercise
     /// (same alphabetical-by-exercise-name convention used throughout the app) and using
     /// the last set performed for each exercise as the target weight/reps.
-    static func makeTemplate(from workout: Workout, name: String, in context: ModelContext) -> WorkoutTemplate {
+    static func makeTemplate(from workout: Workout, name: String, in context: ModelContext) throws -> WorkoutTemplate {
         let template = WorkoutTemplate(name: name)
         context.insert(template)
 
@@ -43,11 +43,7 @@ enum TemplateService {
             template.templateExercises.append(templateExercise)
         }
 
-        do {
-            try context.save()
-        } catch {
-            print("Failed to save template: \(error)")
-        }
+        try context.save()
 
         return template
     }

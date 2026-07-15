@@ -144,7 +144,7 @@ extension Workout {
     /// exercises and set count, carrying over the previous weight/reps as a starting point
     /// but resetting completion so the user logs each set fresh. Preserves the original
     /// workout's exercise order rather than re-alphabetizing it.
-    func duplicate(in context: ModelContext) -> Workout {
+    func duplicate(in context: ModelContext) throws -> Workout {
         let newWorkout = Workout(title: title, date: .now)
         context.insert(newWorkout)
 
@@ -186,11 +186,7 @@ extension Workout {
             }
         }
 
-        do {
-            try context.save()
-        } catch {
-            print("Failed to duplicate workout: \(error)")
-        }
+        try context.save()
 
         return newWorkout
     }
