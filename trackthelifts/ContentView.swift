@@ -15,31 +15,11 @@ struct ContentView: View {
 
     var body: some View {
         ZStack {
-            TabView {
-                Tab("Profile", systemImage: "person") {
-                    ProfileView()
-                }
-
-                Tab("History", systemImage: "clock") {
-                    HistoryView()
-                }
-
-                Tab("Create Workout", systemImage: "plus") {
-                    WorkoutView()
-                }
-
-                Tab("Exercises", systemImage: "dumbbell") {
-                    ExerciseListView()
-                }
-
-                Tab("Settings", systemImage: "gearshape") {
-                    SettingsView()
-                }
-            }
-            .tint(.appAccent)
-            .toolbarColorScheme(.dark, for: .tabBar)
-            .toolbarBackground(Color.appSurface, for: .tabBar)
-            .toolbarBackground(.visible, for: .tabBar)
+            appTabView
+                .tint(.appAccent)
+                .toolbarColorScheme(.dark, for: .tabBar)
+                .toolbarBackground(Color.appSurface, for: .tabBar)
+                .toolbarBackground(.visible, for: .tabBar)
 
             // Onboarding is a plain overlay rather than a fullScreenCover: presenting a cover
             // from a computed binding during the app's very first frame can fail and write
@@ -64,6 +44,69 @@ struct ContentView: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                 requestReview()
             }
+        }
+    }
+
+    @ViewBuilder
+    private var appTabView: some View {
+        if #available(iOS 18.0, *) {
+            modernTabView
+        } else {
+            legacyTabView
+        }
+    }
+
+    @available(iOS 18.0, *)
+    private var modernTabView: some View {
+        TabView {
+            Tab("Profile", systemImage: "person") {
+                ProfileView()
+            }
+
+            Tab("History", systemImage: "clock") {
+                HistoryView()
+            }
+
+            Tab("Create Workout", systemImage: "plus") {
+                WorkoutView()
+            }
+
+            Tab("Exercises", systemImage: "dumbbell") {
+                ExerciseListView()
+            }
+
+            Tab("Settings", systemImage: "gearshape") {
+                SettingsView()
+            }
+        }
+    }
+
+    private var legacyTabView: some View {
+        TabView {
+            ProfileView()
+                .tabItem {
+                    Label("Profile", systemImage: "person")
+                }
+
+            HistoryView()
+                .tabItem {
+                    Label("History", systemImage: "clock")
+                }
+
+            WorkoutView()
+                .tabItem {
+                    Label("Create Workout", systemImage: "plus")
+                }
+
+            ExerciseListView()
+                .tabItem {
+                    Label("Exercises", systemImage: "dumbbell")
+                }
+
+            SettingsView()
+                .tabItem {
+                    Label("Settings", systemImage: "gearshape")
+                }
         }
     }
 

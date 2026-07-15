@@ -101,14 +101,23 @@ struct ExerciseListView: View {
             }
     }
 
+    @ViewBuilder
     private var content: some View {
+        if #available(iOS 26.0, *) {
+            searchableContent
+                .searchToolbarBehavior(.minimize)
+        } else {
+            searchableContent
+        }
+    }
+
+    private var searchableContent: some View {
         navigationContent
             .searchable(
                 text: $searchText,
                 placement: .toolbar,
                 prompt: "Search exercises..."
             )
-            .searchToolbarBehavior(.minimize)
     }
 
     private var navigationContent: some View {
