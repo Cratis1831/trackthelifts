@@ -42,6 +42,12 @@ struct AppRelease: Identifiable {
 enum ReleaseCatalog {
     static let releases = [
         AppRelease(
+            version: "1.0.4",
+            notes: [
+                "Fixed minor bug for lbs/kg conversion."
+            ]
+        ),
+        AppRelease(
             version: "1.0.3",
             notes: [
                 "A new Support section makes it easy to manage your subscription, send feedback, share ForgeLyte Lift, review the app, and find legal information."

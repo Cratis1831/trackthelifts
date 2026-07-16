@@ -302,21 +302,35 @@ struct ExerciseSetView: View {
         refreshPersonalRecordFlag()
     }
     
+    /// The stored weight as the user currently sees it. The model can hold more precision than
+    /// the one-decimal display (e.g. 47.6272 after a lbs->kg conversion shows as "47.6"), so
+    /// change detection must compare against this, not the raw value — otherwise reloading the
+    /// field would count as an edit and write the truncated display value back.
+    private var displayedModelWeight: Double {
+        Double(exerciseSet.weight.formattedWeight) ?? exerciseSet.weight
+    }
+
     private func updateExerciseSet() {
-        if let weightValue = Double(weight) {
-            exerciseSet.weight = weightValue
-        } else {
-            exerciseSet.weight = 0
+        let newWeight = Double(weight) ?? 0
+        let newReps = Int(reps) ?? 0
+
+        // `loadExerciseSetData()` repopulates the cached @State strings on appear and on unit
+        // change, which fires these fields' onChange handlers. Only write (and save) when the
+        // user actually changed something, so programmatic reloads never echo back into the
+        // model — N simultaneous saves during a unit toggle re-rendered the List mid-update
+        // and could land the old weight text in the reps field.
+        let weightChanged = newWeight != displayedModelWeight
+        let repsChanged = newReps != exerciseSet.reps
+        guard weightChanged || repsChanged else { return }
+
+        if weightChanged {
+            exerciseSet.weight = newWeight
         }
-        
-        if let repsValue = Int(reps) {
-            exerciseSet.reps = repsValue
-        } else {
-            exerciseSet.reps = 0
+        if repsChanged {
+            exerciseSet.reps = newReps
         }
-        
         exerciseSet.updatedAt = .now
-        
+
         do {
             try modelContext.save()
         } catch {
@@ -396,9 +410,14 @@ struct ExerciseSetView: View {
         exerciseSet.isCompleted = isCompleted
         exerciseSet.updatedAt = .now
 
-        // Update the exercise set with current values
-        exerciseSet.weight = weightValue
-        exerciseSet.reps = repsValue
+        // Update the exercise set with current values. Preserve stored precision: only
+        // overwrite when the field differs from what's displayed (see displayedModelWeight).
+        if weightValue != displayedModelWeight {
+            exerciseSet.weight = weightValue
+        }
+        if repsValue != exerciseSet.reps {
+            exerciseSet.reps = repsValue
+        }
 
         do {
             try modelContext.save()
