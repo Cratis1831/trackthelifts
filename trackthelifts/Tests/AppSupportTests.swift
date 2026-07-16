@@ -29,8 +29,8 @@ final class AppSupportTests: XCTestCase {
     }
 
     func testCurrentVersionAndChangelogMatchReleaseBuildSettings() {
-        XCTAssertEqual(AppVersion.marketingVersion, "1.0.3")
-        XCTAssertEqual(AppVersion.buildNumber, "3")
+        XCTAssertEqual(AppVersion.marketingVersion, "1.0.4")
+        XCTAssertEqual(AppVersion.buildNumber, "1")
         XCTAssertEqual(ReleaseCatalog.releases.first?.version, AppVersion.marketingVersion)
         XCTAssertFalse(ReleaseCatalog.releases.first?.notes.isEmpty ?? true)
     }
