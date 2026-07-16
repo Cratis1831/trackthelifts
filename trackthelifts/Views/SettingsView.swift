@@ -26,7 +26,6 @@ struct SettingsView: View {
 
     private let weightUnitPreference = WeightUnitPreference.shared
     @State private var selectedUnit: WeightUnit = WeightUnitPreference.shared.unit
-    @State private var previousUnit: WeightUnit?
     @State private var pendingUnit: WeightUnit?
     @State private var showUnitChangeConfirmation = false
 
@@ -130,15 +129,15 @@ struct SettingsView: View {
         }
         .alert("Change Weight Unit?", isPresented: $showUnitChangeConfirmation) {
             Button("Cancel", role: .cancel) {
-                if let previousUnit {
-                    selectedUnit = previousUnit
-                }
+                selectedUnit = weightUnitPreference.unit
+                pendingUnit = nil
             }
             Button("Convert") {
-                if let previousUnit, let pendingUnit {
-                    convertAllStoredWeights(from: previousUnit, to: pendingUnit)
+                if let pendingUnit {
+                    convertAllStoredWeights(from: weightUnitPreference.unit, to: pendingUnit)
                     weightUnitPreference.unit = pendingUnit
                 }
+                pendingUnit = nil
             }
         } message: {
             Text("Switching to \(pendingUnit?.label ?? "") will convert all your logged weights. Continue?")
@@ -504,9 +503,14 @@ struct SettingsView: View {
                 }
             }
             .pickerStyle(.segmented)
-            .onChange(of: selectedUnit) { oldValue, newValue in
-                guard newValue != oldValue else { return }
-                previousUnit = oldValue
+            .onChange(of: selectedUnit) { _, newValue in
+                // Reverting to the persisted unit (e.g. after Cancel) must not
+                // re-arm the confirmation, or the alert reappears on the next
+                // visit to this tab.
+                guard newValue != weightUnitPreference.unit else {
+                    pendingUnit = nil
+                    return
+                }
                 pendingUnit = newValue
                 showUnitChangeConfirmation = true
             }
