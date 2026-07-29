@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import StoreKit
+import CloudKit
 
 struct SettingsView: View {
     @EnvironmentObject var revenueCatService: RevenueCatService
@@ -32,6 +33,8 @@ struct SettingsView: View {
     private var themePreference = ThemePreference.shared
     private var restTimerDurationPreference = RestTimerDurationPreference.shared
     private var intensityPreference = IntensityPreference.shared
+    private var cloudSyncPreference = CloudSyncPreference.shared
+    @State private var iCloudAccountAvailable = true
 
     // Shared card/typography constants so every section reads as one system.
     private let cardBorder = Color.appBorder
@@ -291,6 +294,8 @@ struct SettingsView: View {
                 rowDivider
                 exportRow
                 rowDivider
+                icloudSyncRow
+                rowDivider
                 resetOnboardingRow
                 #if DEBUG
                 rowDivider
@@ -536,6 +541,66 @@ struct SettingsView: View {
             }
         }
         .buttonStyle(.plain)
+    }
+
+    private var icloudSyncBinding: Binding<Bool> {
+        Binding(
+            get: { cloudSyncPreference.isEnabled },
+            set: { cloudSyncPreference.isEnabled = $0 }
+        )
+    }
+
+    private var icloudSyncRow: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if revenueCatService.canAccess(.icloudSync) {
+                Toggle(isOn: icloudSyncBinding) {
+                    icloudSyncLabel
+                }
+                .tint(.appToggleTint)
+
+                if cloudSyncPreference.isEnabled {
+                    Text(iCloudAccountAvailable
+                        ? "Your workouts, routines, and exercises back up to your iCloud and stay in sync across your devices."
+                        : "Sign in to iCloud in iOS Settings to start syncing. Your data stays safe on this device until then.")
+                        .font(.system(size: 13))
+                        .foregroundColor(secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            } else {
+                Button {
+                    selectedProFeature = .icloudSync
+                } label: {
+                    HStack(spacing: 12) {
+                        icloudSyncLabel
+                        Spacer()
+                        ProBadge()
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(secondaryText)
+                    }
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .task {
+            let status = try? await CKContainer(
+                identifier: CloudSyncPreference.containerIdentifier
+            ).accountStatus()
+            iCloudAccountAvailable = status == .available
+        }
+    }
+
+    private var icloudSyncLabel: some View {
+        HStack(spacing: 12) {
+            IconTile(color: Color(red: 0.25, green: 0.51, blue: 0.95)) {
+                Image(systemName: "icloud.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.appTextPrimary)
+            }
+            Text("iCloud Sync")
+                .font(.system(size: 16))
+                .foregroundColor(.appTextPrimary)
+        }
     }
 
     private var resetOnboardingRow: some View {

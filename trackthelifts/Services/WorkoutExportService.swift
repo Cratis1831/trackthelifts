@@ -37,7 +37,7 @@ enum WorkoutExportService {
             var supersetLabels: [UUID: String] = [:]
             var nextSupersetNumber = 1
 
-            let grouped = Dictionary(grouping: workout.exerciseSets.filter { $0.isCompleted }, by: \.exercise.name)
+            let grouped = Dictionary(grouping: workout.exerciseSets.filter { $0.isCompleted }, by: \.exerciseName)
             let orderedNames = grouped.keys.sorted { name1, name2 in
                 let order1 = grouped[name1]?.map(\.exerciseOrder).min() ?? Int.max
                 let order2 = grouped[name2]?.map(\.exerciseOrder).min() ?? Int.max
@@ -49,7 +49,7 @@ enum WorkoutExportService {
 
             for name in orderedNames {
                 guard let sets = grouped[name]?.sorted(by: { $0.order < $1.order }) else { continue }
-                let bodypart = sets.first?.exercise.bodypart?.name ?? ""
+                let bodypart = sets.first?.exercise?.bodypart?.name ?? ""
                 // Read via the Workout helper (which scans all of the workout's sets), not this
                 // completed-only group — the note may live on a set that was never completed.
                 let exerciseNote = workout.exerciseNote(for: name)

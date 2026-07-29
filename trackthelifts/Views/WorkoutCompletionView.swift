@@ -15,7 +15,7 @@ struct WorkoutCompletionSummary: Identifiable {
         self.earnedPersonalRecord = earnedPersonalRecord
         workoutName = workout.title
         duration = max(0, (workout.completedAt ?? .now).timeIntervalSince(workout.createdAt))
-        exerciseCount = Set(completedSets.map { $0.exercise.id }).count
+        exerciseCount = Set(completedSets.compactMap { $0.exercise?.id }).count
         completedSetCount = completedSets.count
         totalReps = completedSets.reduce(0) { $0 + $1.reps }
         totalVolume = completedSets.reduce(0) { $0 + $1.weight * Double($1.reps) }

@@ -22,7 +22,7 @@ struct WorkoutDetailView: View {
     /// for older data that predates `exerciseOrder`. `body` computes this once per render and
     /// passes the groups down, instead of re-grouping/re-sorting per exercise row.
     private var exerciseGroups: [(name: String, sets: [ExerciseSet])] {
-        let grouped = Dictionary(grouping: workout.exerciseSets, by: \.exercise.name)
+        let grouped = Dictionary(grouping: workout.exerciseSets, by: \.exerciseName)
         return grouped
             .map { (name: $0.key, sets: $0.value.sorted { $0.order < $1.order }) }
             .sorted { lhs, rhs in
@@ -56,7 +56,7 @@ struct WorkoutDetailView: View {
 
     private func sets(for exerciseName: String) -> [ExerciseSet] {
         workout.exerciseSets
-            .filter { $0.exercise.name == exerciseName }
+            .filter { $0.exerciseName == exerciseName }
             .sorted { $0.order < $1.order }
     }
 
@@ -418,13 +418,13 @@ struct WorkoutDetailView: View {
 
     /// Removes a set and renumbers the remaining sets for that exercise so "Set N" stays sequential.
     private func deleteSet(_ set: ExerciseSet) {
-        let exercise = set.exercise
+        let exerciseID = set.exercise?.id
         workout.preserveExerciseNote(beforeDeleting: set)
         workout.exerciseSets.removeAll { $0.id == set.id }
         modelContext.delete(set)
 
         let remaining = workout.exerciseSets
-            .filter { $0.exercise.id == exercise.id }
+            .filter { $0.exercise?.id == exerciseID }
             .sorted { $0.order < $1.order }
         for (index, remainingSet) in remaining.enumerated() {
             remainingSet.order = index

@@ -19,7 +19,10 @@ class RevenueCatService: ObservableObject {
     @Published var availablePackages: [Package] = []
     #if DEBUG
     @Published var debugTierOverride: SubscriptionTier? {
-        didSet { synchronizeThemeAccess() }
+        didSet {
+            synchronizeThemeAccess()
+            CloudSyncPreference.shared.cachedHasPro = currentTier == .pro
+        }
     }
     #endif
 
@@ -269,7 +272,11 @@ class RevenueCatService: ObservableObject {
         }
 
         synchronizeThemeAccess()
-        
+
+        // Snapshot the entitlement so the next launch can decide synchronously whether to open
+        // the CloudKit-backed store (see CloudSyncPreference).
+        CloudSyncPreference.shared.cachedHasPro = currentTier == .pro
+
         // The user's tier and entitlements are account state; only log them in debug builds.
         #if DEBUG
         print("Updated subscription status - Current tier: \(currentTier.displayName)")

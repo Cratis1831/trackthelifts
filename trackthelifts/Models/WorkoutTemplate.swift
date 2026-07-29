@@ -6,16 +6,18 @@
 import Foundation
 import SwiftData
 
+// All attributes carry default values because CloudKit mirroring requires it — see
+// CloudSyncPreference.
 @Model
 class WorkoutTemplate {
-    var id: UUID
-    var name: String
+    var id: UUID = UUID()
+    var name: String = ""
     var notes: String?
 
     // CloudKit sync properties
-    var createdAt: Date
-    var updatedAt: Date
-    var isDeleted: Bool
+    var createdAt: Date = Date.now
+    var updatedAt: Date = Date.now
+    var isDeleted: Bool = false
     var cloudKitRecordID: String?
     var lastSyncDate: Date?
 
@@ -57,13 +59,14 @@ extension WorkoutTemplate {
         var copiedSupersetIDs: [UUID: UUID] = [:]
 
         for (exerciseIndex, templateExercise) in templateExercises.sorted(by: { $0.order < $1.order }).enumerated() {
+            guard let exercise = templateExercise.exercise else { continue }
             for setIndex in 0..<max(templateExercise.targetSets, 1) {
                 let set = ExerciseSet(
                     weight: templateExercise.targetWeight,
                     reps: templateExercise.targetReps,
                     order: setIndex,
                     exerciseOrder: exerciseIndex,
-                    exercise: templateExercise.exercise,
+                    exercise: exercise,
                     workout: workout,
                     supersetGroupID: templateExercise.supersetGroupID.map { oldID in
                         if let existing = copiedSupersetIDs[oldID] { return existing }
@@ -90,6 +93,7 @@ extension WorkoutTemplate {
         var copiedSupersetIDs: [UUID: UUID] = [:]
 
         for templateExercise in templateExercises.sorted(by: { $0.order < $1.order }) {
+            guard let exercise = templateExercise.exercise else { continue }
             let newTemplateExercise = WorkoutTemplateExercise(
                 order: templateExercise.order,
                 targetSets: templateExercise.targetSets,
@@ -102,7 +106,7 @@ extension WorkoutTemplate {
                     return fresh
                 },
                 template: copy,
-                exercise: templateExercise.exercise
+                exercise: exercise
             )
             context.insert(newTemplateExercise)
             copy.templateExercises.append(newTemplateExercise)

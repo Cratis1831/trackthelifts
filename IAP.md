@@ -14,6 +14,7 @@ Track The Lifts uses RevenueCat to manage in-app purchases and subscriptions. Th
 
 ### Pro Tier
 - ✅ Everything in Free Tier
+- ✅ **iCloud Sync & Backup**
 - ✅ **Unlimited routines**
 - ✅ **Advanced progress analytics**
 - ✅ **RPE and RIR effort tracking**
@@ -24,6 +25,7 @@ Track The Lifts uses RevenueCat to manage in-app purchases and subscriptions. Th
 ## Pro Features
 
 The Pro tier is defined by the `ProFeature` enum in `Services/SubscriptionTier.swift`:
+- `icloudSync` — iCloud Sync & Backup (opt-in toggle in Settings; see `Services/CloudSyncPreference.swift`)
 - `unlimitedRoutines` — Unlimited Routines
 - `advancedProgress` — Advanced Progress Analytics
 - `effortTracking` — RPE and RIR Tracking

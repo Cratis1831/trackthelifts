@@ -33,6 +33,7 @@ enum SubscriptionTier: String, CaseIterable, Identifiable {
 }
 
 enum ProFeature: String, CaseIterable, Identifiable {
+    case icloudSync
     case unlimitedRoutines
     case advancedProgress
     case effortTracking
@@ -43,6 +44,7 @@ enum ProFeature: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
+        case .icloudSync: return "iCloud Sync & Backup"
         case .unlimitedRoutines: return "Unlimited Routines"
         case .advancedProgress: return "Advanced Progress Analytics"
         case .effortTracking: return "RPE and RIR Tracking"
@@ -53,6 +55,8 @@ enum ProFeature: String, CaseIterable, Identifiable {
 
     var description: String {
         switch self {
+        case .icloudSync:
+            return "Keep every workout backed up to your iCloud and in sync across all your devices."
         case .unlimitedRoutines:
             return "Create as many reusable workout routines as you need. Free includes up to three."
         case .advancedProgress:
@@ -68,6 +72,7 @@ enum ProFeature: String, CaseIterable, Identifiable {
 
     var systemImage: String {
         switch self {
+        case .icloudSync: return "icloud.fill"
         case .unlimitedRoutines: return "list.bullet.rectangle.portrait"
         case .advancedProgress: return "chart.xyaxis.line"
         case .effortTracking: return "gauge.with.dots.needle.50percent"

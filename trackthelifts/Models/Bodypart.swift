@@ -8,17 +8,23 @@
 import Foundation
 import SwiftData
 
+// All attributes carry default values and every relationship has an inverse because
+// CloudKit mirroring requires it — see CloudSyncPreference.
 @Model
 class Bodypart: Identifiable {
-    var id: UUID
-    var name: String
-    
+    var id: UUID = UUID()
+    var name: String = ""
+
     // CloudKit sync properties
-    var createdAt: Date
-    var updatedAt: Date
-    var isDeleted: Bool
+    var createdAt: Date = Date.now
+    var updatedAt: Date = Date.now
+    var isDeleted: Bool = false
     var cloudKitRecordID: String?
     var lastSyncDate: Date?
+
+    /// Inverse of `Exercise.bodypart`, required by CloudKit mirroring.
+    @Relationship(deleteRule: .nullify, inverse: \Exercise.bodypart)
+    var exercises: [Exercise] = []
 
     init(
         id: UUID = UUID(),

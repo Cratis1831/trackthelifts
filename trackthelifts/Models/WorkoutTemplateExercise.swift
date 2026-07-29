@@ -6,24 +6,28 @@
 import Foundation
 import SwiftData
 
+// All attributes carry default values and to-one relationships are optional because
+// CloudKit mirroring requires it — see CloudSyncPreference. App code always assigns
+// `template`/`exercise` at creation; they can only be nil transiently for records that
+// arrive from CloudKit before their related records do.
 @Model
 class WorkoutTemplateExercise {
-    var id: UUID
-    var order: Int
-    var targetSets: Int
-    var targetReps: Int
-    var targetWeight: Double
+    var id: UUID = UUID()
+    var order: Int = 0
+    var targetSets: Int = 0
+    var targetReps: Int = 0
+    var targetWeight: Double = 0
     var supersetGroupID: UUID?
 
     // CloudKit sync properties
-    var createdAt: Date
-    var updatedAt: Date
-    var isDeleted: Bool
+    var createdAt: Date = Date.now
+    var updatedAt: Date = Date.now
+    var isDeleted: Bool = false
     var cloudKitRecordID: String?
     var lastSyncDate: Date?
 
-    @Relationship var template: WorkoutTemplate
-    @Relationship var exercise: Exercise
+    @Relationship var template: WorkoutTemplate?
+    @Relationship var exercise: Exercise?
 
     init(
         id: UUID = UUID(),

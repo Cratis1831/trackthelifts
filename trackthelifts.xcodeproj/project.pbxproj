@@ -17,6 +17,10 @@
 		7A10001030A0000100000001 /* AppSupportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A10001130A0000100000001 /* AppSupportTests.swift */; };
 		7A20000430B0000100000001 /* AnalyticsEventTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A20000530B0000100000001 /* AnalyticsEventTests.swift */; };
 		7A30000130C0000100000001 /* ExerciseDataTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A30000230C0000100000001 /* ExerciseDataTests.swift */; };
+		7A40000D30D0000100000001 /* RestTimerActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A40000B30D0000100000001 /* RestTimerActivityAttributes.swift */; };
+		7A50000130E0000100000001 /* CloudSyncPreferenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A50000330E0000100000001 /* CloudSyncPreferenceTests.swift */; };
+		7A50000230E0000100000001 /* CloudSyncMergeServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A50000430E0000100000001 /* CloudSyncMergeServiceTests.swift */; };
+		7A40000F30D0000100000001 /* TrackTheLiftsWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 7A40000130D0000100000001 /* TrackTheLiftsWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -27,7 +31,28 @@
 			remoteGlobalIDString = 41E8F9A42E57804200D8D36F;
 			remoteInfo = trackthelifts;
 		};
+		7A40001030D0000100000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41E8F99D2E57804200D8D36F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7A40000430D0000100000001;
+			remoteInfo = TrackTheLiftsWidgets;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		7A40000E30D0000100000001 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				7A40000F30D0000100000001 /* TrackTheLiftsWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		41E8F9A52E57804200D8D36F /* trackthelifts.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = trackthelifts.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -39,9 +64,20 @@
 		7A10001130A0000100000001 /* AppSupportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSupportTests.swift; sourceTree = "<group>"; };
 		7A20000530B0000100000001 /* AnalyticsEventTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsEventTests.swift; sourceTree = "<group>"; };
 		7A30000230C0000100000001 /* ExerciseDataTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseDataTests.swift; sourceTree = "<group>"; };
+		7A40000130D0000100000001 /* TrackTheLiftsWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TrackTheLiftsWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		7A50000330E0000100000001 /* CloudSyncPreferenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudSyncPreferenceTests.swift; sourceTree = "<group>"; };
+		7A50000430E0000100000001 /* CloudSyncMergeServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudSyncMergeServiceTests.swift; sourceTree = "<group>"; };
+		7A40000B30D0000100000001 /* RestTimerActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RestTimerActivityAttributes.swift; path = TrackTheLiftsWidgets/RestTimerActivityAttributes.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		7A40000330D0000100000001 /* Exceptions for "TrackTheLiftsWidgets" folder in "TrackTheLiftsWidgets" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 7A40000430D0000100000001 /* TrackTheLiftsWidgets */;
+		};
 		41E8F9F12E5780B300D8D36F /* Exceptions for "trackthelifts" folder in "trackthelifts" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -49,8 +85,11 @@
 				Tests/AnalyticsEventTests.swift,
 				Tests/AppReviewPromptControllerTests.swift,
 				Tests/AppSupportTests.swift,
+				Tests/CloudSyncMergeServiceTests.swift,
+				Tests/CloudSyncPreferenceTests.swift,
 				Tests/ExerciseDataTests.swift,
 				Tests/SubscriptionAccessPolicyTests.swift,
+				trackthelifts.entitlements,
 			);
 			target = 41E8F9A42E57804200D8D36F /* trackthelifts */;
 		};
@@ -63,6 +102,14 @@
 				41E8F9F12E5780B300D8D36F /* Exceptions for "trackthelifts" folder in "trackthelifts" target */,
 			);
 			path = trackthelifts;
+			sourceTree = "<group>";
+		};
+		7A40000230D0000100000001 /* TrackTheLiftsWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				7A40000330D0000100000001 /* Exceptions for "TrackTheLiftsWidgets" folder in "TrackTheLiftsWidgets" target */,
+			);
+			path = TrackTheLiftsWidgets;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -85,6 +132,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		7A40000630D0000100000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -92,6 +146,8 @@
 			isa = PBXGroup;
 			children = (
 				41E8F9A72E57804200D8D36F /* trackthelifts */,
+				7A40000230D0000100000001 /* TrackTheLiftsWidgets */,
+				7A40000B30D0000100000001 /* RestTimerActivityAttributes.swift */,
 				7A10000530A0000100000001 /* trackthelifts/Tests */,
 				41E8F9A62E57804200D8D36F /* Products */,
 				41E8F9B32E57805500D8D36F /* IAP.md */,
@@ -104,6 +160,7 @@
 			children = (
 				41E8F9A52E57804200D8D36F /* trackthelifts.app */,
 				7A10000430A0000100000001 /* tracktheliftsTests.xctest */,
+				7A40000130D0000100000001 /* TrackTheLiftsWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -114,6 +171,8 @@
 				7A20000530B0000100000001 /* AnalyticsEventTests.swift */,
 				7A10000F30A0000100000001 /* AppReviewPromptControllerTests.swift */,
 				7A10001130A0000100000001 /* AppSupportTests.swift */,
+				7A50000430E0000100000001 /* CloudSyncMergeServiceTests.swift */,
+				7A50000330E0000100000001 /* CloudSyncPreferenceTests.swift */,
 				7A10000330A0000100000001 /* SubscriptionAccessPolicyTests.swift */,
 				7A30000230C0000100000001 /* ExerciseDataTests.swift */,
 			);
@@ -130,10 +189,12 @@
 				41E8F9A12E57804200D8D36F /* Sources */,
 				41E8F9A22E57804200D8D36F /* Frameworks */,
 				41E8F9A32E57804200D8D36F /* Resources */,
+				7A40000E30D0000100000001 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				7A40001130D0000100000001 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				41E8F9A72E57804200D8D36F /* trackthelifts */,
@@ -147,6 +208,28 @@
 			productName = trackthelifts;
 			productReference = 41E8F9A52E57804200D8D36F /* trackthelifts.app */;
 			productType = "com.apple.product-type.application";
+		};
+		7A40000430D0000100000001 /* TrackTheLiftsWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7A40000830D0000100000001 /* Build configuration list for PBXNativeTarget "TrackTheLiftsWidgets" */;
+			buildPhases = (
+				7A40000530D0000100000001 /* Sources */,
+				7A40000630D0000100000001 /* Frameworks */,
+				7A40000730D0000100000001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				7A40000230D0000100000001 /* TrackTheLiftsWidgets */,
+			);
+			name = TrackTheLiftsWidgets;
+			packageProductDependencies = (
+			);
+			productName = TrackTheLiftsWidgets;
+			productReference = 7A40000130D0000100000001 /* TrackTheLiftsWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 		7A10000930A0000100000001 /* tracktheliftsTests */ = {
 			isa = PBXNativeTarget;
@@ -206,6 +289,7 @@
 			projectRoot = "";
 			targets = (
 				41E8F9A42E57804200D8D36F /* trackthelifts */,
+				7A40000430D0000100000001 /* TrackTheLiftsWidgets */,
 				7A10000930A0000100000001 /* tracktheliftsTests */,
 			);
 		};
@@ -228,10 +312,25 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		7A40000730D0000100000001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		41E8F9A12E57804200D8D36F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7A40000D30D0000100000001 /* RestTimerActivityAttributes.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7A40000530D0000100000001 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -245,6 +344,8 @@
 				7A20000430B0000100000001 /* AnalyticsEventTests.swift in Sources */,
 				7A10000E30A0000100000001 /* AppReviewPromptControllerTests.swift in Sources */,
 				7A10001030A0000100000001 /* AppSupportTests.swift in Sources */,
+				7A50000230E0000100000001 /* CloudSyncMergeServiceTests.swift in Sources */,
+				7A50000130E0000100000001 /* CloudSyncPreferenceTests.swift in Sources */,
 				7A10000130A0000100000001 /* SubscriptionAccessPolicyTests.swift in Sources */,
 				7A30000130C0000100000001 /* ExerciseDataTests.swift in Sources */,
 			);
@@ -257,6 +358,11 @@
 			isa = PBXTargetDependency;
 			target = 41E8F9A42E57804200D8D36F /* trackthelifts */;
 			targetProxy = 7A10000230A0000100000001 /* PBXContainerItemProxy */;
+		};
+		7A40001130D0000100000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7A40000430D0000100000001 /* TrackTheLiftsWidgets */;
+			targetProxy = 7A40001030D0000100000001 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -387,6 +493,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = trackthelifts/trackthelifts.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = X4Y9269GC5;
@@ -406,7 +513,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.4;
+				MARKETING_VERSION = 1.0.5;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.ashkansdev.track-the-lifts";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -424,6 +531,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = trackthelifts/trackthelifts.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = X4Y9269GC5;
@@ -443,9 +551,69 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.4;
+				MARKETING_VERSION = 1.0.5;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.ashkansdev.track-the-lifts";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		7A40000930D0000100000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = X4Y9269GC5;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TrackTheLiftsWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "ForgeLyte Lift";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.5;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ashkansdev.track-the-lifts.Widgets";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		7A40000A30D0000100000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = X4Y9269GC5;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TrackTheLiftsWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "ForgeLyte Lift";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.5;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ashkansdev.track-the-lifts.Widgets";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -519,6 +687,15 @@
 			buildConfigurations = (
 				41E8F9B12E57804300D8D36F /* Debug */,
 				41E8F9B22E57804300D8D36F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7A40000830D0000100000001 /* Build configuration list for PBXNativeTarget "TrackTheLiftsWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7A40000930D0000100000001 /* Debug */,
+				7A40000A30D0000100000001 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

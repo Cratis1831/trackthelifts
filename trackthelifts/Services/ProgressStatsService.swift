@@ -129,8 +129,8 @@ enum ProgressStatsService {
         let exerciseID = exercise.id
         let descriptor = FetchDescriptor<ExerciseSet>(
             predicate: #Predicate<ExerciseSet> {
-                $0.exercise.id == exerciseID && $0.isCompleted
-                    && $0.workout.completedAt != nil && !$0.workout.isDeleted
+                $0.exercise?.id == exerciseID && $0.isCompleted
+                    && $0.workout?.completedAt != nil && $0.workout?.isDeleted == false
             }
         )
         guard let sets = try? context.fetch(descriptor) else { return [] }
@@ -138,7 +138,7 @@ enum ProgressStatsService {
             .map { set in
                 ExerciseHistoryPoint(
                     id: set.id,
-                    date: set.workout.completedAt ?? set.updatedAt,
+                    date: set.workout?.completedAt ?? set.updatedAt,
                     weight: set.weight,
                     reps: set.reps
                 )
@@ -151,12 +151,12 @@ enum ProgressStatsService {
     static func personalRecords(in context: ModelContext) -> [ExercisePersonalRecord] {
         let descriptor = FetchDescriptor<ExerciseSet>(
             predicate: #Predicate<ExerciseSet> {
-                $0.isCompleted && $0.workout.completedAt != nil && !$0.workout.isDeleted
+                $0.isCompleted && $0.workout?.completedAt != nil && $0.workout?.isDeleted == false
             }
         )
         guard let sets = try? context.fetch(descriptor), !sets.isEmpty else { return [] }
 
-        let groupedByExerciseID = Dictionary(grouping: sets, by: { $0.exercise.id })
+        let groupedByExerciseID = Dictionary(grouping: sets, by: { $0.exercise?.id })
         return groupedByExerciseID.compactMap { _, sets -> ExercisePersonalRecord? in
             guard let exercise = sets.first?.exercise,
                   let bestWeightSet = sets.max(by: { $0.weight < $1.weight }) else { return nil }

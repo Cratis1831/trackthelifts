@@ -5,6 +5,7 @@
 
 import Foundation
 import UserNotifications
+import ActivityKit
 
 /// Tracks a rest-between-sets countdown using a wall-clock end date (rather than a
 /// running `Timer`) so the remaining time stays correct across app backgrounding.
@@ -39,10 +40,26 @@ class RestTimerManager {
     @ObservationIgnored
     private let center = UNUserNotificationCenter.current()
 
+    /// The Live Activity mirroring the current countdown in the Dynamic Island / Lock Screen.
+    /// Its timer text is system-rendered over start...end, so it only needs an update when the
+    /// end date moves, and an end when the countdown finishes or is cancelled.
+    @ObservationIgnored
+    private var liveActivity: Activity<RestTimerActivityAttributes>?
+
+    /// Start of the running rest period, kept so +/- adjustments preserve the Live Activity's
+    /// progress-bar origin instead of restarting it.
+    @ObservationIgnored
+    private var liveActivityStartDate: Date?
+
     private init() {}
 
     func markBecameActive() {
         lastBecameActiveDate = Date()
+        // A timer that elapsed (or was abandoned) while the app was away leaves a stale 0:00
+        // Live Activity behind — its staleDate has it dimmed by now; remove it on return.
+        if !isRunning {
+            endLiveActivity()
+        }
     }
 
     /// Called by the app-level foreground driver every second while the scene is active. Returns
@@ -53,6 +70,7 @@ class RestTimerManager {
     func consumeForegroundCompletion() -> Bool {
         guard let endDate, !completionHandled, Date() >= endDate else { return false }
         completionHandled = true
+        endLiveActivity()
         return endDate >= lastBecameActiveDate
     }
 
@@ -72,6 +90,7 @@ class RestTimerManager {
         activeExerciseName = exerciseName
         completionHandled = false
         scheduleCompletionNotification()
+        startLiveActivity(exerciseName: exerciseName)
     }
 
     func addTime(_ seconds: TimeInterval) {
@@ -79,6 +98,7 @@ class RestTimerManager {
         self.endDate = endDate.addingTimeInterval(seconds)
         completionHandled = false
         scheduleCompletionNotification()
+        updateLiveActivity()
     }
 
     /// Reduces the remaining rest time, clamped so the countdown never drops into the past (i.e.
@@ -89,12 +109,14 @@ class RestTimerManager {
         self.endDate = max(endDate.addingTimeInterval(-seconds), Date())
         completionHandled = false
         scheduleCompletionNotification()
+        updateLiveActivity()
     }
 
     func cancel() {
         endDate = nil
         activeExerciseName = nil
         clearPendingNotification()
+        endLiveActivity()
     }
 
     /// Cancels the completion notification once the countdown has been handled in-app (foreground
@@ -147,6 +169,70 @@ class RestTimerManager {
         center.add(request) { error in
             if let error {
                 print("Failed to schedule rest timer notification: \(error)")
+            }
+        }
+    }
+
+    // MARK: - Live Activity (Dynamic Island / Lock Screen)
+
+    /// Replaces any existing rest-timer Live Activity with a fresh one for the just-started
+    /// countdown. Requires no permission prompt — the user can turn Live Activities off for the
+    /// app in iOS Settings, in which case this silently does nothing.
+    private func startLiveActivity(exerciseName: String) {
+        guard ActivityAuthorizationInfo().areActivitiesEnabled, let endDate else { return }
+
+        // Snapshot the stale activities (including any orphaned by a previous app run) before
+        // requesting the replacement, so the async cleanup can't race it away.
+        let staleActivities = Activity<RestTimerActivityAttributes>.activities
+        Task {
+            for activity in staleActivities {
+                await activity.end(activity.content, dismissalPolicy: .immediate)
+            }
+        }
+
+        let startDate = Date()
+        liveActivityStartDate = startDate
+        let content = ActivityContent(
+            state: RestTimerActivityAttributes.ContentState(startDate: startDate, endDate: endDate),
+            // Once the countdown hits zero the activity has nothing live left to show; marking
+            // it stale lets the system dim it until the app returns to clean it up.
+            staleDate: endDate
+        )
+        do {
+            liveActivity = try Activity.request(
+                attributes: RestTimerActivityAttributes(exerciseName: exerciseName),
+                content: content
+            )
+        } catch {
+            liveActivity = nil
+            print("Failed to start rest timer Live Activity: \(error)")
+        }
+    }
+
+    /// Pushes the moved end date (from +/- adjustments) into the running Live Activity.
+    private func updateLiveActivity() {
+        guard let liveActivity, let endDate else { return }
+        let content = ActivityContent(
+            state: RestTimerActivityAttributes.ContentState(
+                startDate: liveActivityStartDate ?? Date(),
+                endDate: endDate
+            ),
+            staleDate: endDate
+        )
+        Task {
+            await liveActivity.update(content)
+        }
+    }
+
+    /// Ends every rest-timer Live Activity (the tracked one plus any orphans from earlier runs).
+    private func endLiveActivity() {
+        liveActivity = nil
+        liveActivityStartDate = nil
+        let activities = Activity<RestTimerActivityAttributes>.activities
+        guard !activities.isEmpty else { return }
+        Task {
+            for activity in activities {
+                await activity.end(activity.content, dismissalPolicy: .immediate)
             }
         }
     }

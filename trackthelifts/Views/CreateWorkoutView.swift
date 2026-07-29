@@ -47,7 +47,7 @@ struct CreateWorkoutView: View {
     /// passes the groups down, instead of re-grouping/re-sorting per exercise row.
     private var exerciseGroups: [(name: String, sets: [ExerciseSet])] {
         guard let workout = savedWorkout else { return [] }
-        let grouped = Dictionary(grouping: workout.exerciseSets, by: \.exercise.name)
+        let grouped = Dictionary(grouping: workout.exerciseSets, by: \.exerciseName)
         return grouped
             .map { (name: $0.key, sets: $0.value.sorted { $0.order < $1.order }) }
             .sorted { lhs, rhs in
@@ -586,7 +586,8 @@ struct CreateWorkoutView: View {
     }
 
     private func showPersonalRecord(for set: ExerciseSet, kind: PRKind) {
-        AppReviewPromptController.shared.recordPersonalRecord(in: set.workout.id)
+        guard let workoutID = set.workout?.id else { return }
+        AppReviewPromptController.shared.recordPersonalRecord(in: workoutID)
 
         let label: String
         switch kind {
@@ -596,7 +597,7 @@ struct CreateWorkoutView: View {
         }
         Haptics.success()
         withAnimation {
-            prAnnouncement = "🏆 \(set.exercise.name): \(label)"
+            prAnnouncement = "🏆 \(set.exerciseName): \(label)"
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             withAnimation {
@@ -755,7 +756,7 @@ struct CreateWorkoutView: View {
             try modelContext.save()
             let completedSets = workout.exerciseSets.filter(\.isCompleted)
             AnalyticsService.track(.workoutCompleted(
-                exerciseCount: Set(completedSets.map { $0.exercise.id }).count,
+                exerciseCount: Set(completedSets.compactMap { $0.exercise?.id }).count,
                 completedSetCount: completedSets.count,
                 earnedPersonalRecord: earnedPersonalRecord,
                 containsSuperset: workout.containsSupersets
@@ -822,13 +823,13 @@ struct CreateWorkoutView: View {
 
     /// Removes a set and renumbers the remaining sets for that exercise so "Set N" stays sequential.
     private func deleteSet(_ set: ExerciseSet, from workout: Workout) {
-        let exercise = set.exercise
+        let exerciseID = set.exercise?.id
         workout.preserveExerciseNote(beforeDeleting: set)
         workout.exerciseSets.removeAll { $0.id == set.id }
         modelContext.delete(set)
 
         let remaining = workout.exerciseSets
-            .filter { $0.exercise.id == exercise.id }
+            .filter { $0.exercise?.id == exerciseID }
             .sorted { $0.order < $1.order }
         for (index, remainingSet) in remaining.enumerated() {
             remainingSet.order = index

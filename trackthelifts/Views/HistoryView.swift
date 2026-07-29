@@ -176,7 +176,7 @@ struct WorkoutHistoryCard: View {
     var onDelete: () -> Void
 
     private var exerciseGroups: [(String, [ExerciseSet])] {
-        let grouped = Dictionary(grouping: workout.exerciseSets, by: \.exercise.name)
+        let grouped = Dictionary(grouping: workout.exerciseSets, by: \.exerciseName)
         return grouped.sorted { lhs, rhs in
             let lhsOrder = lhs.value.map(\.exerciseOrder).min() ?? .max
             let rhsOrder = rhs.value.map(\.exerciseOrder).min() ?? .max
