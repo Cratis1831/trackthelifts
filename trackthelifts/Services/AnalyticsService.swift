@@ -51,6 +51,7 @@ enum AnalyticsFailureReason: String {
 }
 
 enum AnalyticsProFeature: String, CaseIterable {
+    case icloudSync
     case unlimitedRoutines
     case advancedProgress
     case effortTracking
@@ -59,6 +60,7 @@ enum AnalyticsProFeature: String, CaseIterable {
 
     init(_ feature: ProFeature) {
         switch feature {
+        case .icloudSync: self = .icloudSync
         case .unlimitedRoutines: self = .unlimitedRoutines
         case .advancedProgress: self = .advancedProgress
         case .effortTracking: self = .effortTracking

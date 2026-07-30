@@ -401,6 +401,7 @@ struct PackageCard: View {
 extension ProFeature {
     var iconColor: Color {
         switch self {
+        case .icloudSync: return Color(red: 0.20, green: 0.48, blue: 0.96)
         case .unlimitedRoutines: return Color(red: 0.95, green: 0.55, blue: 0.19)
         case .advancedProgress: return Color(red: 0.20, green: 0.48, blue: 0.96)
         case .effortTracking: return Color(red: 0.88, green: 0.38, blue: 0.50)
