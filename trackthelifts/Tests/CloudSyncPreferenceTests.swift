@@ -1,4 +1,5 @@
 import XCTest
+import SwiftData
 @testable import trackthelifts
 
 final class CloudSyncPreferenceTests: XCTestCase {
@@ -60,5 +61,23 @@ final class CloudSyncPreferenceTests: XCTestCase {
         XCTAssertTrue(second.cachedHasPro)
         XCTAssertTrue(second.hasSeenAnnouncement)
         XCTAssertTrue(second.isSyncActive)
+    }
+
+    func testLocalAndCloudConfigurationsUseTheSameStoreFile() {
+        let schema = Schema([
+            Workout.self, Exercise.self, Bodypart.self,
+            ExerciseSet.self, WorkoutTemplate.self, WorkoutTemplateExercise.self,
+        ])
+        let local = ModelConfiguration(schema: schema, cloudKitDatabase: .none)
+        let cloud = ModelConfiguration(
+            schema: schema,
+            cloudKitDatabase: .private(CloudSyncPreference.containerIdentifier)
+        )
+
+        XCTAssertEqual(
+            local.url,
+            cloud.url,
+            "Enabling iCloud must mirror the existing store rather than switch to a different file"
+        )
     }
 }

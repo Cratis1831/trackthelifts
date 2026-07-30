@@ -52,7 +52,7 @@ final class AnalyticsEventTests: XCTestCase {
         XCTAssertEqual(RoutineAnalyticsSource.pastWorkout.rawValue, "pastWorkout")
         XCTAssertEqual(RoutineAnalyticsSource.duplicate.rawValue, "duplicate")
         XCTAssertEqual(RoutineAnalyticsSource.edit.rawValue, "edit")
-        XCTAssertEqual(AnalyticsProFeature.allRawValues, ["unlimitedRoutines", "advancedProgress", "effortTracking", "supersets", "accentThemes"])
+        XCTAssertEqual(AnalyticsProFeature.allRawValues, ["icloudSync", "unlimitedRoutines", "advancedProgress", "effortTracking", "supersets", "accentThemes"])
     }
 
     func testRevenueCatPackageTypeFallback() {
