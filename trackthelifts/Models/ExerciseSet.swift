@@ -8,16 +8,20 @@
 import Foundation
 import SwiftData
 
+// All attributes carry default values and to-one relationships are optional because
+// CloudKit mirroring requires it — see CloudSyncPreference. App code always assigns
+// `exercise`/`workout` at creation; they can only be nil transiently for records that
+// arrive from CloudKit before their related records do.
 @Model
 class ExerciseSet {
-    var id: UUID
-    var weight: Double
-    var reps: Int
-    var order: Int
+    var id: UUID = UUID()
+    var weight: Double = 0
+    var reps: Int = 0
+    var order: Int = 0
     /// Position of this set's exercise within the workout (shared by every set of that
     /// exercise), so exercises can be drag-reordered independently of when each set was logged.
     var exerciseOrder: Int = 0
-    var isCompleted: Bool
+    var isCompleted: Bool = false
     /// Warm-up / working / failure classification for this specific set. Optional at the storage
     /// layer because SwiftData's lightweight migration does not backfill a declared enum default
     /// into rows written before this column existed — those rows persist `NULL`, and reading a
@@ -55,14 +59,14 @@ class ExerciseSet {
     }
 
     // CloudKit sync properties
-    var createdAt: Date
-    var updatedAt: Date
-    var isDeleted: Bool
+    var createdAt: Date = Date.now
+    var updatedAt: Date = Date.now
+    var isDeleted: Bool = false
     var cloudKitRecordID: String?
     var lastSyncDate: Date?
 
-    @Relationship var exercise: Exercise
-    @Relationship var workout: Workout
+    @Relationship var exercise: Exercise?
+    @Relationship var workout: Workout?
 
     init(
         id: UUID = UUID(),
@@ -102,5 +106,14 @@ class ExerciseSet {
         self.isDeleted = isDeleted
         self.cloudKitRecordID = cloudKitRecordID
         self.lastSyncDate = lastSyncDate
+    }
+}
+
+extension ExerciseSet {
+    /// Resolved exercise name with a stable fallback for sets whose exercise hasn't
+    /// arrived from CloudKit yet (or was deleted on another device). Grouping and
+    /// filtering by name should go through this so orphaned sets stay consistent.
+    var exerciseName: String {
+        exercise?.name ?? "Unknown Exercise"
     }
 }

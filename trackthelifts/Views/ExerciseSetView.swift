@@ -281,13 +281,13 @@ struct ExerciseSetView: View {
     }
 
     private func fetchPreviousSet() -> ExerciseSet? {
-        let exerciseID = exerciseSet.exercise.id
-        let workoutID = exerciseSet.workout.id
+        guard let exerciseID = exerciseSet.exercise?.id,
+              let workoutID = exerciseSet.workout?.id else { return nil }
         let order = exerciseSet.order
         let descriptor = FetchDescriptor<ExerciseSet>(
             predicate: #Predicate<ExerciseSet> { set in
-                set.exercise.id == exerciseID && set.workout.id != workoutID && set.order == order
-                    && set.workout.completedAt != nil && !set.workout.isDeleted
+                set.exercise?.id == exerciseID && set.workout?.id != workoutID && set.order == order
+                    && set.workout?.completedAt != nil && set.workout?.isDeleted == false
             },
             sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
         )
@@ -427,7 +427,7 @@ struct ExerciseSetView: View {
 
         if !wasCompleted && isCompleted {
             Haptics.impact(.light)
-            RestTimerManager.shared.startTimer(for: exerciseSet.exercise.name)
+            RestTimerManager.shared.startTimer(for: exerciseSet.exerciseName)
             // Compute the PR once here and reuse it for both the announcement and the cached
             // highlight, so `body` never has to fetch.
             let prKind = PersonalRecordService.personalRecord(for: exerciseSet, in: modelContext)

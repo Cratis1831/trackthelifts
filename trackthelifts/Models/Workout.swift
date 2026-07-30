@@ -1,19 +1,21 @@
 import SwiftUI
 import SwiftData
 
+// All attributes carry default values and relationships are optional (or defaulted
+// to-many collections) because CloudKit mirroring requires it — see CloudSyncPreference.
 @Model
 class Workout {
-    var id: UUID
-    var title: String
-    var date: Date
+    var id: UUID = UUID()
+    var title: String = ""
+    var date: Date = Date.now
     var notes: String?
-    var isActive: Bool
+    var isActive: Bool = true
     var completedAt: Date?
-    
+
     // CloudKit sync properties
-    var createdAt: Date
-    var updatedAt: Date
-    var isDeleted: Bool
+    var createdAt: Date = Date.now
+    var updatedAt: Date = Date.now
+    var isDeleted: Bool = false
     var cloudKitRecordID: String?
     var lastSyncDate: Date?
 
@@ -53,12 +55,12 @@ extension Workout {
     }
 
     func supersetID(for exerciseName: String) -> UUID? {
-        exerciseSets.first(where: { $0.exercise.name == exerciseName })?.supersetGroupID
+        exerciseSets.first(where: { $0.exerciseName == exerciseName })?.supersetGroupID
     }
 
     func setSuperset(_ firstExerciseName: String, _ secondExerciseName: String) {
         let groupID = UUID()
-        for set in exerciseSets where set.exercise.name == firstExerciseName || set.exercise.name == secondExerciseName {
+        for set in exerciseSets where set.exerciseName == firstExerciseName || set.exerciseName == secondExerciseName {
             set.supersetGroupID = groupID
             set.updatedAt = .now
         }
@@ -80,7 +82,7 @@ extension Workout {
             set.supersetGroupID.map { ($0, set) }
         }, by: \.0)
         for (groupID, entries) in grouped {
-            let names = Set(entries.map { $0.1.exercise.name })
+            let names = Set(entries.map { $0.1.exerciseName })
             if names.count != 2 {
                 for set in exerciseSets where set.supersetGroupID == groupID {
                     set.supersetGroupID = nil
@@ -127,7 +129,7 @@ extension Workout {
     /// (When it's the exercise's last set, the note is intentionally deleted with the exercise.)
     func preserveExerciseNote(beforeDeleting set: ExerciseSet) {
         guard let note = set.exerciseNote else { return }
-        guard let survivor = orderedSets(ofExerciseNamed: set.exercise.name)
+        guard let survivor = orderedSets(ofExerciseNamed: set.exerciseName)
             .first(where: { $0.id != set.id }) else { return }
         survivor.exerciseNote = note
         survivor.updatedAt = .now
@@ -136,7 +138,7 @@ extension Workout {
 
     private func orderedSets(ofExerciseNamed name: String) -> [ExerciseSet] {
         exerciseSets
-            .filter { $0.exercise.name == name }
+            .filter { $0.exerciseName == name }
             .sorted { $0.order < $1.order }
     }
 
@@ -148,7 +150,7 @@ extension Workout {
         let newWorkout = Workout(title: title, date: .now)
         context.insert(newWorkout)
 
-        let grouped = Dictionary(grouping: exerciseSets, by: \.exercise.name)
+        let grouped = Dictionary(grouping: exerciseSets, by: \.exerciseName)
         let sortedNames = grouped.keys.sorted { name1, name2 in
             let order1 = grouped[name1]?.map(\.exerciseOrder).min() ?? Int.max
             let order2 = grouped[name2]?.map(\.exerciseOrder).min() ?? Int.max

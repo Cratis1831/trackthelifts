@@ -201,11 +201,15 @@ struct CreateRoutineView: View {
                     name = existingTemplate.name
                     entries = existingTemplate.templateExercises
                         .sorted { $0.order < $1.order }
-                        .map { DraftExercise(
-                            exercise: $0.exercise,
-                            targetSets: $0.targetSets,
-                            supersetGroupID: $0.supersetGroupID
-                        ) }
+                        .compactMap { templateExercise in
+                            templateExercise.exercise.map {
+                                DraftExercise(
+                                    exercise: $0,
+                                    targetSets: templateExercise.targetSets,
+                                    supersetGroupID: templateExercise.supersetGroupID
+                                )
+                            }
+                        }
                 }
             }
             .proPaywall(feature: $selectedProFeature)
@@ -238,17 +242,18 @@ struct CreateRoutineView: View {
 
             // Remove template exercises for anything no longer in `entries`.
             let entryExerciseIDs = Set(entries.map { $0.exercise.id })
-            for stale in template.templateExercises where !entryExerciseIDs.contains(stale.exercise.id) {
+            // A nil exercise (record not yet resolved from sync) also counts as stale.
+            for stale in template.templateExercises where stale.exercise.map({ !entryExerciseIDs.contains($0.id) }) ?? true {
                 modelContext.delete(stale)
             }
-            template.templateExercises.removeAll { !entryExerciseIDs.contains($0.exercise.id) }
+            template.templateExercises.removeAll { $0.exercise.map { !entryExerciseIDs.contains($0.id) } ?? true }
         } else {
             template = WorkoutTemplate(name: trimmedName)
             modelContext.insert(template)
         }
 
         for (index, entry) in entries.enumerated() {
-            if let match = template.templateExercises.first(where: { $0.exercise.id == entry.exercise.id }) {
+            if let match = template.templateExercises.first(where: { $0.exercise?.id == entry.exercise.id }) {
                 match.order = index
                 match.targetSets = entry.targetSets
                 match.supersetGroupID = entry.supersetGroupID

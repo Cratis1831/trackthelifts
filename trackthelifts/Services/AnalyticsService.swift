@@ -25,6 +25,7 @@ enum RoutineAnalyticsSource: String {
 }
 
 enum AnalyticsPackageType: String {
+    case weekly
     case monthly
     case annual
     case lifetime
@@ -32,6 +33,7 @@ enum AnalyticsPackageType: String {
 
     static func fromRevenueCatDescription(_ description: String) -> Self {
         switch description.lowercased() {
+        case "weekly": return .weekly
         case "monthly": return .monthly
         case "annual", "yearly": return .annual
         case "lifetime": return .lifetime
@@ -51,6 +53,7 @@ enum AnalyticsFailureReason: String {
 }
 
 enum AnalyticsProFeature: String, CaseIterable {
+    case icloudSync
     case unlimitedRoutines
     case advancedProgress
     case effortTracking
@@ -59,6 +62,7 @@ enum AnalyticsProFeature: String, CaseIterable {
 
     init(_ feature: ProFeature) {
         switch feature {
+        case .icloudSync: self = .icloudSync
         case .unlimitedRoutines: self = .unlimitedRoutines
         case .advancedProgress: self = .advancedProgress
         case .effortTracking: self = .effortTracking

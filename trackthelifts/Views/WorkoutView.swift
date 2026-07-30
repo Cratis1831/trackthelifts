@@ -313,7 +313,7 @@ struct TemplateCard: View {
     private var exercisesSummary: String {
         template.templateExercises
             .sorted { $0.order < $1.order }
-            .map { $0.exercise.name }
+            .compactMap { $0.exercise?.name }
             .joined(separator: ", ")
     }
 
@@ -395,7 +395,7 @@ struct ResumeWorkoutBanner: View {
     }
     
     private var uniqueExercises: Int {
-        Set(workout.exerciseSets.map { $0.exercise.name }).count
+        Set(workout.exerciseSets.map(\.exerciseName)).count
     }
     
     var body: some View {

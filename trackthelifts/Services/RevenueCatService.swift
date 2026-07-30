@@ -11,6 +11,7 @@ struct PurchaseResultData {
 @MainActor
 class RevenueCatService: ObservableObject {
     static let shared = RevenueCatService()
+    static let proOfferingIdentifier = "pro_v2"
     
     @Published private(set) var entitlementTier: SubscriptionTier = .free
     @Published var isConfigured = false
@@ -19,7 +20,10 @@ class RevenueCatService: ObservableObject {
     @Published var availablePackages: [Package] = []
     #if DEBUG
     @Published var debugTierOverride: SubscriptionTier? {
-        didSet { synchronizeThemeAccess() }
+        didSet {
+            synchronizeThemeAccess()
+            CloudSyncPreference.shared.cachedHasPro = currentTier == .pro
+        }
     }
     #endif
 
@@ -222,29 +226,44 @@ class RevenueCatService: ObservableObject {
                 }
             }
             
-            if let currentOffering = offerings.current {
-                availablePackages = currentOffering.availablePackages
-                print("✅ Loaded \(availablePackages.count) packages from current offering")
+            if let offering = offerings.all[Self.proOfferingIdentifier] ?? offerings.current {
+                availablePackages = Self.sortedPackages(offering.availablePackages)
+                print("✅ Loaded \(availablePackages.count) packages from offering: \(offering.identifier)")
                 print("Packages: \(availablePackages.map { $0.storeProduct.productIdentifier })")
             } else {
-                print("⚠️ No current offering found - checking all offerings")
-                // Fallback: use packages from any available offering
-                for offering in offerings.all.values {
-                    if !offering.availablePackages.isEmpty {
-                        availablePackages = offering.availablePackages
-                        print("✅ Using packages from offering: \(offering.identifier)")
-                        break
-                    }
-                }
-                
-                if availablePackages.isEmpty {
-                    print("❌ No packages found in any offerings")
-                    lastError = .noOfferingsAvailable
-                }
+                availablePackages = []
+                print("❌ No Pro or current offering found")
+                lastError = .noOfferingsAvailable
             }
         } catch {
             print("❌ Failed to load offerings: \(error)")
             lastError = .offeringsLoadFailed(error)
+        }
+    }
+
+    /// Stable merchandising order for the 2×2 paywall:
+    /// Annual, Lifetime, Monthly, Weekly.
+    private static func sortedPackages(_ packages: [Package]) -> [Package] {
+        packages.sorted { packageRank($0) < packageRank($1) }
+    }
+
+    private static func packageRank(_ package: Package) -> Int {
+        switch package.packageType {
+        case .annual:
+            return 0
+        case .lifetime:
+            return 1
+        case .monthly:
+            return 2
+        case .weekly:
+            return 3
+        default:
+            let identifier = package.storeProduct.productIdentifier.lowercased()
+            if identifier.contains("annual") || identifier.contains("year") { return 0 }
+            if identifier.contains("lifetime") || identifier.contains("life") { return 1 }
+            if identifier.contains("month") { return 2 }
+            if identifier.contains("week") { return 3 }
+            return 4
         }
     }
     
@@ -269,7 +288,11 @@ class RevenueCatService: ObservableObject {
         }
 
         synchronizeThemeAccess()
-        
+
+        // Snapshot the entitlement so the next launch can decide synchronously whether to open
+        // the CloudKit-backed store (see CloudSyncPreference).
+        CloudSyncPreference.shared.cachedHasPro = currentTier == .pro
+
         // The user's tier and entitlements are account state; only log them in debug builds.
         #if DEBUG
         print("Updated subscription status - Current tier: \(currentTier.displayName)")

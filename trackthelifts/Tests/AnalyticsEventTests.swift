@@ -24,6 +24,7 @@ final class AnalyticsEventTests: XCTestCase {
         assertEvent(.workoutCancelled(hadLoggedSets: false), name: "Workout.cancelled", parameters: ["hadLoggedSets": "false"])
         assertEvent(.routineSaved(source: .pastWorkout), name: "Routine.saved", parameters: ["source": "pastWorkout"])
         assertEvent(.paywallShown(feature: .supersets), name: "Paywall.shown", parameters: ["feature": "supersets"])
+        assertEvent(.purchaseCompleted(packageType: .weekly), name: "Purchase.completed", parameters: ["packageType": "weekly"])
         assertEvent(.purchaseCompleted(packageType: .annual), name: "Purchase.completed", parameters: ["packageType": "annual"])
         assertEvent(.purchaseCancelled(packageType: .monthly), name: "Purchase.cancelled", parameters: ["packageType": "monthly"])
         assertEvent(
@@ -52,10 +53,11 @@ final class AnalyticsEventTests: XCTestCase {
         XCTAssertEqual(RoutineAnalyticsSource.pastWorkout.rawValue, "pastWorkout")
         XCTAssertEqual(RoutineAnalyticsSource.duplicate.rawValue, "duplicate")
         XCTAssertEqual(RoutineAnalyticsSource.edit.rawValue, "edit")
-        XCTAssertEqual(AnalyticsProFeature.allRawValues, ["unlimitedRoutines", "advancedProgress", "effortTracking", "supersets", "accentThemes"])
+        XCTAssertEqual(AnalyticsProFeature.allRawValues, ["icloudSync", "unlimitedRoutines", "advancedProgress", "effortTracking", "supersets", "accentThemes"])
     }
 
     func testRevenueCatPackageTypeFallback() {
+        XCTAssertEqual(AnalyticsPackageType.fromRevenueCatDescription("weekly"), .weekly)
         XCTAssertEqual(AnalyticsPackageType.fromRevenueCatDescription("monthly"), .monthly)
         XCTAssertEqual(AnalyticsPackageType.fromRevenueCatDescription("ANNUAL"), .annual)
         XCTAssertEqual(AnalyticsPackageType.fromRevenueCatDescription("yearly"), .annual)

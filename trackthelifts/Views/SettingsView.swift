@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import StoreKit
+import CloudKit
 
 struct SettingsView: View {
     @EnvironmentObject var revenueCatService: RevenueCatService
@@ -26,12 +27,15 @@ struct SettingsView: View {
 
     private let weightUnitPreference = WeightUnitPreference.shared
     @State private var selectedUnit: WeightUnit = WeightUnitPreference.shared.unit
+    @State private var previousUnit: WeightUnit?
     @State private var pendingUnit: WeightUnit?
     @State private var showUnitChangeConfirmation = false
 
     private var themePreference = ThemePreference.shared
     private var restTimerDurationPreference = RestTimerDurationPreference.shared
     private var intensityPreference = IntensityPreference.shared
+    private var cloudSyncPreference = CloudSyncPreference.shared
+    @State private var iCloudAccountAvailable = true
 
     // Shared card/typography constants so every section reads as one system.
     private let cardBorder = Color.appBorder
@@ -129,15 +133,10 @@ struct SettingsView: View {
         }
         .alert("Change Weight Unit?", isPresented: $showUnitChangeConfirmation) {
             Button("Cancel", role: .cancel) {
-                selectedUnit = weightUnitPreference.unit
-                pendingUnit = nil
+                cancelPendingWeightUnitChange()
             }
             Button("Convert") {
-                if let pendingUnit {
-                    convertAllStoredWeights(from: weightUnitPreference.unit, to: pendingUnit)
-                    weightUnitPreference.unit = pendingUnit
-                }
-                pendingUnit = nil
+                confirmPendingWeightUnitChange()
             }
         } message: {
             Text("Switching to \(pendingUnit?.label ?? "") will convert all your logged weights. Continue?")
@@ -290,6 +289,8 @@ struct SettingsView: View {
                 weightUnitRow
                 rowDivider
                 exportRow
+                rowDivider
+                icloudSyncRow
                 rowDivider
                 resetOnboardingRow
                 #if DEBUG
@@ -497,23 +498,12 @@ struct SettingsView: View {
                 Spacer()
             }
 
-            Picker("Weight Unit", selection: $selectedUnit) {
+            Picker("Weight Unit", selection: weightUnitSelectionBinding) {
                 ForEach(WeightUnit.allCases, id: \.self) { unit in
                     Text(unit.label).tag(unit)
                 }
             }
             .pickerStyle(.segmented)
-            .onChange(of: selectedUnit) { _, newValue in
-                // Reverting to the persisted unit (e.g. after Cancel) must not
-                // re-arm the confirmation, or the alert reappears on the next
-                // visit to this tab.
-                guard newValue != weightUnitPreference.unit else {
-                    pendingUnit = nil
-                    return
-                }
-                pendingUnit = newValue
-                showUnitChangeConfirmation = true
-            }
         }
     }
 
@@ -536,6 +526,66 @@ struct SettingsView: View {
             }
         }
         .buttonStyle(.plain)
+    }
+
+    private var icloudSyncBinding: Binding<Bool> {
+        Binding(
+            get: { cloudSyncPreference.isEnabled },
+            set: { cloudSyncPreference.isEnabled = $0 }
+        )
+    }
+
+    private var icloudSyncRow: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if revenueCatService.canAccess(.icloudSync) {
+                Toggle(isOn: icloudSyncBinding) {
+                    icloudSyncLabel
+                }
+                .tint(.appToggleTint)
+
+                if cloudSyncPreference.isEnabled {
+                    Text(iCloudAccountAvailable
+                        ? "Your workouts, routines, and exercises back up to your iCloud and stay in sync across your devices."
+                        : "Sign in to iCloud in iOS Settings to start syncing. Your data stays safe on this device until then.")
+                        .font(.system(size: 13))
+                        .foregroundColor(secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            } else {
+                Button {
+                    selectedProFeature = .icloudSync
+                } label: {
+                    HStack(spacing: 12) {
+                        icloudSyncLabel
+                        Spacer()
+                        ProBadge()
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(secondaryText)
+                    }
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .task {
+            let status = try? await CKContainer(
+                identifier: CloudSyncPreference.containerIdentifier
+            ).accountStatus()
+            iCloudAccountAvailable = status == .available
+        }
+    }
+
+    private var icloudSyncLabel: some View {
+        HStack(spacing: 12) {
+            IconTile(color: Color(red: 0.25, green: 0.51, blue: 0.95)) {
+                Image(systemName: "icloud.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.appTextPrimary)
+            }
+            Text("iCloud Sync")
+                .font(.system(size: 16))
+                .foregroundColor(.appTextPrimary)
+        }
     }
 
     private var resetOnboardingRow: some View {
@@ -765,6 +815,33 @@ struct SettingsView: View {
     private var rowDivider: some View {
         Divider()
             .background(cardBorder)
+    }
+
+    private var weightUnitSelectionBinding: Binding<WeightUnit> {
+        Binding(
+            get: { selectedUnit },
+            set: { requestedUnit in
+                guard requestedUnit != selectedUnit else { return }
+                previousUnit = selectedUnit
+                pendingUnit = requestedUnit
+                showUnitChangeConfirmation = true
+            }
+        )
+    }
+
+    private func cancelPendingWeightUnitChange() {
+        previousUnit = nil
+        pendingUnit = nil
+    }
+
+    private func confirmPendingWeightUnitChange() {
+        guard let previousUnit, let pendingUnit else { return }
+
+        convertAllStoredWeights(from: previousUnit, to: pendingUnit)
+        weightUnitPreference.unit = pendingUnit
+        selectedUnit = pendingUnit
+        self.previousUnit = nil
+        self.pendingUnit = nil
     }
 
     private func convertAllStoredWeights(from oldUnit: WeightUnit, to newUnit: WeightUnit) {

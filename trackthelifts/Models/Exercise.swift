@@ -34,21 +34,32 @@ enum ExerciseCategory: String, CaseIterable, Codable, Identifiable {
     }
 }
 
+// All attributes carry default values and every relationship has an inverse because
+// CloudKit mirroring requires it — see CloudSyncPreference.
 @Model
 class Exercise {
-    var id: UUID
-    var name: String
+    var id: UUID = UUID()
+    var name: String = ""
     /// Stored as a string so existing SwiftData stores can add the field with a safe default.
     var categoryRawValue: String = "other"
-    
+
     // CloudKit sync properties
-    var createdAt: Date
-    var updatedAt: Date
-    var isDeleted: Bool
+    var createdAt: Date = Date.now
+    var updatedAt: Date = Date.now
+    var isDeleted: Bool = false
     var cloudKitRecordID: String?
     var lastSyncDate: Date?
-    
+
     @Relationship var bodypart: Bodypart?
+
+    /// Inverse of `ExerciseSet.exercise`. Deleting an exercise nullifies its sets'
+    /// reference rather than deleting logged history.
+    @Relationship(deleteRule: .nullify, inverse: \ExerciseSet.exercise)
+    var exerciseSets: [ExerciseSet] = []
+
+    /// Inverse of `WorkoutTemplateExercise.exercise`.
+    @Relationship(deleteRule: .nullify, inverse: \WorkoutTemplateExercise.exercise)
+    var templateExercises: [WorkoutTemplateExercise] = []
 
     var category: ExerciseCategory {
         get { ExerciseCategory(rawValue: categoryRawValue) ?? .other }

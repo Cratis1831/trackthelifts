@@ -22,12 +22,12 @@ enum PersonalRecordService {
     /// completed set previously logged for the same exercise in a workout that was actually
     /// finished. Returns nil if it isn't a new best.
     static func personalRecord(for set: ExerciseSet, in context: ModelContext) -> PRKind? {
-        let exerciseID = set.exercise.id
+        guard let exerciseID = set.exercise?.id else { return nil }
         let setID = set.id
         let descriptor = FetchDescriptor<ExerciseSet>(
             predicate: #Predicate<ExerciseSet> { other in
-                other.exercise.id == exerciseID && other.isCompleted && other.id != setID
-                    && other.workout.completedAt != nil && !other.workout.isDeleted
+                other.exercise?.id == exerciseID && other.isCompleted && other.id != setID
+                    && other.workout?.completedAt != nil && other.workout?.isDeleted == false
             }
         )
 

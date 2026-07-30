@@ -278,7 +278,7 @@ struct ExerciseListView: View {
             exerciseToDelete = exercise
             let exerciseID = exercise.id
             let descriptor = FetchDescriptor<ExerciseSet>(
-                predicate: #Predicate<ExerciseSet> { $0.exercise.id == exerciseID }
+                predicate: #Predicate<ExerciseSet> { $0.exercise?.id == exerciseID }
             )
             deleteUsageCount = (try? modelContext.fetchCount(descriptor)) ?? 0
             showingDeleteConfirmation = true

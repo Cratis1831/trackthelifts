@@ -42,6 +42,14 @@ struct AppRelease: Identifiable {
 enum ReleaseCatalog {
     static let releases = [
         AppRelease(
+            version: "1.0.6",
+            notes: [
+                "iCloud Sync & Backup (Pro): keep every workout backed up to your iCloud and in sync across your devices. Turn it on in Settings.",
+                "The rest timer now lives in the Dynamic Island and on your Lock Screen, so you can watch the countdown without reopening the app.",
+                "Choose from Weekly, Monthly, Annual, or Lifetime Pro access in the refreshed plan selector."
+            ]
+        ),
+        AppRelease(
             version: "1.0.4",
             notes: [
                 "Fixed minor bug for lbs/kg conversion."

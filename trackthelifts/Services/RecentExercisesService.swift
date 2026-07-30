@@ -19,7 +19,7 @@ enum RecentExercisesService {
             var seen = Set<UUID>()
             var result: [Exercise] = []
             for set in sets {
-                let exercise = set.exercise
+                guard let exercise = set.exercise else { continue }
                 if seen.insert(exercise.id).inserted {
                     result.append(exercise)
                 }
