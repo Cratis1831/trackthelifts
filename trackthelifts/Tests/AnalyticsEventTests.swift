@@ -24,6 +24,7 @@ final class AnalyticsEventTests: XCTestCase {
         assertEvent(.workoutCancelled(hadLoggedSets: false), name: "Workout.cancelled", parameters: ["hadLoggedSets": "false"])
         assertEvent(.routineSaved(source: .pastWorkout), name: "Routine.saved", parameters: ["source": "pastWorkout"])
         assertEvent(.paywallShown(feature: .supersets), name: "Paywall.shown", parameters: ["feature": "supersets"])
+        assertEvent(.purchaseCompleted(packageType: .weekly), name: "Purchase.completed", parameters: ["packageType": "weekly"])
         assertEvent(.purchaseCompleted(packageType: .annual), name: "Purchase.completed", parameters: ["packageType": "annual"])
         assertEvent(.purchaseCancelled(packageType: .monthly), name: "Purchase.cancelled", parameters: ["packageType": "monthly"])
         assertEvent(
@@ -56,6 +57,7 @@ final class AnalyticsEventTests: XCTestCase {
     }
 
     func testRevenueCatPackageTypeFallback() {
+        XCTAssertEqual(AnalyticsPackageType.fromRevenueCatDescription("weekly"), .weekly)
         XCTAssertEqual(AnalyticsPackageType.fromRevenueCatDescription("monthly"), .monthly)
         XCTAssertEqual(AnalyticsPackageType.fromRevenueCatDescription("ANNUAL"), .annual)
         XCTAssertEqual(AnalyticsPackageType.fromRevenueCatDescription("yearly"), .annual)

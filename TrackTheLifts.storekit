@@ -5,7 +5,7 @@
   ],
   "products" : [
     {
-      "displayPrice" : "24.99",
+      "displayPrice" : "59.99",
       "familyShareable" : false,
       "internalID" : "6720144200",
       "localizations" : [
@@ -90,7 +90,7 @@
           "codeOffers" : [
 
           ],
-          "displayPrice" : "1.99",
+          "displayPrice" : "3.99",
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "6720144066",
@@ -115,7 +115,7 @@
           "codeOffers" : [
 
           ],
-          "displayPrice" : "14.99",
+          "displayPrice" : "24.99",
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "6720144127",
@@ -130,6 +130,31 @@
           "productID" : "com.ashkansdev.track_the_lifts.Annual",
           "recurringSubscriptionPeriod" : "P1Y",
           "referenceName" : "Premium Yearly",
+          "subscriptionGroupID" : "21760682",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "1.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6790801552",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Unlock every Pro feature with a flexible weekly subscription",
+              "displayName" : "ForgeLyte Lift Pro Weekly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.ashkansdev.track_the_lifts.Weekly",
+          "recurringSubscriptionPeriod" : "P1W",
+          "referenceName" : "Pro Weekly",
           "subscriptionGroupID" : "21760682",
           "type" : "RecurringSubscription"
         }

@@ -34,9 +34,28 @@ struct PaywallView: View {
             }
     }
 
+    /// Savings shown above the compact plan selector, calculated from localized StoreKit prices.
+    private var annualSavingsPercent: Int? {
+        guard
+            let monthlyPackage,
+            let annualPackage = revenueCatService.availablePackages.first(where: {
+                $0.packageType == .annual
+                    || $0.storeProduct.productIdentifier.lowercased().contains("annual")
+                    || $0.storeProduct.productIdentifier.lowercased().contains("year")
+            })
+        else { return nil }
+
+        let annual = NSDecimalNumber(decimal: annualPackage.storeProduct.price).doubleValue
+        let monthlyForYear = NSDecimalNumber(decimal: monthlyPackage.storeProduct.price).doubleValue * 12
+        guard monthlyForYear > 0, annual < monthlyForYear else { return nil }
+        return Int((((monthlyForYear - annual) / monthlyForYear) * 100).rounded())
+    }
+
     /// Whether the currently selected plan is a one-time (non-subscription) purchase.
     private var isLifetimeSelected: Bool {
-        selectedPackage?.packageType == .lifetime
+        guard let selectedPackage else { return false }
+        return selectedPackage.packageType == .lifetime
+            || selectedPackage.storeProduct.productIdentifier.lowercased().contains("life")
     }
 
     private var displayedFeatures: [ProFeature] {
@@ -51,10 +70,10 @@ struct PaywallView: View {
                     .ignoresSafeArea()
 
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 12) {
 
                         // Features Section
-                        VStack(alignment: .leading, spacing: 10) {
+                        VStack(alignment: .leading, spacing: 7) {
                             ForEach(displayedFeatures) { feature in
                                 FeatureRow(
                                     icon: feature.systemImage,
@@ -101,10 +120,10 @@ struct PaywallView: View {
             }
         }
         .onAppear {
-            // Auto-select first package if available
-            if selectedPackage == nil && !revenueCatService.availablePackages.isEmpty {
-                selectedPackage = revenueCatService.availablePackages.first
-            }
+            selectDefaultPackageIfNeeded()
+        }
+        .onChange(of: revenueCatService.availablePackages.map(\.identifier)) {
+            selectDefaultPackageIfNeeded()
         }
         .alert("Purchase Error", isPresented: $showingError) {
             Button("OK") { }
@@ -157,14 +176,24 @@ struct PaywallView: View {
                 .padding(40)
             }
         } else {
-            HStack(alignment: .top, spacing: 10) {
-                ForEach(revenueCatService.availablePackages, id: \.identifier) { package in
-                    PackageCard(
-                        package: package,
-                        isSelected: selectedPackage?.identifier == package.identifier,
-                        monthlyPackage: monthlyPackage
-                    ) {
-                        selectedPackage = package
+            VStack(alignment: .leading, spacing: 8) {
+                if let annualSavingsPercent {
+                    Text("BEST VALUE · SAVE \(annualSavingsPercent)% WITH YEARLY")
+                        .font(.system(size: 9, weight: .heavy))
+                        .foregroundColor(.onAppAccent)
+                        .padding(.horizontal, 9)
+                        .padding(.vertical, 4)
+                        .background(Color.appAccent, in: Capsule())
+                }
+
+                HStack(alignment: .top, spacing: 6) {
+                    ForEach(revenueCatService.availablePackages, id: \.identifier) { package in
+                        PackageCard(
+                            package: package,
+                            isSelected: selectedPackage?.identifier == package.identifier
+                        ) {
+                            selectedPackage = package
+                        }
                     }
                 }
             }
@@ -241,6 +270,15 @@ struct PaywallView: View {
 
     // MARK: - Actions
 
+    private func selectDefaultPackageIfNeeded() {
+        guard selectedPackage == nil else { return }
+        selectedPackage = revenueCatService.availablePackages.first {
+            $0.packageType == .annual
+                || $0.storeProduct.productIdentifier.lowercased().contains("annual")
+                || $0.storeProduct.productIdentifier.lowercased().contains("year")
+        } ?? revenueCatService.availablePackages.first
+    }
+
     private func restorePurchases() async {
         let success = await revenueCatService.restorePurchases()
         if success {
@@ -261,20 +299,20 @@ struct FeatureRow: View {
     let description: String
 
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
-            IconTile(color: iconColor, size: 32) {
+        HStack(alignment: .top, spacing: 12) {
+            IconTile(color: iconColor, size: 28) {
                 Image(systemName: icon)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(.appTextPrimary)
             }
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(.appTextPrimary)
 
                 Text(description)
-                    .font(.system(size: 12))
+                    .font(.system(size: 10.5))
                     .foregroundColor(Color.appTextSecondary)
                     .lineLimit(2)
             }
@@ -287,8 +325,6 @@ struct FeatureRow: View {
 struct PackageCard: View {
     let package: Package
     let isSelected: Bool
-    /// The monthly package, when present, so annual savings can be computed from real store prices.
-    var monthlyPackage: Package? = nil
     let action: () -> Void
 
     /// Falls back to matching the product identifier for custom/unknown package types.
@@ -298,6 +334,8 @@ struct PackageCard: View {
 
     var planType: String {
         switch package.packageType {
+        case .weekly:
+            return "Weekly"
         case .monthly:
             return "Monthly"
         case .annual:
@@ -305,7 +343,9 @@ struct PackageCard: View {
         case .lifetime:
             return "Lifetime"
         default:
-            if identifier.contains("month") {
+            if identifier.contains("week") {
+                return "Weekly"
+            } else if identifier.contains("month") {
                 return "Monthly"
             } else if identifier.contains("annual") || identifier.contains("year") {
                 return "Yearly"
@@ -320,73 +360,47 @@ struct PackageCard: View {
     /// Short per-unit caption shown under the price in the compact card.
     var unitCaption: String {
         switch planType {
+        case "Weekly":
+            return "week"
         case "Monthly":
-            return "per month"
+            return "month"
         case "Yearly":
-            return "per year"
+            return "year"
         case "Lifetime":
-            return "one-time"
+            return "once"
         default:
             return ""
         }
     }
 
-    /// Percentage saved by paying yearly instead of 12× monthly, computed from real store prices.
-    /// Uses Double math — NSDecimalNumber.intValue is unreliable for values from Decimal arithmetic.
-    private var savingsPercent: Int? {
-        guard planType == "Yearly", let monthlyPackage else { return nil }
-        let yearly = NSDecimalNumber(decimal: package.storeProduct.price).doubleValue
-        let annualizedMonthly = NSDecimalNumber(decimal: monthlyPackage.storeProduct.price).doubleValue * 12
-        guard annualizedMonthly > 0, yearly < annualizedMonthly else { return nil }
-        let percent = Int((((annualizedMonthly - yearly) / annualizedMonthly) * 100).rounded())
-        return percent > 0 ? percent : nil
-    }
-
-    /// Badge shown at the top of the card (savings on the yearly plan).
-    var badge: String? {
-        guard let savingsPercent else { return nil }
-        return "SAVE \(savingsPercent)%"
-    }
-
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 8) {
-                // Badge slot — fixed height so all cards align even when only one has a badge.
-                ZStack {
-                    if let badge {
-                        Text(badge)
-                            .font(.system(size: 10, weight: .heavy))
-                            .foregroundColor(.onAppAccent)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(Color.appAccent, in: Capsule())
-                    }
-                }
-                .frame(height: 20)
-
+            VStack(spacing: 5) {
                 Text(planType)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 10.5, weight: .semibold))
                     .foregroundColor(.appTextPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
 
-                VStack(spacing: 2) {
+                VStack(spacing: 1) {
                     Text(package.storeProduct.localizedPriceString)
-                        .font(.system(size: 17, weight: .bold))
+                        .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.appTextPrimary)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.7)
+                        .minimumScaleFactor(0.62)
 
                     Text(unitCaption)
-                        .font(.system(size: 11))
+                        .font(.system(size: 8.5, weight: .medium))
                         .foregroundColor(Color.appTextSecondary)
                 }
 
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .foregroundColor(isSelected ? .appAccent : Color.appTextSecondary)
-                    .font(.system(size: 20))
+                    .font(.system(size: 16))
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .padding(.horizontal, 8)
+            .padding(.vertical, 10)
+            .padding(.horizontal, 3)
             .background(Color.appSurface)
             .cornerRadius(AppDesign.cardRadius)
             .overlay(
