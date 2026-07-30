@@ -27,6 +27,7 @@ struct SettingsView: View {
 
     private let weightUnitPreference = WeightUnitPreference.shared
     @State private var selectedUnit: WeightUnit = WeightUnitPreference.shared.unit
+    @State private var previousUnit: WeightUnit?
     @State private var pendingUnit: WeightUnit?
     @State private var showUnitChangeConfirmation = false
 
@@ -132,15 +133,10 @@ struct SettingsView: View {
         }
         .alert("Change Weight Unit?", isPresented: $showUnitChangeConfirmation) {
             Button("Cancel", role: .cancel) {
-                selectedUnit = weightUnitPreference.unit
-                pendingUnit = nil
+                cancelPendingWeightUnitChange()
             }
             Button("Convert") {
-                if let pendingUnit {
-                    convertAllStoredWeights(from: weightUnitPreference.unit, to: pendingUnit)
-                    weightUnitPreference.unit = pendingUnit
-                }
-                pendingUnit = nil
+                confirmPendingWeightUnitChange()
             }
         } message: {
             Text("Switching to \(pendingUnit?.label ?? "") will convert all your logged weights. Continue?")
@@ -502,23 +498,12 @@ struct SettingsView: View {
                 Spacer()
             }
 
-            Picker("Weight Unit", selection: $selectedUnit) {
+            Picker("Weight Unit", selection: weightUnitSelectionBinding) {
                 ForEach(WeightUnit.allCases, id: \.self) { unit in
                     Text(unit.label).tag(unit)
                 }
             }
             .pickerStyle(.segmented)
-            .onChange(of: selectedUnit) { _, newValue in
-                // Reverting to the persisted unit (e.g. after Cancel) must not
-                // re-arm the confirmation, or the alert reappears on the next
-                // visit to this tab.
-                guard newValue != weightUnitPreference.unit else {
-                    pendingUnit = nil
-                    return
-                }
-                pendingUnit = newValue
-                showUnitChangeConfirmation = true
-            }
         }
     }
 
@@ -830,6 +815,33 @@ struct SettingsView: View {
     private var rowDivider: some View {
         Divider()
             .background(cardBorder)
+    }
+
+    private var weightUnitSelectionBinding: Binding<WeightUnit> {
+        Binding(
+            get: { selectedUnit },
+            set: { requestedUnit in
+                guard requestedUnit != selectedUnit else { return }
+                previousUnit = selectedUnit
+                pendingUnit = requestedUnit
+                showUnitChangeConfirmation = true
+            }
+        )
+    }
+
+    private func cancelPendingWeightUnitChange() {
+        previousUnit = nil
+        pendingUnit = nil
+    }
+
+    private func confirmPendingWeightUnitChange() {
+        guard let previousUnit, let pendingUnit else { return }
+
+        convertAllStoredWeights(from: previousUnit, to: pendingUnit)
+        weightUnitPreference.unit = pendingUnit
+        selectedUnit = pendingUnit
+        self.previousUnit = nil
+        self.pendingUnit = nil
     }
 
     private func convertAllStoredWeights(from oldUnit: WeightUnit, to newUnit: WeightUnit) {
