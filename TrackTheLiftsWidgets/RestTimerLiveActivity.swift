@@ -15,14 +15,14 @@ struct RestTimerLiveActivity: Widget {
         ActivityConfiguration(for: RestTimerActivityAttributes.self) { context in
             LockScreenRestTimerView(context: context)
                 .activityBackgroundTint(Color.black.opacity(0.85))
-                .activitySystemActionForegroundColor(.orange)
+                .activitySystemActionForegroundColor(context.accentColor)
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
                     HStack(spacing: 8) {
                         Image(systemName: "timer")
                             .font(.title3)
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(context.accentColor)
                         Text("Rest")
                             .font(.headline)
                             .foregroundStyle(.white)
@@ -36,7 +36,7 @@ struct RestTimerLiveActivity: Widget {
                         .monospacedDigit()
                         .multilineTextAlignment(.trailing)
                         .frame(width: 70)
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(context.accentColor)
                         .padding(.trailing, 4)
                 }
 
@@ -55,19 +55,19 @@ struct RestTimerLiveActivity: Widget {
                         } currentValueLabel: {
                             EmptyView()
                         }
-                        .tint(.orange)
+                        .tint(context.accentColor)
                     }
                     .padding(.horizontal, 4)
                 }
             } compactLeading: {
                 Image(systemName: "timer")
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(context.accentColor)
             } compactTrailing: {
                 Text(timerInterval: context.state.startDate...context.state.endDate, countsDown: true)
                     .monospacedDigit()
                     .multilineTextAlignment(.trailing)
                     .frame(maxWidth: 44)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(context.accentColor)
             } minimal: {
                 ProgressView(
                     timerInterval: context.state.startDate...context.state.endDate,
@@ -77,12 +77,12 @@ struct RestTimerLiveActivity: Widget {
                 } currentValueLabel: {
                     Image(systemName: "timer")
                         .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(context.accentColor)
                 }
                 .progressViewStyle(.circular)
-                .tint(.orange)
+                .tint(context.accentColor)
             }
-            .keylineTint(.orange)
+            .keylineTint(context.accentColor)
         }
     }
 }
@@ -96,7 +96,7 @@ private struct LockScreenRestTimerView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "timer")
                         .font(.headline)
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(context.accentColor)
                     Text("Rest Timer")
                         .font(.headline)
                         .foregroundStyle(.white)
@@ -109,7 +109,7 @@ private struct LockScreenRestTimerView: View {
                     .monospacedDigit()
                     .multilineTextAlignment(.trailing)
                     .frame(maxWidth: 80)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(context.accentColor)
             }
 
             Text(context.attributes.exerciseName)
@@ -125,8 +125,25 @@ private struct LockScreenRestTimerView: View {
             } currentValueLabel: {
                 EmptyView()
             }
-            .tint(.orange)
+            .tint(context.accentColor)
         }
         .padding(16)
+    }
+}
+
+private extension ActivityViewContext where Attributes == RestTimerActivityAttributes {
+    var accentColor: Color {
+        switch attributes.accentTheme {
+        case "white": .white
+        case "orange": .orange
+        case "red": .red
+        case "pink": .pink
+        case "purple": .purple
+        case "indigo": .indigo
+        case "blue": .blue
+        case "teal": .teal
+        case "green": .green
+        default: .indigo
+        }
     }
 }

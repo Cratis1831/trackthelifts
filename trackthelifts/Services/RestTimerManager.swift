@@ -196,11 +196,16 @@ class RestTimerManager {
             state: RestTimerActivityAttributes.ContentState(startDate: startDate, endDate: endDate),
             // Once the countdown hits zero the activity has nothing live left to show; marking
             // it stale lets the system dim it until the app returns to clean it up.
-            staleDate: endDate
+            staleDate: endDate,
+            // Prefer the short-lived rest timer when another app also has a Live Activity.
+            relevanceScore: 1
         )
         do {
             liveActivity = try Activity.request(
-                attributes: RestTimerActivityAttributes(exerciseName: exerciseName),
+                attributes: RestTimerActivityAttributes(
+                    exerciseName: exerciseName,
+                    accentTheme: ThemePreference.shared.theme.rawValue
+                ),
                 content: content
             )
         } catch {
@@ -217,7 +222,8 @@ class RestTimerManager {
                 startDate: liveActivityStartDate ?? Date(),
                 endDate: endDate
             ),
-            staleDate: endDate
+            staleDate: endDate,
+            relevanceScore: 1
         )
         Task {
             await liveActivity.update(content)

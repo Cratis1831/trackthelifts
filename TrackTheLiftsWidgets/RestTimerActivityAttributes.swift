@@ -22,4 +22,8 @@ struct RestTimerActivityAttributes: ActivityAttributes {
 
     /// Exercise whose completed set kicked off this rest period.
     var exerciseName: String
+
+    /// App accent selected when the timer starts. The widget extension runs in a separate process,
+    /// so it can't observe the app's standard UserDefaults-backed ThemePreference directly.
+    var accentTheme: String
 }
