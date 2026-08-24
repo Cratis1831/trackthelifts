@@ -53,7 +53,7 @@ struct ContentView: View {
             UIApplication.shared.enableTapToDismissKeyboard()
             ExerciseData.seedIfNeeded(in: modelContext)
             WorkoutSessionManager.shared.reconcileOrphanedActiveWorkouts(in: modelContext)
-            if CloudSyncPreference.shared.isSyncActive {
+            if CloudSyncPreference.shared.isStoreMirrored {
                 CloudSyncMergeService.mergeDuplicates(in: modelContext)
             }
         }
@@ -64,6 +64,7 @@ struct ContentView: View {
             NotificationCenter.default.publisher(for: .NSPersistentStoreRemoteChange)
                 .debounce(for: .seconds(2), scheduler: DispatchQueue.main)
         ) { _ in
+            guard CloudSyncPreference.shared.isStoreMirrored else { return }
             CloudSyncMergeService.mergeDuplicates(in: modelContext)
         }
         .onReceive(NotificationCenter.default.publisher(for: .appReviewRequestEligible)) { _ in

@@ -544,9 +544,7 @@ struct SettingsView: View {
                 .tint(.appToggleTint)
 
                 if cloudSyncPreference.isEnabled {
-                    Text(iCloudAccountAvailable
-                        ? "Your workouts, routines, and exercises back up to your iCloud and stay in sync across your devices."
-                        : "Sign in to iCloud in iOS Settings to start syncing. Your data stays safe on this device until then.")
+                    Text(icloudStatusText)
                         .font(.system(size: 13))
                         .foregroundColor(secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
@@ -573,6 +571,26 @@ struct SettingsView: View {
             ).accountStatus()
             iCloudAccountAvailable = status == .available
         }
+    }
+
+    /// Honest status for the live store. Success copy is shown only when CloudKit actually
+    /// opened (`isStoreMirrored`); otherwise Settings surfaces the last store-open message.
+    private var icloudStatusText: String {
+        if cloudSyncPreference.isStoreMirrored {
+            if let message = cloudSyncPreference.lastStoreOpenMessage, !message.isEmpty {
+                return message
+            }
+            return iCloudAccountAvailable
+                ? "Your workouts, routines, and exercises back up to your iCloud and stay in sync across your devices."
+                : "Sign in to iCloud in iOS Settings to start syncing. Your data stays safe on this device until then."
+        }
+        if let message = cloudSyncPreference.lastStoreOpenMessage, !message.isEmpty {
+            return message
+        }
+        if !iCloudAccountAvailable {
+            return "Sign in to iCloud in iOS Settings to start syncing. Your data stays safe on this device until then."
+        }
+        return "iCloud is not mirroring this device yet."
     }
 
     private var icloudSyncLabel: some View {

@@ -17,9 +17,11 @@ class CloudSyncPreference {
     /// capability in the Apple Developer portal).
     static let containerIdentifier = "iCloud.com.ashkansdev.track-the-lifts"
 
-    /// Posted after `isEnabled` changes so the app root can rebuild the model container with
-    /// (or without) CloudKit mirroring. The store file on disk is the same either way.
+    /// Posted after `isEnabled` or `cachedHasPro` changes so the app root can snapshot local
+    /// data and ask for a relaunch. CloudKit cannot be attached mid-process.
     static let didChangeNotification = Notification.Name("cloudSyncPreferenceDidChange")
+
+    static let relaunchMessage = "Force-quit Track The Lifts and reopen to finish turning on iCloud."
 
     @ObservationIgnored
     private let userDefaults: UserDefaults
@@ -43,9 +45,14 @@ class CloudSyncPreference {
     }
 
     /// Last known Pro entitlement, written by `RevenueCatService` whenever customer info (or
-    /// the debug tier override) updates.
+    /// the debug tier override) updates. A change posts `didChangeNotification` so turning on
+    /// Pro after launch can snapshot local data the same way the Settings toggle does.
     var cachedHasPro: Bool {
-        didSet { userDefaults.set(cachedHasPro, forKey: cachedProKey) }
+        didSet {
+            userDefaults.set(cachedHasPro, forKey: cachedProKey)
+            guard oldValue != cachedHasPro else { return }
+            NotificationCenter.default.post(name: Self.didChangeNotification, object: nil)
+        }
     }
 
     /// Whether the one-time "iCloud Sync is here" announcement card has been dismissed.
@@ -53,9 +60,16 @@ class CloudSyncPreference {
         didSet { userDefaults.set(hasSeenAnnouncement, forKey: announcementSeenKey) }
     }
 
+    /// Whether the live `ModelContainer` is actually CloudKit-mirrored. In-memory only — it
+    /// reflects this process's open store, not the opt-in toggle.
+    var isStoreMirrored = false
+
+    /// Last store-open failure, snapshot failure, or relaunch instruction. In-memory only.
+    var lastStoreOpenMessage: String?
+
     /// Sync is active only when the user opted in AND the last known entitlement was Pro. If
-    /// Pro lapses, the next container rebuild quietly falls back to the local-only store — the
-    /// on-disk data is untouched and the opt-in is remembered in case Pro returns.
+    /// Pro lapses, the next cold launch opens the local-only store — the opt-in is remembered
+    /// in case Pro returns.
     var isSyncActive: Bool {
         isEnabled && cachedHasPro
     }
