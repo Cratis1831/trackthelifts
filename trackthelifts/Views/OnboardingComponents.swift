@@ -850,8 +850,8 @@ struct TrialOnboardingPage: View {
 
     private var detail: String {
         isTrialEligible
-            ? "iCloud sync, unlimited routines, charts, and the rest of Pro are included. Cancel anytime before the trial ends."
-            : "iCloud sync, unlimited routines, and advanced progress stay available whenever you want them."
+            ? "Unlimited routines, RPE, charts, supersets, and every accent theme. iCloud sync waits until you subscribe so your log stays on this device if you cancel."
+            : "Unlimited routines, RPE, charts, supersets, and themes. iCloud sync is included when you subscribe."
     }
 
     var body: some View {
@@ -917,12 +917,7 @@ private struct TrialSpecimen: View {
     let isTrialEligible: Bool
     let trialDurationText: String
 
-    private let features: [(ProFeature, String)] = [
-        (.icloudSync, "Back up every session"),
-        (.unlimitedRoutines, "More than three routines"),
-        (.advancedProgress, "Volume and estimated 1RM"),
-        (.supersets, "Pair lifts in one session"),
-    ]
+    private let features = ProFeature.trialIncluded
 
     var body: some View {
         OnboardingSpecimenCard {
@@ -937,7 +932,7 @@ private struct TrialSpecimen: View {
                         Text("ForgeLyte Lift Pro")
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(.appTextPrimary)
-                        Text("Every Pro feature, included")
+                        Text("Included in your trial")
                             .font(.system(size: 11))
                             .foregroundColor(.appTextSecondary)
                     }
@@ -954,11 +949,11 @@ private struct TrialSpecimen: View {
                 Divider().overlay(Color.appBorder)
 
                 VStack(spacing: 0) {
-                    ForEach(Array(features.enumerated()), id: \.element.0) { index, item in
+                    ForEach(Array(features.enumerated()), id: \.element) { index, feature in
                         if index > 0 {
                             Divider().overlay(Color.appBorder)
                         }
-                        trialFeatureRow(feature: item.0, caption: item.1)
+                        trialFeatureRow(feature: feature)
                             .opacity(phase >= 3 || index < 2 ? 1 : 0)
                     }
                 }
@@ -967,7 +962,7 @@ private struct TrialSpecimen: View {
         .accessibilityHidden(true)
     }
 
-    private func trialFeatureRow(feature: ProFeature, caption: String) -> some View {
+    private func trialFeatureRow(feature: ProFeature) -> some View {
         HStack(spacing: 10) {
             IconTile(color: feature.iconColor, size: 30) {
                 Image(systemName: feature.systemImage)
@@ -977,7 +972,7 @@ private struct TrialSpecimen: View {
                 Text(feature.title)
                     .font(.system(size: 13, weight: .medium))
                     .foregroundColor(.appTextPrimary)
-                Text(caption)
+                Text(feature.onboardingCaption)
                     .font(.system(size: 11))
                     .foregroundColor(.appTextSecondary)
             }
@@ -986,7 +981,7 @@ private struct TrialSpecimen: View {
                 .font(.system(size: 11, weight: .bold))
                 .foregroundColor(.appAccent)
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, 6)
     }
 }
 

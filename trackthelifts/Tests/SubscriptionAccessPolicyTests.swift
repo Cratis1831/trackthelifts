@@ -9,6 +9,25 @@ final class SubscriptionAccessPolicyTests: XCTestCase {
         }
     }
 
+    func testFreeTrialOmitsICloudAndKeepsLocalProFeatures() {
+        XCTAssertFalse(
+            SubscriptionAccessPolicy.canAccess(.icloudSync, tier: .pro, isInFreeTrial: true)
+        )
+        for feature in ProFeature.trialIncluded {
+            XCTAssertTrue(
+                SubscriptionAccessPolicy.canAccess(feature, tier: .pro, isInFreeTrial: true),
+                "\(feature.title) should be available during the trial"
+            )
+        }
+        XCTAssertTrue(
+            SubscriptionAccessPolicy.canAccess(.icloudSync, tier: .pro, isInFreeTrial: false)
+        )
+        XCTAssertFalse(ProFeature.trialIncluded.contains(.icloudSync))
+        XCTAssertTrue(ProFeature.trialIncluded.contains(.effortTracking))
+        XCTAssertTrue(ProFeature.trialIncluded.contains(.accentThemes))
+        XCTAssertEqual(ProFeature.trialIncluded.count, ProFeature.allCases.count - 1)
+    }
+
     func testFreeRoutineLimitAllowsFirstThreeRoutines() {
         XCTAssertTrue(SubscriptionAccessPolicy.canCreateRoutine(existingCount: 0, tier: .free))
         XCTAssertTrue(SubscriptionAccessPolicy.canCreateRoutine(existingCount: 1, tier: .free))

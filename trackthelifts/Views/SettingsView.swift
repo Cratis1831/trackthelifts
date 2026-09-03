@@ -551,6 +551,20 @@ struct SettingsView: View {
                         .foregroundColor(secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+            } else if revenueCatService.isInFreeTrial {
+                HStack(spacing: 12) {
+                    icloudSyncLabel
+                    Spacer()
+                    ProBadge()
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 10))
+                        .foregroundColor(secondaryText)
+                }
+
+                Text("Available after your trial so your workouts stay on this device if you cancel.")
+                    .font(.system(size: 13))
+                    .foregroundColor(secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
             } else {
                 Button {
                     selectedProFeature = .icloudSync

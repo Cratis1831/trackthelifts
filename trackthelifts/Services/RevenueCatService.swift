@@ -19,6 +19,7 @@ class RevenueCatService: ObservableObject {
     @Published var lastError: RevenueCatError?
     @Published var availablePackages: [Package] = []
     @Published private(set) var introEligibleProductIDs: Set<String> = []
+    @Published private(set) var isInFreeTrial = false
     private var introEligibilityLoaded = false
     #if DEBUG
     private static let debugTierOverrideKey = "debugSubscriptionTierOverride"
@@ -27,7 +28,7 @@ class RevenueCatService: ObservableObject {
         didSet {
             persistDebugTierOverride()
             synchronizeThemeAccess()
-            CloudSyncPreference.shared.cachedHasPro = currentTier == .pro
+            CloudSyncPreference.shared.cachedHasPro = canAccess(.icloudSync)
         }
     }
     #endif
@@ -42,6 +43,14 @@ class RevenueCatService: ObservableObject {
         entitlementTier
         #endif
     }
+
+    /// Debug Pro overrides are treated as a paid subscription so iCloud can be tested.
+    private var effectiveIsInFreeTrial: Bool {
+        #if DEBUG
+        if debugTierOverride != nil { return false }
+        #endif
+        return isInFreeTrial
+    }
     
     private var cancellables = Set<AnyCancellable>()
     
@@ -50,11 +59,7 @@ class RevenueCatService: ObservableObject {
         if let raw = UserDefaults.standard.string(forKey: Self.debugTierOverrideKey) {
             debugTierOverride = SubscriptionTier(rawValue: raw)
         }
-        if debugTierOverride == .pro {
-            CloudSyncPreference.shared.cachedHasPro = true
-        } else if debugTierOverride == .free {
-            CloudSyncPreference.shared.cachedHasPro = false
-        }
+        CloudSyncPreference.shared.cachedHasPro = canAccess(.icloudSync)
         #endif
         synchronizeThemeAccess()
     }
@@ -328,7 +333,11 @@ class RevenueCatService: ObservableObject {
     // MARK: - Feature Access Methods
     
     func canAccess(_ feature: ProFeature) -> Bool {
-        SubscriptionAccessPolicy.canAccess(feature, tier: currentTier)
+        SubscriptionAccessPolicy.canAccess(
+            feature,
+            tier: currentTier,
+            isInFreeTrial: effectiveIsInFreeTrial
+        )
     }
     
     func requiresPro(_ feature: ProFeature) -> Bool {
@@ -338,18 +347,20 @@ class RevenueCatService: ObservableObject {
     // MARK: - Private Methods
     
     private func updateSubscriptionStatus(from customerInfo: CustomerInfo) {
-        // Check if user has active Pro entitlement
-        if customerInfo.entitlements["Pro"]?.isActive == true {
+        let entitlement = customerInfo.entitlements["Pro"]
+        if entitlement?.isActive == true {
             entitlementTier = .pro
+            isInFreeTrial = entitlement?.periodType == .trial
         } else {
             entitlementTier = .free
+            isInFreeTrial = false
         }
 
         synchronizeThemeAccess()
 
-        // Snapshot the entitlement so the next launch can decide synchronously whether to open
-        // the CloudKit-backed store (see CloudSyncPreference).
-        CloudSyncPreference.shared.cachedHasPro = currentTier == .pro
+        // Snapshot paid-Pro access (not trial) so the next launch does not open CloudKit
+        // for a trial that might be cancelled. See `ProFeature.isIncludedInFreeTrial`.
+        CloudSyncPreference.shared.cachedHasPro = canAccess(.icloudSync)
 
         // The user's tier and entitlements are account state; only log them in debug builds.
         #if DEBUG
