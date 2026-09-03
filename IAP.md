@@ -38,9 +38,10 @@ entitlement. New Pro features are added by extending `ProFeature`.
 ## RevenueCat Products
 
 ### Product IDs
-- **Monthly Subscription**: `com.ashkansdev.track_the_lifts.Monthly` (auto-renewable)
+- **Monthly Subscription**: `com.ashkansdev.track_the_lifts.Monthly` (auto-renewable, 1-week free trial then $1.99)
 - **Yearly Subscription**: `com.ashkansdev.track_the_lifts.Annual` (auto-renewable)
 - **Lifetime**: `com.ashkansdev.track_the_lifts.Lifetime` (non-consumable, one-time)
+- Weekly (`com.ashkansdev.track_the_lifts.Weekly`) is removed from sale and archived in RevenueCat; do not attach it to the offering.
 
 The paywall reads packages dynamically from the current RevenueCat offering, so
 these IDs must match the products configured in App Store Connect and attached to
@@ -62,15 +63,18 @@ the offering. See `TrackTheLifts.storekit` for the local StoreKit testing config
 ### Key Files
 - `Services/RevenueCatService.swift` - Main subscription service
 - `Services/SubscriptionTier.swift` - Tier and `ProFeature` definitions, access policy
+- `Services/SubscriptionOfferPresentation.swift` - Trial/paywall copy and plan merchandising
 - `Views/Subscription/PaywallView.swift` - Subscription purchase interface
 - `Views/Subscription/ProBenefitsView.swift` - Benefits + management for subscribers
 - `Views/SettingsView.swift` - Subscription status, upgrade entry, restore
+- `Views/OnboardingView.swift` - First-launch walkthrough, including the optional Monthly trial page
 
 ### Integration Points
 1. **App Launch**: RevenueCat is configured in `TrackTheLiftsApp.swift`
-2. **Settings**: Users can view current tier and upgrade via `SettingsView`
-3. **Paywall**: Purchase interface shown when upgrading
-4. **Feature Gates**: iCloud sync features check subscription status
+2. **Onboarding**: After the profile name page, eligible new users can start the Monthly 1-week trial or skip
+3. **Settings**: Users can view current tier and upgrade via `SettingsView`
+4. **Paywall**: Purchase interface shown when upgrading; Monthly shows the trial when the Apple ID is eligible
+5. **Feature Gates**: iCloud sync features check subscription status
 
 ## Setup Instructions
 

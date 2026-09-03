@@ -45,7 +45,7 @@ final class AnalyticsEventTests: XCTestCase {
     }
 
     func testStableSourceSerialization() {
-        XCTAssertEqual(OnboardingAnalyticsPage.allRawValues, ["welcome", "workouts", "routines", "progress", "personalization", "ready", "profile"])
+        XCTAssertEqual(OnboardingAnalyticsPage.allRawValues, ["welcome", "workouts", "routines", "progress", "personalization", "ready", "profile", "trial"])
         XCTAssertEqual(WorkoutAnalyticsSource.blank.rawValue, "blank")
         XCTAssertEqual(WorkoutAnalyticsSource.routine.rawValue, "routine")
         XCTAssertEqual(WorkoutAnalyticsSource.repeatWorkout.rawValue, "repeat")

@@ -222,7 +222,9 @@ struct SettingsView: View {
                 isPaywallPresented = true
             } label: {
                 HStack {
-                    Text("Upgrade to Pro")
+                    Text(SubscriptionOfferPresentation.settingsUpgradeTitle(
+                        isMonthlyTrialEligible: revenueCatService.hasEligibleMonthlyTrial
+                    ))
                         .font(.system(size: 16, weight: .semibold))
 
                     Spacer()

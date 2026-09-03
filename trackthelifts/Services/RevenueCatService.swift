@@ -18,9 +18,14 @@ class RevenueCatService: ObservableObject {
     @Published var isLoading = false
     @Published var lastError: RevenueCatError?
     @Published var availablePackages: [Package] = []
+    @Published private(set) var introEligibleProductIDs: Set<String> = []
+    private var introEligibilityLoaded = false
     #if DEBUG
+    private static let debugTierOverrideKey = "debugSubscriptionTierOverride"
+
     @Published var debugTierOverride: SubscriptionTier? {
         didSet {
+            persistDebugTierOverride()
             synchronizeThemeAccess()
             CloudSyncPreference.shared.cachedHasPro = currentTier == .pro
         }
@@ -42,7 +47,14 @@ class RevenueCatService: ObservableObject {
     
     private init() {
         #if DEBUG
-        debugTierOverride = nil
+        if let raw = UserDefaults.standard.string(forKey: Self.debugTierOverrideKey) {
+            debugTierOverride = SubscriptionTier(rawValue: raw)
+        }
+        if debugTierOverride == .pro {
+            CloudSyncPreference.shared.cachedHasPro = true
+        } else if debugTierOverride == .free {
+            CloudSyncPreference.shared.cachedHasPro = false
+        }
         #endif
         synchronizeThemeAccess()
     }
@@ -230,8 +242,11 @@ class RevenueCatService: ObservableObject {
                 availablePackages = Self.sortedPackages(offering.availablePackages)
                 print("✅ Loaded \(availablePackages.count) packages from offering: \(offering.identifier)")
                 print("Packages: \(availablePackages.map { $0.storeProduct.productIdentifier })")
+                await refreshIntroEligibility()
             } else {
                 availablePackages = []
+                introEligibleProductIDs = []
+                introEligibilityLoaded = false
                 print("❌ No Pro or current offering found")
                 lastError = .noOfferingsAvailable
             }
@@ -239,6 +254,49 @@ class RevenueCatService: ObservableObject {
             print("❌ Failed to load offerings: \(error)")
             lastError = .offeringsLoadFailed(error)
         }
+    }
+
+    var monthlyPackage: Package? {
+        availablePackages.first { $0.planKind == .monthly }
+    }
+
+    var annualPackage: Package? {
+        availablePackages.first { $0.planKind == .annual }
+    }
+
+    var hasEligibleMonthlyTrial: Bool {
+        guard let monthlyPackage else { return false }
+        return isEligibleForFreeTrial(monthlyPackage)
+    }
+
+    func isEligibleForFreeTrial(_ package: Package) -> Bool {
+        guard package.introOfferSummary?.isFreeTrial == true else { return false }
+        if introEligibilityLoaded {
+            return introEligibleProductIDs.contains(package.storeProduct.productIdentifier)
+        }
+        return true
+    }
+
+    func preferredPaywallPackage() -> Package? {
+        if let monthlyPackage, isEligibleForFreeTrial(monthlyPackage) {
+            return monthlyPackage
+        }
+        return annualPackage ?? availablePackages.first
+    }
+
+    private func refreshIntroEligibility() async {
+        let packages = availablePackages
+        guard !packages.isEmpty else {
+            introEligibleProductIDs = []
+            introEligibilityLoaded = false
+            return
+        }
+
+        let result = await Purchases.shared.checkTrialOrIntroDiscountEligibility(packages: packages)
+        introEligibleProductIDs = Set(result.compactMap { package, eligibility in
+            eligibility.status == .eligible ? package.storeProduct.productIdentifier : nil
+        })
+        introEligibilityLoaded = true
     }
 
     /// Stable merchandising order for the 2×2 paywall:
@@ -303,4 +361,14 @@ class RevenueCatService: ObservableObject {
     private func synchronizeThemeAccess() {
         ThemePreference.shared.updateProAccess(currentTier == .pro)
     }
+
+    #if DEBUG
+    private func persistDebugTierOverride() {
+        if let debugTierOverride {
+            UserDefaults.standard.set(debugTierOverride.rawValue, forKey: Self.debugTierOverrideKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: Self.debugTierOverrideKey)
+        }
+    }
+    #endif
 }

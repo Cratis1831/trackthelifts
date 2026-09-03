@@ -91,16 +91,18 @@ final class SubscriptionAccessPolicyTests: XCTestCase {
         XCTAssertEqual(RestTimerPresentation.progress(remaining: 30, totalDuration: 0), 0)
     }
 
-    func testOnboardingFlowHasSevenOrderedPages() {
-        XCTAssertEqual(OnboardingPage.allCases.count, 7)
+    func testOnboardingFlowHasEightOrderedPages() {
+        XCTAssertEqual(OnboardingPage.allCases.count, 8)
         XCTAssertEqual(OnboardingPage.welcome.next, .workouts)
         XCTAssertEqual(OnboardingPage.workouts.next, .routines)
         XCTAssertEqual(OnboardingPage.routines.next, .progress)
         XCTAssertEqual(OnboardingPage.progress.next, .personalization)
         XCTAssertEqual(OnboardingPage.personalization.next, .ready)
         XCTAssertEqual(OnboardingPage.ready.next, .profile)
-        XCTAssertNil(OnboardingPage.profile.next)
-        XCTAssertTrue(OnboardingPage.profile.isFinal)
+        XCTAssertEqual(OnboardingPage.profile.next, .trial)
+        XCTAssertNil(OnboardingPage.trial.next)
+        XCTAssertTrue(OnboardingPage.trial.isFinal)
+        XCTAssertFalse(OnboardingPage.profile.isFinal)
         XCTAssertFalse(OnboardingPage.ready.isFinal)
     }
 
@@ -119,5 +121,92 @@ final class SubscriptionAccessPolicyTests: XCTestCase {
         XCTAssertEqual(ProfileNamePolicy.initials(from: "Ashkan Sotoudeh"), "AS")
         XCTAssertEqual(ProfileNamePolicy.initials(from: "Ashkan Reza Sotoudeh"), "AS")
         XCTAssertNil(ProfileNamePolicy.initials(from: "  "))
+    }
+
+    func testPlanKindFallsBackToProductIdentifier() {
+        XCTAssertEqual(
+            SubscriptionPlanKind.from(packageTypeDescription: "custom", productIdentifier: "com.app.Monthly"),
+            .monthly
+        )
+        XCTAssertEqual(
+            SubscriptionPlanKind.from(packageTypeDescription: "annual", productIdentifier: "ignored"),
+            .annual
+        )
+        XCTAssertEqual(SubscriptionPlanKind.from(productIdentifier: "com.app.lifetime"), .lifetime)
+        XCTAssertEqual(SubscriptionPlanKind.annual.displayName, "Yearly")
+    }
+
+    func testFreeTrialCopyMatchesAppleDisclosureNeeds() {
+        let weeklyTrial = IntroOfferSummary(
+            paymentMode: .freeTrial,
+            periodCount: 1,
+            periodUnit: .week
+        )
+
+        XCTAssertEqual(SubscriptionOfferPresentation.durationPhrase(for: weeklyTrial), "1 week")
+        XCTAssertEqual(SubscriptionOfferPresentation.hyphenatedDuration(for: weeklyTrial), "1-Week")
+        XCTAssertEqual(SubscriptionOfferPresentation.trialCardCaption(for: weeklyTrial), "1 week free")
+        XCTAssertEqual(
+            SubscriptionOfferPresentation.purchaseButtonTitle(
+                plan: .monthly,
+                price: "$1.99",
+                intro: weeklyTrial,
+                isIntroEligible: true
+            ),
+            "Start 1-Week Free Trial"
+        )
+        XCTAssertEqual(
+            SubscriptionOfferPresentation.legalFooter(
+                plan: .monthly,
+                price: "$1.99",
+                intro: weeklyTrial,
+                isIntroEligible: true
+            ),
+            "Free for 1 week, then $1.99/month. Cancel anytime in Settings at least 24 hours before the trial ends."
+        )
+    }
+
+    func testIneligibleAndLifetimeCopyStayPaid() {
+        let weeklyTrial = IntroOfferSummary(
+            paymentMode: .freeTrial,
+            periodCount: 1,
+            periodUnit: .week
+        )
+
+        XCTAssertEqual(
+            SubscriptionOfferPresentation.purchaseButtonTitle(
+                plan: .monthly,
+                price: "$1.99",
+                intro: weeklyTrial,
+                isIntroEligible: false
+            ),
+            "Start Pro - $1.99"
+        )
+        XCTAssertEqual(
+            SubscriptionOfferPresentation.purchaseButtonTitle(
+                plan: .lifetime,
+                price: "$24.99",
+                intro: nil,
+                isIntroEligible: false
+            ),
+            "Get Lifetime Access - $24.99"
+        )
+        XCTAssertEqual(
+            SubscriptionOfferPresentation.legalFooter(
+                plan: .lifetime,
+                price: "$24.99",
+                intro: nil,
+                isIntroEligible: false
+            ),
+            "One-time purchase. No subscription, no renewals."
+        )
+        XCTAssertEqual(
+            SubscriptionOfferPresentation.settingsUpgradeTitle(isMonthlyTrialEligible: true),
+            "Try Pro Free for 1 Week"
+        )
+        XCTAssertEqual(
+            SubscriptionOfferPresentation.settingsUpgradeTitle(isMonthlyTrialEligible: false),
+            "Upgrade to Pro"
+        )
     }
 }

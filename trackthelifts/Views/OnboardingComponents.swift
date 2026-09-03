@@ -828,3 +828,204 @@ struct ProfileNameOnboardingPage: View {
         .accessibilityHidden(true)
     }
 }
+
+// MARK: - Page 8: Pro trial
+
+struct TrialOnboardingPage: View {
+    let isActive: Bool
+    let isTrialEligible: Bool
+    let trialDurationText: String
+    let monthlyPriceText: String?
+    let introOffer: IntroOfferSummary?
+    let onSeeAllPlans: () -> Void
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var phase = 0
+
+    private var title: String {
+        isTrialEligible
+            ? "Try Pro free for \(trialDurationText)."
+            : "Unlock more when you're ready."
+    }
+
+    private var detail: String {
+        isTrialEligible
+            ? "iCloud sync, unlimited routines, charts, and the rest of Pro are included. Cancel anytime before the trial ends."
+            : "iCloud sync, unlimited routines, and advanced progress stay available whenever you want them."
+    }
+
+    var body: some View {
+        OnboardingPageLayout(
+            eyebrow: "ForgeLyte Lift Pro",
+            title: title,
+            detail: detail,
+            phase: phase
+        ) {
+            VStack(spacing: 16) {
+                TrialSpecimen(phase: phase, isTrialEligible: isTrialEligible, trialDurationText: trialDurationText)
+
+                if isTrialEligible {
+                    Button("See all plans", action: onSeeAllPlans)
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(.appAccent)
+                        .opacity(phase >= 3 ? 1 : 0)
+
+                    trialLegalCopy
+                        .opacity(phase >= 3 ? 1 : 0)
+                }
+            }
+        }
+        .onboardingPhaseSequence(
+            isActive: isActive,
+            reduceMotion: reduceMotion,
+            phase: $phase
+        )
+    }
+
+    private var trialLegalCopy: some View {
+        VStack(spacing: 8) {
+            Text(legalText)
+                .font(.system(size: 11))
+                .foregroundColor(.appTextTertiary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack(spacing: 6) {
+                Link("Terms of Service", destination: AppLinks.termsOfService)
+                Text("·")
+                    .foregroundColor(.appTextTertiary)
+                Link("Privacy Policy", destination: AppLinks.privacyPolicy)
+            }
+            .font(.system(size: 11))
+            .foregroundColor(.appAccent)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var legalText: String {
+        SubscriptionOfferPresentation.legalFooter(
+            plan: .monthly,
+            price: monthlyPriceText ?? "the monthly price",
+            intro: introOffer ?? IntroOfferSummary(paymentMode: .freeTrial, periodCount: 1, periodUnit: .week),
+            isIntroEligible: true
+        )
+    }
+}
+
+private struct TrialSpecimen: View {
+    let phase: Int
+    let isTrialEligible: Bool
+    let trialDurationText: String
+
+    private let features: [(ProFeature, String)] = [
+        (.icloudSync, "Back up every session"),
+        (.unlimitedRoutines, "More than three routines"),
+        (.advancedProgress, "Volume and estimated 1RM"),
+        (.supersets, "Pair lifts in one session"),
+    ]
+
+    var body: some View {
+        OnboardingSpecimenCard {
+            VStack(spacing: 13) {
+                HStack(spacing: 11) {
+                    IconTile(color: .appAccent, size: 34) {
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.system(size: 14, weight: .semibold))
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("ForgeLyte Lift Pro")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.appTextPrimary)
+                        Text("Every Pro feature, included")
+                            .font(.system(size: 11))
+                            .foregroundColor(.appTextSecondary)
+                    }
+
+                    Spacer()
+
+                    AppStatusBadge(
+                        text: isTrialEligible ? "\(trialDurationText) free" : "Pro",
+                        color: .appAccent
+                    )
+                    .trialBadgeJiggle(isActive: phase >= 3)
+                }
+
+                Divider().overlay(Color.appBorder)
+
+                VStack(spacing: 0) {
+                    ForEach(Array(features.enumerated()), id: \.element.0) { index, item in
+                        if index > 0 {
+                            Divider().overlay(Color.appBorder)
+                        }
+                        trialFeatureRow(feature: item.0, caption: item.1)
+                            .opacity(phase >= 3 || index < 2 ? 1 : 0)
+                    }
+                }
+            }
+        }
+        .accessibilityHidden(true)
+    }
+
+    private func trialFeatureRow(feature: ProFeature, caption: String) -> some View {
+        HStack(spacing: 10) {
+            IconTile(color: feature.iconColor, size: 30) {
+                Image(systemName: feature.systemImage)
+                    .font(.system(size: 12, weight: .semibold))
+            }
+            VStack(alignment: .leading, spacing: 1) {
+                Text(feature.title)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.appTextPrimary)
+                Text(caption)
+                    .font(.system(size: 11))
+                    .foregroundColor(.appTextSecondary)
+            }
+            Spacer()
+            Image(systemName: "checkmark")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundColor(.appAccent)
+        }
+        .padding(.vertical, 8)
+    }
+}
+
+private extension View {
+    func trialBadgeJiggle(isActive: Bool) -> some View {
+        modifier(TrialBadgeJiggle(isActive: isActive))
+    }
+}
+
+private struct TrialBadgeJiggle: ViewModifier {
+    let isActive: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var angle: Double = 0
+
+    func body(content: Content) -> some View {
+        content
+            .rotationEffect(.degrees(angle))
+            .task(id: isActive) {
+                angle = 0
+                guard isActive, !reduceMotion else { return }
+
+                try? await Task.sleep(for: .milliseconds(280))
+                guard !Task.isCancelled else { return }
+                await jiggleOnce()
+
+                try? await Task.sleep(for: .milliseconds(2200))
+                guard !Task.isCancelled else { return }
+                await jiggleOnce()
+            }
+    }
+
+    private func jiggleOnce() async {
+        let sequence: [Double] = [-12, 11, -8, 7, -4, 3, 0]
+        for value in sequence {
+            withAnimation(.easeInOut(duration: 0.07)) {
+                angle = value
+            }
+            try? await Task.sleep(for: .milliseconds(72))
+            if Task.isCancelled { return }
+        }
+    }
+}

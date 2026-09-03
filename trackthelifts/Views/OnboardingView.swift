@@ -13,6 +13,7 @@ enum OnboardingPage: Int, CaseIterable, Identifiable {
     case personalization
     case ready
     case profile
+    case trial
 
     var id: Int { rawValue }
 
@@ -20,7 +21,7 @@ enum OnboardingPage: Int, CaseIterable, Identifiable {
         Self.allCases.first { $0.rawValue == rawValue + 1 }
     }
 
-    var isFinal: Bool { self == .profile }
+    var isFinal: Bool { self == .trial }
 
     static let skipDestination = OnboardingPage.profile
 
@@ -33,6 +34,7 @@ enum OnboardingPage: Int, CaseIterable, Identifiable {
         case .personalization: return .personalization
         case .ready: return .ready
         case .profile: return .profile
+        case .trial: return .trial
         }
     }
 }
@@ -41,12 +43,33 @@ enum OnboardingPage: Int, CaseIterable, Identifiable {
 /// Reset Onboarding in Settings recreates this view and pre-fills the stored profile name.
 struct OnboardingView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    @EnvironmentObject private var revenueCatService: RevenueCatService
     @State private var currentPage = OnboardingPage.welcome
     @State private var nameDraft = ProfilePreference.shared.name
     @State private var didSkip = false
+    @State private var isPaywallPresented = false
+    @State private var showingPurchaseError = false
+    @State private var purchaseErrorMessage = ""
 
-    private var canComplete: Bool {
-        !currentPage.isFinal || ProfileNamePolicy.isValid(nameDraft)
+    private var canAdvance: Bool {
+        currentPage != .profile || ProfileNamePolicy.isValid(nameDraft)
+    }
+
+    private var showsSkip: Bool {
+        currentPage != .profile
+    }
+
+    private var skipTitle: String {
+        currentPage == .trial ? "Not now" : "Skip"
+    }
+
+    private var primaryButtonTitle: String {
+        switch currentPage {
+        case .trial:
+            return revenueCatService.hasEligibleMonthlyTrial ? "Start Free Trial" : "See All Plans"
+        default:
+            return "Continue"
+        }
     }
 
     var body: some View {
@@ -73,9 +96,18 @@ struct OnboardingView: View {
                     ProfileNameOnboardingPage(
                         name: $nameDraft,
                         isActive: currentPage == .profile,
-                        onSubmit: completeOnboarding
+                        onSubmit: advance
                     )
                     .tag(OnboardingPage.profile)
+                    TrialOnboardingPage(
+                        isActive: currentPage == .trial,
+                        isTrialEligible: revenueCatService.hasEligibleMonthlyTrial,
+                        trialDurationText: trialDurationText,
+                        monthlyPriceText: revenueCatService.monthlyPackage?.storeProduct.localizedPriceString,
+                        introOffer: revenueCatService.monthlyPackage?.introOfferSummary,
+                        onSeeAllPlans: showAllPlans
+                    )
+                    .tag(OnboardingPage.trial)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
 
@@ -84,16 +116,47 @@ struct OnboardingView: View {
                     .padding(.bottom, 18)
 
                 Button(action: advance) {
-                    Text(currentPage.isFinal ? "Start Lifting" : "Continue")
+                    if revenueCatService.isLoading && currentPage == .trial {
+                        ProgressView()
+                            .tint(Color.onAppAction)
+                    } else {
+                        Text(primaryButtonTitle)
+                    }
                 }
                 .buttonStyle(AppPrimaryButtonStyle())
                 .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-                .disabled(!canComplete)
-                .opacity(canComplete ? 1 : 0.42)
+                .disabled(!canAdvance || (revenueCatService.isLoading && currentPage == .trial))
+                .opacity(canAdvance ? 1 : 0.42)
                 .padding(.horizontal, 24)
                 .padding(.bottom, 16)
             }
         }
+        .fullScreenCover(isPresented: $isPaywallPresented) {
+            PaywallView()
+                .environmentObject(revenueCatService)
+        }
+        .onChange(of: currentPage) {
+            if currentPage == .trial, !ProfileNamePolicy.isValid(nameDraft) {
+                currentPage = .profile
+            }
+        }
+        .onChange(of: revenueCatService.currentTier) {
+            if revenueCatService.currentTier == .pro {
+                finishOnboarding()
+            }
+        }
+        .alert("Purchase Error", isPresented: $showingPurchaseError) {
+            Button("OK") { }
+        } message: {
+            Text(purchaseErrorMessage)
+        }
+    }
+
+    private var trialDurationText: String {
+        if let summary = revenueCatService.monthlyPackage?.introOfferSummary {
+            return SubscriptionOfferPresentation.durationPhrase(for: summary)
+        }
+        return "1 week"
     }
 
     private var topBar: some View {
@@ -106,18 +169,14 @@ struct OnboardingView: View {
 
             Spacer()
 
-            Button("Skip") {
-                AnalyticsService.track(.onboardingSkipped(fromPage: currentPage.analyticsPage))
-                didSkip = true
-                withAnimation(.easeInOut(duration: 0.25)) {
-                    currentPage = .skipDestination
-                }
+            Button(skipTitle) {
+                handleSkip()
             }
             .font(.system(size: 15, weight: .medium))
             .foregroundColor(.appTextSecondary)
-            .opacity(currentPage.isFinal ? 0 : 1)
-            .disabled(currentPage.isFinal)
-            .accessibilityHidden(currentPage.isFinal)
+            .opacity(showsSkip ? 1 : 0)
+            .disabled(!showsSkip)
+            .accessibilityHidden(!showsSkip)
         }
         .frame(minHeight: 36)
         .padding(.horizontal, 24)
@@ -146,21 +205,72 @@ struct OnboardingView: View {
         return .appBorder
     }
 
+    private func handleSkip() {
+        if currentPage == .trial {
+            finishOnboarding()
+            return
+        }
+
+        AnalyticsService.track(.onboardingSkipped(fromPage: currentPage.analyticsPage))
+        didSkip = true
+        withAnimation(.easeInOut(duration: 0.25)) {
+            currentPage = .skipDestination
+        }
+    }
+
     private func advance() {
-        if currentPage.isFinal {
-            completeOnboarding()
-        } else if let next = currentPage.next {
+        if currentPage == .trial {
+            startTrialOrShowPlans()
+            return
+        }
+
+        if currentPage == .profile {
+            guard persistNameIfValid() else { return }
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+            if revenueCatService.currentTier == .pro {
+                finishOnboarding()
+                return
+            }
+        }
+
+        if let next = currentPage.next {
             withAnimation(.easeInOut(duration: 0.25)) {
                 currentPage = next
             }
         }
     }
 
-    private func completeOnboarding() {
-        let normalizedName = ProfileNamePolicy.normalized(nameDraft)
-        guard ProfileNamePolicy.isValid(normalizedName) else { return }
+    private func startTrialOrShowPlans() {
+        if revenueCatService.hasEligibleMonthlyTrial, let monthlyPackage = revenueCatService.monthlyPackage {
+            Task {
+                let success = await revenueCatService.purchasePackage(monthlyPackage)
+                if success {
+                    finishOnboarding()
+                } else if let error = revenueCatService.lastError {
+                    if case .userCancelled = error { return }
+                    purchaseErrorMessage = error.localizedDescription
+                    showingPurchaseError = true
+                }
+            }
+            return
+        }
 
+        showAllPlans()
+    }
+
+    private func showAllPlans() {
+        isPaywallPresented = true
+    }
+
+    private func persistNameIfValid() -> Bool {
+        let normalizedName = ProfileNamePolicy.normalized(nameDraft)
+        guard ProfileNamePolicy.isValid(normalizedName) else { return false }
         ProfilePreference.shared.name = normalizedName
+        return true
+    }
+
+    private func finishOnboarding() {
+        guard persistNameIfValid() else { return }
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
         hasCompletedOnboarding = true
         AnalyticsService.track(.onboardingCompleted(skipped: didSkip))
@@ -169,4 +279,5 @@ struct OnboardingView: View {
 
 #Preview {
     OnboardingView()
+        .environmentObject(RevenueCatService.shared)
 }
