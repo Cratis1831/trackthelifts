@@ -45,8 +45,8 @@ enum ReleaseCatalog {
             version: "1.0.8",
             notes: [
                 "Try Pro free for 1 week on Monthly: unlimited routines, RPE and RIR, charts, supersets, and every accent theme.",
-                "iCloud Sync stays off during the trial so your workouts remain on this device if you cancel. It unlocks when you subscribe.",
-                "Weekly Pro is no longer offered. Monthly, Yearly, and Lifetime are the available plans.",
+                "Save completed workouts to Apple Health as Strength Training when you turn that on in Settings.",
+                "Start from free Push, Pull, Legs, and Full Body routines. They do not count toward your three custom routines.",
             ]
         ),
         AppRelease(
