@@ -80,13 +80,48 @@ enum ProFeature: String, CaseIterable, Identifiable {
         case .accentThemes: return "paintpalette.fill"
         }
     }
+
+    /// iCloud uses a separate CloudKit store. If a trial user opted in and then cancelled,
+    /// the next launch would open the empty local store and look like their log disappeared.
+    var isIncludedInFreeTrial: Bool {
+        self != .icloudSync
+    }
+
+    var onboardingCaption: String {
+        switch self {
+        case .icloudSync:
+            return "After you subscribe"
+        case .unlimitedRoutines:
+            return "More than three routines"
+        case .advancedProgress:
+            return "Volume and estimated 1RM"
+        case .effortTracking:
+            return "Rate sets with RPE or RIR"
+        case .supersets:
+            return "Pair lifts in one session"
+        case .accentThemes:
+            return "Every accent color"
+        }
+    }
+
+    static var trialIncluded: [ProFeature] {
+        allCases.filter(\.isIncludedInFreeTrial)
+    }
 }
 
 enum SubscriptionAccessPolicy {
     static let freeRoutineLimit = 3
 
-    static func canAccess(_ feature: ProFeature, tier: SubscriptionTier) -> Bool {
-        tier == .pro
+    static func canAccess(
+        _ feature: ProFeature,
+        tier: SubscriptionTier,
+        isInFreeTrial: Bool = false
+    ) -> Bool {
+        guard tier == .pro else { return false }
+        if isInFreeTrial && !feature.isIncludedInFreeTrial {
+            return false
+        }
+        return true
     }
 
     static func effectiveTier(

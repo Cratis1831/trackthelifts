@@ -13,25 +13,28 @@ struct PaywallView: View {
     @State private var showRestoreResultAlert = false
     @State private var restoreResultMessage = ""
 
+    @State private var hasUserChosenPackage = false
+
     var purchaseButtonText: String {
         guard let package = selectedPackage else {
             return "Select a Plan"
         }
-        let price = package.storeProduct.localizedPriceString
-        if package.packageType == .lifetime {
-            return "Get Lifetime Access - \(price)"
-        } else {
-            return "Start Pro - \(price)"
-        }
+        return SubscriptionOfferPresentation.purchaseButtonTitle(
+            plan: package.planKind,
+            price: package.storeProduct.localizedPriceString,
+            intro: package.introOfferSummary,
+            isIntroEligible: revenueCatService.isEligibleForFreeTrial(package)
+        )
     }
 
     /// The monthly package from the current offering, used to compute annual savings.
-    /// Falls back to identifier matching when the package type isn't set.
     private var monthlyPackage: Package? {
-        revenueCatService.availablePackages.first { $0.packageType == .monthly }
-            ?? revenueCatService.availablePackages.first {
-                $0.storeProduct.productIdentifier.lowercased().contains("month")
-            }
+        revenueCatService.monthlyPackage
+    }
+
+    private var selectedIntroEligible: Bool {
+        guard let selectedPackage else { return false }
+        return revenueCatService.isEligibleForFreeTrial(selectedPackage)
     }
 
     /// Savings shown above the compact plan selector, calculated from localized StoreKit prices.
@@ -51,11 +54,16 @@ struct PaywallView: View {
         return Int((((monthlyForYear - annual) / monthlyForYear) * 100).rounded())
     }
 
-    /// Whether the currently selected plan is a one-time (non-subscription) purchase.
-    private var isLifetimeSelected: Bool {
-        guard let selectedPackage else { return false }
-        return selectedPackage.packageType == .lifetime
-            || selectedPackage.storeProduct.productIdentifier.lowercased().contains("life")
+    private var legalFooterText: String {
+        guard let package = selectedPackage else {
+            return "Subscription automatically renews unless canceled at least 24 hours before the end of the current period."
+        }
+        return SubscriptionOfferPresentation.legalFooter(
+            plan: package.planKind,
+            price: package.storeProduct.localizedPriceString,
+            intro: package.introOfferSummary,
+            isIntroEligible: selectedIntroEligible
+        )
     }
 
     private var displayedFeatures: [ProFeature] {
@@ -125,6 +133,9 @@ struct PaywallView: View {
         .onChange(of: revenueCatService.availablePackages.map(\.identifier)) {
             selectDefaultPackageIfNeeded()
         }
+        .onChange(of: revenueCatService.hasEligibleMonthlyTrial) {
+            selectDefaultPackageIfNeeded()
+        }
         .alert("Purchase Error", isPresented: $showingError) {
             Button("OK") { }
         } message: {
@@ -190,8 +201,10 @@ struct PaywallView: View {
                     ForEach(revenueCatService.availablePackages, id: \.identifier) { package in
                         PackageCard(
                             package: package,
-                            isSelected: selectedPackage?.identifier == package.identifier
+                            isSelected: selectedPackage?.identifier == package.identifier,
+                            showsFreeTrial: revenueCatService.isEligibleForFreeTrial(package)
                         ) {
+                            hasUserChosenPackage = true
                             selectedPackage = package
                         }
                     }
@@ -233,13 +246,11 @@ struct PaywallView: View {
             .disabled(revenueCatService.isLoading || selectedPackage == nil)
 
             VStack(spacing: 6) {
-                Text(isLifetimeSelected
-                     ? "One-time purchase. No subscription, no renewals."
-                     : "Subscription automatically renews unless canceled at least 24 hours before the end of the current period.")
+                Text(legalFooterText)
                     .font(.system(size: 11))
                     .foregroundColor(Color.appTextSecondary)
                     .multilineTextAlignment(.center)
-                    .lineLimit(2)
+                    .lineLimit(3)
 
                 HStack(spacing: 6) {
                     Button("Restore Purchases") {
@@ -271,12 +282,8 @@ struct PaywallView: View {
     // MARK: - Actions
 
     private func selectDefaultPackageIfNeeded() {
-        guard selectedPackage == nil else { return }
-        selectedPackage = revenueCatService.availablePackages.first {
-            $0.packageType == .annual
-                || $0.storeProduct.productIdentifier.lowercased().contains("annual")
-                || $0.storeProduct.productIdentifier.lowercased().contains("year")
-        } ?? revenueCatService.availablePackages.first
+        guard !hasUserChosenPackage else { return }
+        selectedPackage = revenueCatService.preferredPaywallPackage()
     }
 
     private func restorePurchases() async {
@@ -325,52 +332,21 @@ struct FeatureRow: View {
 struct PackageCard: View {
     let package: Package
     let isSelected: Bool
+    var showsFreeTrial: Bool = false
     let action: () -> Void
 
-    /// Falls back to matching the product identifier for custom/unknown package types.
-    private var identifier: String {
-        package.storeProduct.productIdentifier.lowercased()
-    }
+    private var planKind: SubscriptionPlanKind { package.planKind }
 
-    var planType: String {
-        switch package.packageType {
-        case .weekly:
-            return "Weekly"
-        case .monthly:
-            return "Monthly"
-        case .annual:
-            return "Yearly"
-        case .lifetime:
-            return "Lifetime"
-        default:
-            if identifier.contains("week") {
-                return "Weekly"
-            } else if identifier.contains("month") {
-                return "Monthly"
-            } else if identifier.contains("annual") || identifier.contains("year") {
-                return "Yearly"
-            } else if identifier.contains("lifetime") || identifier.contains("life") {
-                return "Lifetime"
-            } else {
-                return "Pro"
-            }
-        }
-    }
+    var planType: String { planKind.displayName }
 
     /// Short per-unit caption shown under the price in the compact card.
+    private var trialCaption: String? {
+        guard showsFreeTrial, let summary = package.introOfferSummary else { return nil }
+        return SubscriptionOfferPresentation.trialCardCaption(for: summary)
+    }
+
     var unitCaption: String {
-        switch planType {
-        case "Weekly":
-            return "week"
-        case "Monthly":
-            return "month"
-        case "Yearly":
-            return "year"
-        case "Lifetime":
-            return "once"
-        default:
-            return ""
-        }
+        trialCaption ?? planKind.unitCaption
     }
 
     var body: some View {
@@ -391,7 +367,9 @@ struct PackageCard: View {
 
                     Text(unitCaption)
                         .font(.system(size: 8.5, weight: .medium))
-                        .foregroundColor(Color.appTextSecondary)
+                        .foregroundColor(trialCaption == nil ? Color.appTextSecondary : .appAccent)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                 }
 
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")

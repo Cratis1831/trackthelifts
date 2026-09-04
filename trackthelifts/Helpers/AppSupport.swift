@@ -42,6 +42,14 @@ struct AppRelease: Identifiable {
 enum ReleaseCatalog {
     static let releases = [
         AppRelease(
+            version: "1.0.8",
+            notes: [
+                "Try Pro free for 1 week on Monthly: unlimited routines, RPE and RIR, charts, supersets, and every accent theme.",
+                "iCloud Sync stays off during the trial so your workouts remain on this device if you cancel. It unlocks when you subscribe.",
+                "Weekly Pro is no longer offered. Monthly, Yearly, and Lifetime are the available plans.",
+            ]
+        ),
+        AppRelease(
             version: "1.0.6",
             notes: [
                 "iCloud Sync & Backup (Pro): keep every workout backed up to your iCloud and in sync across your devices. Turn it on in Settings.",

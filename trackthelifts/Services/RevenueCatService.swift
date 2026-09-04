@@ -18,11 +18,17 @@ class RevenueCatService: ObservableObject {
     @Published var isLoading = false
     @Published var lastError: RevenueCatError?
     @Published var availablePackages: [Package] = []
+    @Published private(set) var introEligibleProductIDs: Set<String> = []
+    @Published private(set) var isInFreeTrial = false
+    private var introEligibilityLoaded = false
     #if DEBUG
+    private static let debugTierOverrideKey = "debugSubscriptionTierOverride"
+
     @Published var debugTierOverride: SubscriptionTier? {
         didSet {
+            persistDebugTierOverride()
             synchronizeThemeAccess()
-            CloudSyncPreference.shared.cachedHasPro = currentTier == .pro
+            CloudSyncPreference.shared.cachedHasPro = canAccess(.icloudSync)
         }
     }
     #endif
@@ -37,12 +43,23 @@ class RevenueCatService: ObservableObject {
         entitlementTier
         #endif
     }
+
+    /// Debug Pro overrides are treated as a paid subscription so iCloud can be tested.
+    private var effectiveIsInFreeTrial: Bool {
+        #if DEBUG
+        if debugTierOverride != nil { return false }
+        #endif
+        return isInFreeTrial
+    }
     
     private var cancellables = Set<AnyCancellable>()
     
     private init() {
         #if DEBUG
-        debugTierOverride = nil
+        if let raw = UserDefaults.standard.string(forKey: Self.debugTierOverrideKey) {
+            debugTierOverride = SubscriptionTier(rawValue: raw)
+        }
+        CloudSyncPreference.shared.cachedHasPro = canAccess(.icloudSync)
         #endif
         synchronizeThemeAccess()
     }
@@ -230,8 +247,11 @@ class RevenueCatService: ObservableObject {
                 availablePackages = Self.sortedPackages(offering.availablePackages)
                 print("✅ Loaded \(availablePackages.count) packages from offering: \(offering.identifier)")
                 print("Packages: \(availablePackages.map { $0.storeProduct.productIdentifier })")
+                await refreshIntroEligibility()
             } else {
                 availablePackages = []
+                introEligibleProductIDs = []
+                introEligibilityLoaded = false
                 print("❌ No Pro or current offering found")
                 lastError = .noOfferingsAvailable
             }
@@ -239,6 +259,49 @@ class RevenueCatService: ObservableObject {
             print("❌ Failed to load offerings: \(error)")
             lastError = .offeringsLoadFailed(error)
         }
+    }
+
+    var monthlyPackage: Package? {
+        availablePackages.first { $0.planKind == .monthly }
+    }
+
+    var annualPackage: Package? {
+        availablePackages.first { $0.planKind == .annual }
+    }
+
+    var hasEligibleMonthlyTrial: Bool {
+        guard let monthlyPackage else { return false }
+        return isEligibleForFreeTrial(monthlyPackage)
+    }
+
+    func isEligibleForFreeTrial(_ package: Package) -> Bool {
+        guard package.introOfferSummary?.isFreeTrial == true else { return false }
+        if introEligibilityLoaded {
+            return introEligibleProductIDs.contains(package.storeProduct.productIdentifier)
+        }
+        return true
+    }
+
+    func preferredPaywallPackage() -> Package? {
+        if let monthlyPackage, isEligibleForFreeTrial(monthlyPackage) {
+            return monthlyPackage
+        }
+        return annualPackage ?? availablePackages.first
+    }
+
+    private func refreshIntroEligibility() async {
+        let packages = availablePackages
+        guard !packages.isEmpty else {
+            introEligibleProductIDs = []
+            introEligibilityLoaded = false
+            return
+        }
+
+        let result = await Purchases.shared.checkTrialOrIntroDiscountEligibility(packages: packages)
+        introEligibleProductIDs = Set(result.compactMap { package, eligibility in
+            eligibility.status == .eligible ? package.storeProduct.productIdentifier : nil
+        })
+        introEligibilityLoaded = true
     }
 
     /// Stable merchandising order for the 2×2 paywall:
@@ -270,7 +333,11 @@ class RevenueCatService: ObservableObject {
     // MARK: - Feature Access Methods
     
     func canAccess(_ feature: ProFeature) -> Bool {
-        SubscriptionAccessPolicy.canAccess(feature, tier: currentTier)
+        SubscriptionAccessPolicy.canAccess(
+            feature,
+            tier: currentTier,
+            isInFreeTrial: effectiveIsInFreeTrial
+        )
     }
     
     func requiresPro(_ feature: ProFeature) -> Bool {
@@ -280,18 +347,20 @@ class RevenueCatService: ObservableObject {
     // MARK: - Private Methods
     
     private func updateSubscriptionStatus(from customerInfo: CustomerInfo) {
-        // Check if user has active Pro entitlement
-        if customerInfo.entitlements["Pro"]?.isActive == true {
+        let entitlement = customerInfo.entitlements["Pro"]
+        if entitlement?.isActive == true {
             entitlementTier = .pro
+            isInFreeTrial = entitlement?.periodType == .trial
         } else {
             entitlementTier = .free
+            isInFreeTrial = false
         }
 
         synchronizeThemeAccess()
 
-        // Snapshot the entitlement so the next launch can decide synchronously whether to open
-        // the CloudKit-backed store (see CloudSyncPreference).
-        CloudSyncPreference.shared.cachedHasPro = currentTier == .pro
+        // Snapshot paid-Pro access (not trial) so the next launch does not open CloudKit
+        // for a trial that might be cancelled. See `ProFeature.isIncludedInFreeTrial`.
+        CloudSyncPreference.shared.cachedHasPro = canAccess(.icloudSync)
 
         // The user's tier and entitlements are account state; only log them in debug builds.
         #if DEBUG
@@ -303,4 +372,14 @@ class RevenueCatService: ObservableObject {
     private func synchronizeThemeAccess() {
         ThemePreference.shared.updateProAccess(currentTier == .pro)
     }
+
+    #if DEBUG
+    private func persistDebugTierOverride() {
+        if let debugTierOverride {
+            UserDefaults.standard.set(debugTierOverride.rawValue, forKey: Self.debugTierOverrideKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: Self.debugTierOverrideKey)
+        }
+    }
+    #endif
 }
