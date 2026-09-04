@@ -197,7 +197,8 @@ private struct CloudSyncSnapshot: Codable {
                 updatedAt: record.updatedAt,
                 isDeleted: record.isDeleted,
                 cloudKitRecordID: record.cloudKitRecordID,
-                lastSyncDate: record.lastSyncDate
+                lastSyncDate: record.lastSyncDate,
+                isPrebuilt: record.isPrebuilt ?? false
             )
             context.insert(template)
             templatesByID[record.id] = template
@@ -390,6 +391,7 @@ private struct TemplateRecord: Codable {
     var isDeleted: Bool
     var cloudKitRecordID: String?
     var lastSyncDate: Date?
+    var isPrebuilt: Bool?
 
     init(_ template: WorkoutTemplate) {
         id = template.id
@@ -400,6 +402,7 @@ private struct TemplateRecord: Codable {
         isDeleted = template.isDeleted
         cloudKitRecordID = template.cloudKitRecordID
         lastSyncDate = template.lastSyncDate
+        isPrebuilt = template.isPrebuilt
     }
 }
 

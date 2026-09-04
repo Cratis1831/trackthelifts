@@ -28,7 +28,8 @@ final class SubscriptionAccessPolicyTests: XCTestCase {
         XCTAssertEqual(ProFeature.trialIncluded.count, ProFeature.allCases.count - 1)
     }
 
-    func testFreeRoutineLimitAllowsFirstThreeRoutines() {
+    func testFreeRoutineLimitCountsOnlyCustomRoutines() {
+        XCTAssertEqual(SubscriptionAccessPolicy.userCreatedRoutineCount(from: []), 0)
         XCTAssertTrue(SubscriptionAccessPolicy.canCreateRoutine(existingCount: 0, tier: .free))
         XCTAssertTrue(SubscriptionAccessPolicy.canCreateRoutine(existingCount: 1, tier: .free))
         XCTAssertTrue(SubscriptionAccessPolicy.canCreateRoutine(existingCount: 2, tier: .free))

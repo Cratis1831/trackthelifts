@@ -30,20 +30,28 @@ struct WorkoutView: View {
         sessionManager.getActiveWorkout(from: modelContext)
     }
 
-    private var sortedTemplates: [WorkoutTemplate] {
+    private var starterTemplates: [WorkoutTemplate] {
+        sorted(templates.filter(\.isPrebuilt))
+    }
+
+    private var userCreatedTemplates: [WorkoutTemplate] {
+        sorted(templates.filter { !$0.isPrebuilt })
+    }
+
+    private var canCreateRoutine: Bool {
+        SubscriptionAccessPolicy.canCreateRoutine(
+            existingCount: SubscriptionAccessPolicy.userCreatedRoutineCount(from: templates),
+            tier: revenueCatService.currentTier
+        )
+    }
+
+    private func sorted(_ templates: [WorkoutTemplate]) -> [WorkoutTemplate] {
         switch sortBy {
         case .name:
             return templates.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
         case .recent:
             return templates.sorted { $0.updatedAt > $1.updatedAt }
         }
-    }
-
-    private var canCreateRoutine: Bool {
-        SubscriptionAccessPolicy.canCreateRoutine(
-            existingCount: templates.count,
-            tier: revenueCatService.currentTier
-        )
     }
 
     enum SortOption: String, CaseIterable {
@@ -118,9 +126,28 @@ struct WorkoutView: View {
                                 .tint(.appTextSecondary)
                             }
 
-                            // My Templates Header
+                            if !starterTemplates.isEmpty {
+                                Text("Starter Routines")
+                                    .font(.appUtility)
+                                    .tracking(0.6)
+                                    .textCase(.uppercase)
+                                    .foregroundColor(.appTextPrimary)
+
+                                LazyVStack(spacing: 15) {
+                                    ForEach(starterTemplates) { template in
+                                        TemplateCard(template: template, onTap: {
+                                            startWorkout(from: template)
+                                        }, onEdit: {
+                                            templateToEdit = template
+                                        }, onDuplicate: {
+                                            duplicateRoutine(template)
+                                        })
+                                    }
+                                }
+                            }
+
                             HStack {
-                                Text("My Routines (\(templates.count))")
+                                Text(myRoutinesHeaderTitle)
                                     .font(.appUtility)
                                     .tracking(0.6)
                                     .textCase(.uppercase)
@@ -143,10 +170,9 @@ struct WorkoutView: View {
                                 }
                             }
 
-                            // Template Cards
-                            if !templates.isEmpty {
+                            if !userCreatedTemplates.isEmpty {
                                 LazyVStack(spacing: 15) {
-                                    ForEach(sortedTemplates) { template in
+                                    ForEach(userCreatedTemplates) { template in
                                         TemplateCard(template: template, onTap: {
                                             startWorkout(from: template)
                                         }, onEdit: {
@@ -251,6 +277,14 @@ struct WorkoutView: View {
         .proPaywall(feature: $selectedProFeature)
     }
 
+    private var myRoutinesHeaderTitle: String {
+        let count = userCreatedTemplates.count
+        if revenueCatService.currentTier == .free {
+            return "My Routines (\(count)/\(SubscriptionAccessPolicy.freeRoutineLimit))"
+        }
+        return "My Routines (\(count))"
+    }
+
     private func startWorkout(from template: WorkoutTemplate) {
         guard !sessionManager.hasActiveWorkout(in: modelContext) else {
             showActiveWorkoutAlert = true
@@ -329,6 +363,20 @@ struct TemplateCard: View {
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.appTextPrimary)
                         .lineLimit(1)
+
+                    if template.isPrebuilt {
+                        Text("Starter")
+                            .font(.appUtility)
+                            .tracking(0.4)
+                            .textCase(.uppercase)
+                            .foregroundColor(.appTextSecondary)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .overlay(
+                                Capsule()
+                                    .stroke(Color.appBorder, lineWidth: 1)
+                            )
+                    }
 
                     Spacer()
 

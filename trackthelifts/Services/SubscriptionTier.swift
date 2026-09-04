@@ -58,7 +58,7 @@ enum ProFeature: String, CaseIterable, Identifiable {
         case .icloudSync:
             return "Keep every workout backed up to your iCloud and in sync across all your devices."
         case .unlimitedRoutines:
-            return "Create as many reusable workout routines as you need. Free includes up to three."
+            return "Create as many reusable workout routines as you need. Free includes three of your own, plus starter routines."
         case .advancedProgress:
             return "See detailed volume and estimated one-rep-max trends over time."
         case .effortTracking:
@@ -92,7 +92,7 @@ enum ProFeature: String, CaseIterable, Identifiable {
         case .icloudSync:
             return "After you subscribe"
         case .unlimitedRoutines:
-            return "More than three routines"
+            return "More than three of your own"
         case .advancedProgress:
             return "Volume and estimated 1RM"
         case .effortTracking:
@@ -129,6 +129,10 @@ enum SubscriptionAccessPolicy {
         debugOverride: SubscriptionTier?
     ) -> SubscriptionTier {
         debugOverride ?? entitlementTier
+    }
+
+    static func userCreatedRoutineCount(from templates: [WorkoutTemplate]) -> Int {
+        templates.filter { !$0.isPrebuilt }.count
     }
 
     static func canCreateRoutine(existingCount: Int, tier: SubscriptionTier) -> Bool {

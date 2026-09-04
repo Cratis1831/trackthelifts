@@ -218,7 +218,7 @@ struct CreateRoutineView: View {
 
     private func saveRoutine() {
         if existingTemplate == nil && !SubscriptionAccessPolicy.canCreateRoutine(
-            existingCount: templates.count,
+            existingCount: SubscriptionAccessPolicy.userCreatedRoutineCount(from: templates),
             tier: revenueCatService.currentTier
         ) {
             selectedProFeature = .unlimitedRoutines
