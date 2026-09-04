@@ -181,7 +181,8 @@ private struct CloudSyncSnapshot: Codable {
                 updatedAt: record.updatedAt,
                 isDeleted: record.isDeleted,
                 cloudKitRecordID: record.cloudKitRecordID,
-                lastSyncDate: record.lastSyncDate
+                lastSyncDate: record.lastSyncDate,
+                healthKitWorkoutUUID: record.healthKitWorkoutUUID
             )
             context.insert(workout)
             workoutsByID[record.id] = workout
@@ -322,6 +323,7 @@ private struct WorkoutRecord: Codable {
     var isDeleted: Bool
     var cloudKitRecordID: String?
     var lastSyncDate: Date?
+    var healthKitWorkoutUUID: UUID?
 
     init(_ workout: Workout) {
         id = workout.id
@@ -335,6 +337,7 @@ private struct WorkoutRecord: Codable {
         isDeleted = workout.isDeleted
         cloudKitRecordID = workout.cloudKitRecordID
         lastSyncDate = workout.lastSyncDate
+        healthKitWorkoutUUID = workout.healthKitWorkoutUUID
     }
 }
 

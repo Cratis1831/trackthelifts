@@ -21,6 +21,7 @@ struct SettingsView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = true
     private let notificationService = NotificationService.shared
     @State private var showNotificationDeniedAlert = false
+    @State private var showHealthKitDeniedAlert = false
     @State private var showRestoreErrorAlert = false
     @State private var showRestoreResultAlert = false
     @State private var restoreResultMessage = ""
@@ -35,6 +36,7 @@ struct SettingsView: View {
     private var restTimerDurationPreference = RestTimerDurationPreference.shared
     private var intensityPreference = IntensityPreference.shared
     private var cloudSyncPreference = CloudSyncPreference.shared
+    private var healthKitPreference = HealthKitPreference.shared
     @State private var iCloudAccountAvailable = true
 
     // Shared card/typography constants so every section reads as one system.
@@ -120,6 +122,11 @@ struct SettingsView: View {
             Button("OK") { }
         } message: {
             Text("Enable notifications for ForgeLyte Lift in iOS Settings to turn on workout reminders.")
+        }
+        .alert("Apple Health Access Off", isPresented: $showHealthKitDeniedAlert) {
+            Button("OK") { }
+        } message: {
+            Text("Enable Health access for ForgeLyte Lift in iOS Settings to save completed workouts to Apple Health.")
         }
         .alert("Restore Failed", isPresented: $showRestoreErrorAlert) {
             Button("OK") { }
@@ -293,6 +300,10 @@ struct SettingsView: View {
                 exportRow
                 rowDivider
                 icloudSyncRow
+                if HealthKitWorkoutService.shared.isHealthDataAvailable {
+                    rowDivider
+                    appleHealthRow
+                }
                 rowDivider
                 resetOnboardingRow
                 #if DEBUG
@@ -619,6 +630,51 @@ struct SettingsView: View {
             Text("iCloud Sync")
                 .font(.system(size: 16))
                 .foregroundColor(.appTextPrimary)
+        }
+    }
+
+    private var appleHealthBinding: Binding<Bool> {
+        Binding(
+            get: { healthKitPreference.isEnabled },
+            set: { newValue in
+                if newValue {
+                    Task {
+                        let granted = await HealthKitWorkoutService.shared.enableIfAuthorized()
+                        await MainActor.run {
+                            if !granted {
+                                showHealthKitDeniedAlert = true
+                            }
+                        }
+                    }
+                } else {
+                    healthKitPreference.isEnabled = false
+                }
+            }
+        )
+    }
+
+    private var appleHealthRow: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Toggle(isOn: appleHealthBinding) {
+                HStack(spacing: 12) {
+                    IconTile(color: Color(red: 1.00, green: 0.27, blue: 0.35)) {
+                        Image(systemName: "heart.fill")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.appTextPrimary)
+                    }
+                    Text("Apple Health")
+                        .font(.system(size: 16))
+                        .foregroundColor(.appTextPrimary)
+                }
+            }
+            .tint(.appToggleTint)
+
+            if healthKitPreference.isEnabled {
+                Text("Completed workouts are saved to Apple Health as Strength Training. Your log in ForgeLyte Lift is unchanged if you turn this off.")
+                    .font(.system(size: 13))
+                    .foregroundColor(secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 
