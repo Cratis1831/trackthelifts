@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/ashkan/.claude/plugins/**)",
+      "Read(//Users/ashkan/.claude/**)"
+    ]
+  }
+}
