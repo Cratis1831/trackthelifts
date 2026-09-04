@@ -33,5 +33,11 @@ final class AppSupportTests: XCTestCase {
         XCTAssertEqual(AppVersion.buildNumber, "1")
         XCTAssertEqual(ReleaseCatalog.releases.first?.version, AppVersion.marketingVersion)
         XCTAssertFalse(ReleaseCatalog.releases.first?.notes.isEmpty ?? true)
+        let notes = ReleaseCatalog.releases.first?.notes.joined(separator: " ") ?? ""
+        XCTAssertTrue(notes.contains("Try Pro free for 1 week"))
+        XCTAssertTrue(notes.contains("Apple Health"))
+        XCTAssertTrue(notes.contains("do not count toward your three custom routines"))
+        XCTAssertFalse(notes.contains("Weekly Pro"))
+        XCTAssertFalse(notes.contains("iCloud Sync stays off"))
     }
 }
