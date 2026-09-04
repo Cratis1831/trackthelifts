@@ -1003,13 +1003,15 @@ private struct TrialBadgeJiggle: ViewModifier {
                 angle = 0
                 guard isActive, !reduceMotion else { return }
 
-                try? await Task.sleep(for: .milliseconds(280))
-                guard !Task.isCancelled else { return }
-                await jiggleOnce()
-
-                try? await Task.sleep(for: .milliseconds(2200))
-                guard !Task.isCancelled else { return }
-                await jiggleOnce()
+                do {
+                    try await Task.sleep(for: .milliseconds(280))
+                    while !Task.isCancelled {
+                        await jiggleOnce()
+                        try await Task.sleep(for: .milliseconds(420))
+                    }
+                } catch {
+                    angle = 0
+                }
             }
     }
 

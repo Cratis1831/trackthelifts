@@ -1,18 +1,49 @@
 import Foundation
 
+struct AppReviewRequestHistory: Equatable {
+    var requestCountInLastYear: Int
+    var daysSinceLastRequest: Int?
+}
+
 enum AppReviewEligibilityPolicy {
+    static let maxRequestsPer365Days = 3
+    static let yearInDays = 365
+
+    static let firstPromptWorkoutCount = 3
+    static let firstPromptWithPRWorkoutCount = 2
+
+    static let secondPromptWorkoutCount = 8
+    static let secondPromptMinimumDays = 30
+
+    static let thirdPromptWorkoutCount = 16
+    static let thirdPromptMinimumDays = 90
+
+    /// StoreKit may suppress the dialog. There is no API for whether the user left a review,
+    /// so later attempts are spaced repeats of a positive moment, capped at Apple's 3 / 365 days.
     static func isEligible(
         completedWorkoutCount: Int,
         currentWorkoutEarnedPersonalRecord: Bool,
-        hasAttemptedAutomaticRequest: Bool
+        history: AppReviewRequestHistory
     ) -> Bool {
-        guard !hasAttemptedAutomaticRequest else { return false }
+        guard history.requestCountInLastYear < maxRequestsPer365Days else { return false }
 
-        if currentWorkoutEarnedPersonalRecord, completedWorkoutCount >= 2 {
-            return true
+        switch history.requestCountInLastYear {
+        case 0:
+            if currentWorkoutEarnedPersonalRecord, completedWorkoutCount >= firstPromptWithPRWorkoutCount {
+                return true
+            }
+            return completedWorkoutCount >= firstPromptWorkoutCount
+
+        case 1:
+            guard let daysSinceLastRequest = history.daysSinceLastRequest,
+                  daysSinceLastRequest >= secondPromptMinimumDays else { return false }
+            return completedWorkoutCount >= secondPromptWorkoutCount
+
+        default:
+            guard let daysSinceLastRequest = history.daysSinceLastRequest,
+                  daysSinceLastRequest >= thirdPromptMinimumDays else { return false }
+            return completedWorkoutCount >= thirdPromptWorkoutCount
         }
-
-        return completedWorkoutCount >= 3
     }
 }
 
@@ -21,17 +52,21 @@ final class AppReviewPromptController {
 
     private enum Key {
         static let hasAttemptedAutomaticRequest = "appReview.hasAttemptedAutomaticRequest"
+        static let automaticRequestTimestamps = "appReview.automaticRequestTimestamps"
         static let pendingPersonalRecordWorkoutID = "appReview.pendingPersonalRecordWorkoutID"
     }
+
+    private static let secondsPerDay: TimeInterval = 86_400
 
     private let userDefaults: UserDefaults
 
     init(userDefaults: UserDefaults = .standard) {
         self.userDefaults = userDefaults
+        migrateLegacyAttemptFlagIfNeeded()
     }
 
     var hasAttemptedAutomaticRequest: Bool {
-        userDefaults.bool(forKey: Key.hasAttemptedAutomaticRequest)
+        !storedRequestDates.isEmpty
     }
 
     var pendingPersonalRecordWorkoutID: UUID? {
@@ -56,21 +91,54 @@ final class AppReviewPromptController {
 
     func registerCompletion(
         completedWorkoutCount: Int,
-        currentWorkoutEarnedPersonalRecord: Bool
+        currentWorkoutEarnedPersonalRecord: Bool,
+        now: Date = .now
     ) -> Bool {
+        let history = requestHistory(at: now)
         let isEligible = AppReviewEligibilityPolicy.isEligible(
             completedWorkoutCount: completedWorkoutCount,
             currentWorkoutEarnedPersonalRecord: currentWorkoutEarnedPersonalRecord,
-            hasAttemptedAutomaticRequest: hasAttemptedAutomaticRequest
+            history: history
         )
 
         if isEligible {
-            // Record the attempt before asking StoreKit. Apple decides whether a prompt is shown,
-            // and the app should not repeatedly interrupt the user when it is suppressed.
-            userDefaults.set(true, forKey: Key.hasAttemptedAutomaticRequest)
+            // Record the attempt before asking StoreKit. Apple decides whether a prompt is shown
+            // and limits the system dialog to three times in 365 days.
+            appendRequest(at: now)
         }
 
         return isEligible
+    }
+
+    func requestHistory(at now: Date = .now) -> AppReviewRequestHistory {
+        let windowStart = now.addingTimeInterval(-TimeInterval(AppReviewEligibilityPolicy.yearInDays) * Self.secondsPerDay)
+        let recent = storedRequestDates.filter { $0 >= windowStart }
+        let daysSinceLastRequest = storedRequestDates.max().map { last in
+            max(0, Int(now.timeIntervalSince(last) / Self.secondsPerDay))
+        }
+        return AppReviewRequestHistory(
+            requestCountInLastYear: recent.count,
+            daysSinceLastRequest: daysSinceLastRequest
+        )
+    }
+
+    private var storedRequestDates: [Date] {
+        let timestamps = userDefaults.array(forKey: Key.automaticRequestTimestamps) as? [Double] ?? []
+        return timestamps.map { Date(timeIntervalSince1970: $0) }
+    }
+
+    private func appendRequest(at date: Date) {
+        var timestamps = userDefaults.array(forKey: Key.automaticRequestTimestamps) as? [Double] ?? []
+        timestamps.append(date.timeIntervalSince1970)
+        userDefaults.set(timestamps, forKey: Key.automaticRequestTimestamps)
+    }
+
+    private func migrateLegacyAttemptFlagIfNeeded() {
+        guard userDefaults.bool(forKey: Key.hasAttemptedAutomaticRequest) else { return }
+        if storedRequestDates.isEmpty {
+            appendRequest(at: .now)
+        }
+        userDefaults.removeObject(forKey: Key.hasAttemptedAutomaticRequest)
     }
 }
 
