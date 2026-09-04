@@ -65,6 +65,7 @@ final class CloudSyncStoreMigratorTests: XCTestCase {
         let workout = Workout(title: "Push Day", date: Date(timeIntervalSince1970: 1_700_000_000), notes: "Felt strong")
         workout.isActive = false
         workout.completedAt = Date(timeIntervalSince1970: 1_700_000_600)
+        workout.healthKitWorkoutUUID = UUID(uuidString: "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE")
         sourceContext.insert(workout)
 
         let set = ExerciseSet(
@@ -105,6 +106,7 @@ final class CloudSyncStoreMigratorTests: XCTestCase {
         XCTAssertEqual(importedWorkouts.first?.id, workout.id)
         XCTAssertEqual(importedWorkouts.first?.title, "Push Day")
         XCTAssertEqual(importedWorkouts.first?.notes, "Felt strong")
+        XCTAssertEqual(importedWorkouts.first?.healthKitWorkoutUUID, workout.healthKitWorkoutUUID)
 
         let importedSets = try destination.mainContext.fetch(FetchDescriptor<ExerciseSet>())
         XCTAssertEqual(importedSets.count, 1)

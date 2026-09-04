@@ -115,8 +115,14 @@ struct HistoryView: View {
         .alert("Delete Workout", isPresented: $showingDeleteConfirmation) {
             Button("Delete", role: .destructive) {
                 if let workout = workoutToDelete {
+                    let healthKitUUID = workout.healthKitWorkoutUUID
                     modelContext.delete(workout)
                     try? modelContext.save()
+                    if let healthKitUUID {
+                        Task {
+                            await HealthKitWorkoutService.shared.deleteWorkout(uuid: healthKitUUID)
+                        }
+                    }
                     Haptics.impact(.medium)
                 }
                 workoutToDelete = nil

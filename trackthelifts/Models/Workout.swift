@@ -18,6 +18,8 @@ class Workout {
     var isDeleted: Bool = false
     var cloudKitRecordID: String?
     var lastSyncDate: Date?
+    /// UUID of the matching `HKWorkout` in Apple Health, if this session was saved there.
+    var healthKitWorkoutUUID: UUID? = nil
 
     @Relationship(deleteRule: .cascade, inverse: \ExerciseSet.workout)
     var exerciseSets: [ExerciseSet] = []
@@ -33,7 +35,8 @@ class Workout {
         updatedAt: Date = .now,
         isDeleted: Bool = false,
         cloudKitRecordID: String? = nil,
-        lastSyncDate: Date? = nil
+        lastSyncDate: Date? = nil,
+        healthKitWorkoutUUID: UUID? = nil
     ) {
         self.id = id
         self.title = title
@@ -46,6 +49,7 @@ class Workout {
         self.isDeleted = isDeleted
         self.cloudKitRecordID = cloudKitRecordID
         self.lastSyncDate = lastSyncDate
+        self.healthKitWorkoutUUID = healthKitWorkoutUUID
     }
 }
 

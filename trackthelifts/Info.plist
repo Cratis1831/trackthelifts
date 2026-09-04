@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSHealthShareUsageDescription</key>
+	<string>ForgeLyte Lift does not read your Apple Health data. iOS requires this description because the app can save completed workouts to Health when you turn that on.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>ForgeLyte Lift saves workouts you complete to Apple Health when you turn this on in Settings.</string>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>UIBackgroundModes</key>

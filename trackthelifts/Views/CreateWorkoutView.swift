@@ -764,6 +764,10 @@ struct CreateWorkoutView: View {
             AppReviewPromptController.shared.clearPendingPersonalRecord(for: workout.id)
             sessionManager.completeWorkout()
             RestTimerManager.shared.cancel()
+            Task {
+                await HealthKitWorkoutService.shared.saveCompletedWorkout(workout)
+                try? modelContext.save()
+            }
             Haptics.success()
             withAnimation(.easeOut(duration: 0.22)) {
                 completionSummary = WorkoutCompletionSummary(
