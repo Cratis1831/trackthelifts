@@ -52,6 +52,7 @@ struct ContentView: View {
         .onAppear {
             UIApplication.shared.enableTapToDismissKeyboard()
             ExerciseData.seedIfNeeded(in: modelContext)
+            PrebuiltRoutineCatalog.seedIfNeeded(in: modelContext)
             WorkoutSessionManager.shared.reconcileOrphanedActiveWorkouts(in: modelContext)
             if CloudSyncPreference.shared.isStoreMirrored {
                 CloudSyncMergeService.mergeDuplicates(in: modelContext)

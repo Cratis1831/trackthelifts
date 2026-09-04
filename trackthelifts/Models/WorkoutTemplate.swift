@@ -20,6 +20,8 @@ class WorkoutTemplate {
     var isDeleted: Bool = false
     var cloudKitRecordID: String?
     var lastSyncDate: Date?
+    /// Bundled starter routine. Free users can use these without spending a custom-routine slot.
+    var isPrebuilt: Bool = false
 
     @Relationship(deleteRule: .cascade, inverse: \WorkoutTemplateExercise.template)
     var templateExercises: [WorkoutTemplateExercise] = []
@@ -32,7 +34,8 @@ class WorkoutTemplate {
         updatedAt: Date = .now,
         isDeleted: Bool = false,
         cloudKitRecordID: String? = nil,
-        lastSyncDate: Date? = nil
+        lastSyncDate: Date? = nil,
+        isPrebuilt: Bool = false
     ) {
         self.id = id
         self.name = name
@@ -42,6 +45,7 @@ class WorkoutTemplate {
         self.isDeleted = isDeleted
         self.cloudKitRecordID = cloudKitRecordID
         self.lastSyncDate = lastSyncDate
+        self.isPrebuilt = isPrebuilt
     }
 }
 

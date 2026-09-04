@@ -163,7 +163,7 @@ struct HistoryView: View {
 
     private func blockedFeatureForNewRoutine(from workout: Workout) -> ProFeature? {
         guard SubscriptionAccessPolicy.canCreateRoutine(
-            existingCount: templates.count,
+            existingCount: SubscriptionAccessPolicy.userCreatedRoutineCount(from: templates),
             tier: revenueCatService.currentTier
         ) else {
             return .unlimitedRoutines

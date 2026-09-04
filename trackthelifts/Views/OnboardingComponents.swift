@@ -357,7 +357,7 @@ struct RoutinesOnboardingPage: View {
         OnboardingPageLayout(
             eyebrow: "Routines",
             title: "Build once. Train again.",
-            detail: "Save workouts as routines and start them in one tap. Free includes up to three routines.",
+            detail: "Save workouts as routines and start them in one tap. Free includes three of your own, plus starter Push, Pull, Legs, and Full Body routines.",
             phase: phase
         ) {
             RoutineSpecimen(phase: phase)

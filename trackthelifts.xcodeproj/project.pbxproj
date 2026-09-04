@@ -22,6 +22,7 @@
 		7A50000230E0000100000001 /* CloudSyncMergeServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A50000430E0000100000001 /* CloudSyncMergeServiceTests.swift */; };
 		7A60000130F0000100000001 /* CloudSyncStoreMigratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A60000230F0000100000001 /* CloudSyncStoreMigratorTests.swift */; };
 		7A8000013100000100000001 /* HealthKitWorkoutPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A8000023100000100000001 /* HealthKitWorkoutPolicyTests.swift */; };
+		7A9000113200000100000001 /* PrebuiltRoutineCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A9000123200000100000001 /* PrebuiltRoutineCatalogTests.swift */; };
 		7A40000F30D0000100000001 /* TrackTheLiftsWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 7A40000130D0000100000001 /* TrackTheLiftsWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -71,6 +72,7 @@
 		7A50000430E0000100000001 /* CloudSyncMergeServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudSyncMergeServiceTests.swift; sourceTree = "<group>"; };
 		7A60000230F0000100000001 /* CloudSyncStoreMigratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudSyncStoreMigratorTests.swift; sourceTree = "<group>"; };
 		7A8000023100000100000001 /* HealthKitWorkoutPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitWorkoutPolicyTests.swift; sourceTree = "<group>"; };
+		7A9000123200000100000001 /* PrebuiltRoutineCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrebuiltRoutineCatalogTests.swift; sourceTree = "<group>"; };
 		7A40000B30D0000100000001 /* RestTimerActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RestTimerActivityAttributes.swift; path = TrackTheLiftsWidgets/RestTimerActivityAttributes.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -94,6 +96,7 @@
 				Tests/CloudSyncStoreMigratorTests.swift,
 				Tests/ExerciseDataTests.swift,
 				Tests/HealthKitWorkoutPolicyTests.swift,
+				Tests/PrebuiltRoutineCatalogTests.swift,
 				Tests/SubscriptionAccessPolicyTests.swift,
 				trackthelifts.entitlements,
 			);
@@ -183,6 +186,7 @@
 				7A10000330A0000100000001 /* SubscriptionAccessPolicyTests.swift */,
 				7A30000230C0000100000001 /* ExerciseDataTests.swift */,
 				7A8000023100000100000001 /* HealthKitWorkoutPolicyTests.swift */,
+				7A9000123200000100000001 /* PrebuiltRoutineCatalogTests.swift */,
 			);
 			path = trackthelifts/Tests;
 			sourceTree = "<group>";
@@ -358,6 +362,7 @@
 				7A10000130A0000100000001 /* SubscriptionAccessPolicyTests.swift in Sources */,
 				7A30000130C0000100000001 /* ExerciseDataTests.swift in Sources */,
 				7A8000013100000100000001 /* HealthKitWorkoutPolicyTests.swift in Sources */,
+				7A9000113200000100000001 /* PrebuiltRoutineCatalogTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
