@@ -142,6 +142,28 @@ final class CloudSyncStoreMigratorTests: XCTestCase {
         XCTAssertEqual(try destination.mainContext.fetch(FetchDescriptor<Exercise>()).count, 1)
     }
 
+    func testRemoveStoreFilesDeletesStoreAndSidecarsOnly() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("cloudkit-store-cleanup-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let store = directory.appendingPathComponent("TrackTheLiftsCloudKit.store")
+        let wal = directory.appendingPathComponent("TrackTheLiftsCloudKit.store-wal")
+        let shm = directory.appendingPathComponent("TrackTheLiftsCloudKit.store-shm")
+        let unrelated = directory.appendingPathComponent("default.store")
+        for url in [store, wal, shm, unrelated] {
+            try Data().write(to: url)
+        }
+
+        CloudSyncStoreMigrator.removeStoreFiles(at: store)
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: store.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: wal.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: shm.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: unrelated.path))
+    }
+
     func testEmptySnapshotStillCreatesPendingImportFile() throws {
         let source = try makeContainer()
         try CloudSyncStoreMigrator.writeSnapshot(from: source.mainContext, to: snapshotURL)

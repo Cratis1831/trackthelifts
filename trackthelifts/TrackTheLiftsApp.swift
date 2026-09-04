@@ -88,13 +88,16 @@ struct TrackTheLiftsApp: App {
 
         if shouldOpenCloudKit {
             do {
-                let container = try ModelContainer(for: schema, configurations: [cloudConfiguration])
-                preference.isStoreMirrored = true
-                importPendingSnapshotIfNeeded(into: container.mainContext, preference: preference)
+                let container = try openCloudKitContainer(
+                    schema: schema,
+                    configuration: cloudConfiguration,
+                    preference: preference
+                )
                 return container
             } catch {
-                print("Failed to open CloudKit-backed store, falling back to local: \(error)")
-                preference.lastStoreOpenMessage = error.localizedDescription
+                let message = CloudSyncPreference.storeOpenFailureMessage(from: error)
+                print("Failed to open CloudKit-backed store, falling back to local: \(message)")
+                preference.lastStoreOpenMessage = message
                 preference.isStoreMirrored = false
             }
         }
@@ -112,6 +115,28 @@ struct TrackTheLiftsApp: App {
             return container
         } catch {
             fatalError("Failed to open the local model store: \(error)")
+        }
+    }
+
+    /// Opens the CloudKit store. If a leftover Development file refuses to load, delete it
+    /// once and retry — that is the same recovery as manually deleting `TrackTheLiftsCloudKit.store`.
+    private static func openCloudKitContainer(
+        schema: Schema,
+        configuration: ModelConfiguration,
+        preference: CloudSyncPreference
+    ) throws -> ModelContainer {
+        do {
+            let container = try ModelContainer(for: schema, configurations: [configuration])
+            preference.isStoreMirrored = true
+            importPendingSnapshotIfNeeded(into: container.mainContext, preference: preference)
+            return container
+        } catch {
+            print("CloudKit store failed to open, deleting leftover store and retrying: \(error)")
+            CloudSyncStoreMigrator.removeStoreFiles(at: configuration.url)
+            let container = try ModelContainer(for: schema, configurations: [configuration])
+            preference.isStoreMirrored = true
+            importPendingSnapshotIfNeeded(into: container.mainContext, preference: preference)
+            return container
         }
     }
 

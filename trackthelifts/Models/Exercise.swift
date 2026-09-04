@@ -53,13 +53,13 @@ class Exercise {
     @Relationship var bodypart: Bodypart?
 
     /// Inverse of `ExerciseSet.exercise`. Deleting an exercise nullifies its sets'
-    /// reference rather than deleting logged history.
+    /// reference rather than deleting logged history. Optional for CloudKit.
     @Relationship(deleteRule: .nullify, inverse: \ExerciseSet.exercise)
-    var exerciseSets: [ExerciseSet] = []
+    var exerciseSets: [ExerciseSet]? = []
 
-    /// Inverse of `WorkoutTemplateExercise.exercise`.
+    /// Inverse of `WorkoutTemplateExercise.exercise`. Optional for CloudKit.
     @Relationship(deleteRule: .nullify, inverse: \WorkoutTemplateExercise.exercise)
-    var templateExercises: [WorkoutTemplateExercise] = []
+    var templateExercises: [WorkoutTemplateExercise]? = []
 
     var category: ExerciseCategory {
         get { ExerciseCategory(rawValue: categoryRawValue) ?? .other }

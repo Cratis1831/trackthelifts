@@ -37,7 +37,7 @@ enum WorkoutExportService {
             var supersetLabels: [UUID: String] = [:]
             var nextSupersetNumber = 1
 
-            let grouped = Dictionary(grouping: workout.exerciseSets.filter { $0.isCompleted }, by: \.exerciseName)
+            let grouped = Dictionary(grouping: (workout.exerciseSets ?? []).filter { $0.isCompleted }, by: \.exerciseName)
             let orderedNames = grouped.keys.sorted { name1, name2 in
                 let order1 = grouped[name1]?.map(\.exerciseOrder).min() ?? Int.max
                 let order2 = grouped[name2]?.map(\.exerciseOrder).min() ?? Int.max

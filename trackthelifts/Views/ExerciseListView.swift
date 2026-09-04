@@ -328,7 +328,7 @@ struct ExerciseListView: View {
         let newExerciseSet = ExerciseSet(
             weight: 0.0,
             reps: 0,
-            order: workout.exerciseSets.count,
+            order: workout.exerciseSets?.count ?? 0,
             exercise: template,
             workout: workout
         )

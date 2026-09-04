@@ -74,6 +74,29 @@ class CloudSyncPreference {
         isEnabled && cachedHasPro
     }
 
+    /// SwiftData's CloudKit load failure often surfaces as a useless "error 1".
+    static func storeOpenFailureMessage(from error: Error) -> String {
+        var parts: [String] = []
+        func collect(_ nsError: NSError) {
+            if let reason = nsError.userInfo[NSLocalizedFailureReasonErrorKey] as? String,
+               !reason.isEmpty,
+               parts.last != reason {
+                parts.append(reason)
+            }
+            for value in nsError.userInfo.values {
+                if let nested = value as? NSError {
+                    collect(nested)
+                }
+            }
+        }
+        collect(error as NSError)
+        if parts.isEmpty {
+            let description = (error as NSError).localizedDescription
+            return description.isEmpty ? "Couldn't open iCloud on this install." : description
+        }
+        return parts.joined(separator: " — ")
+    }
+
     init(userDefaults: UserDefaults = .standard) {
         self.userDefaults = userDefaults
         self.isEnabled = userDefaults.bool(forKey: enabledKey)

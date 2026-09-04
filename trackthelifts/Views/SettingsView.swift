@@ -98,7 +98,7 @@ struct SettingsView: View {
                 Color.appCanvas
                     .ignoresSafeArea()
 
-                ScrollView {
+                ScrollView(.vertical) {
                     VStack(alignment: .leading, spacing: 20) {
                         subscriptionSection
                         appSettingsSection
@@ -107,7 +107,10 @@ struct SettingsView: View {
                     }
                     .padding(.horizontal, 20)
                     .padding(.bottom, 30)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .containerRelativeFrame(.horizontal, alignment: .top)
                 }
+                .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
             }
             .navigationTitle("Settings")
         }
@@ -561,6 +564,7 @@ struct SettingsView: View {
                         .font(.system(size: 13))
                         .foregroundColor(secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
             } else if revenueCatService.isInFreeTrial {
                 HStack(spacing: 12) {
@@ -576,6 +580,7 @@ struct SettingsView: View {
                     .font(.system(size: 13))
                     .foregroundColor(secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             } else {
                 Button {
                     selectedProFeature = .icloudSync
@@ -674,6 +679,7 @@ struct SettingsView: View {
                     .font(.system(size: 13))
                     .foregroundColor(secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
     }

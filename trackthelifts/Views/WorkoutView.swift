@@ -31,11 +31,11 @@ struct WorkoutView: View {
     }
 
     private var starterTemplates: [WorkoutTemplate] {
-        sorted(templates.filter(\.isPrebuilt))
+        sorted(templates.filter(\.isStarterRoutine))
     }
 
     private var userCreatedTemplates: [WorkoutTemplate] {
-        sorted(templates.filter { !$0.isPrebuilt })
+        sorted(templates.filter { !$0.isStarterRoutine })
     }
 
     private var canCreateRoutine: Bool {
@@ -345,14 +345,14 @@ struct TemplateCard: View {
     @Environment(\.modelContext) private var modelContext
 
     private var exercisesSummary: String {
-        template.templateExercises
+        (template.templateExercises ?? [])
             .sorted { $0.order < $1.order }
             .compactMap { $0.exercise?.name }
             .joined(separator: ", ")
     }
 
     private var supersetCount: Int {
-        Set(template.templateExercises.compactMap(\.supersetGroupID)).count
+        Set((template.templateExercises ?? []).compactMap(\.supersetGroupID)).count
     }
 
     var body: some View {
@@ -364,7 +364,7 @@ struct TemplateCard: View {
                         .foregroundColor(.appTextPrimary)
                         .lineLimit(1)
 
-                    if template.isPrebuilt {
+                    if template.isStarterRoutine {
                         Text("Starter")
                             .font(.appUtility)
                             .tracking(0.4)
@@ -435,15 +435,15 @@ struct ResumeWorkoutBanner: View {
     let onResume: () -> Void
     
     private var completedSets: Int {
-        workout.exerciseSets.filter { $0.isCompleted }.count
+        (workout.exerciseSets ?? []).filter { $0.isCompleted }.count
     }
     
     private var totalSets: Int {
-        workout.exerciseSets.count
+        (workout.exerciseSets ?? []).count
     }
     
     private var uniqueExercises: Int {
-        Set(workout.exerciseSets.map(\.exerciseName)).count
+        Set((workout.exerciseSets ?? []).map(\.exerciseName)).count
     }
     
     var body: some View {

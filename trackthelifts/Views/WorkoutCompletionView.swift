@@ -11,7 +11,7 @@ struct WorkoutCompletionSummary: Identifiable {
     let totalVolume: Double
 
     init(workout: Workout, earnedPersonalRecord: Bool = false) {
-        let completedSets = workout.exerciseSets.filter(\.isCompleted)
+        let completedSets = (workout.exerciseSets ?? []).filter(\.isCompleted)
         self.earnedPersonalRecord = earnedPersonalRecord
         workoutName = workout.title
         duration = max(0, (workout.completedAt ?? .now).timeIntervalSince(workout.createdAt))

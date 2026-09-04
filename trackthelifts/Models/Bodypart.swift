@@ -22,9 +22,10 @@ class Bodypart: Identifiable {
     var cloudKitRecordID: String?
     var lastSyncDate: Date?
 
-    /// Inverse of `Exercise.bodypart`, required by CloudKit mirroring.
+    /// Inverse of `Exercise.bodypart`. Optional because CloudKit rejects non-optional to-many
+    /// relationships even when they default to `[]`.
     @Relationship(deleteRule: .nullify, inverse: \Exercise.bodypart)
-    var exercises: [Exercise] = []
+    var exercises: [Exercise]? = []
 
     init(
         id: UUID = UUID(),

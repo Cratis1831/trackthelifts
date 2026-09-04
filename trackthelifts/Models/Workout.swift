@@ -21,8 +21,9 @@ class Workout {
     /// UUID of the matching `HKWorkout` in Apple Health, if this session was saved there.
     var healthKitWorkoutUUID: UUID? = nil
 
+    /// Optional because CloudKit rejects non-optional to-many relationships even with `= []`.
     @Relationship(deleteRule: .cascade, inverse: \ExerciseSet.workout)
-    var exerciseSets: [ExerciseSet] = []
+    var exerciseSets: [ExerciseSet]? = []
 
     init(
         id: UUID = UUID(),
@@ -55,16 +56,16 @@ class Workout {
 
 extension Workout {
     var containsSupersets: Bool {
-        exerciseSets.contains { $0.supersetGroupID != nil }
+        (exerciseSets ?? []).contains { $0.supersetGroupID != nil }
     }
 
     func supersetID(for exerciseName: String) -> UUID? {
-        exerciseSets.first(where: { $0.exerciseName == exerciseName })?.supersetGroupID
+        (exerciseSets ?? []).first(where: { $0.exerciseName == exerciseName })?.supersetGroupID
     }
 
     func setSuperset(_ firstExerciseName: String, _ secondExerciseName: String) {
         let groupID = UUID()
-        for set in exerciseSets where set.exerciseName == firstExerciseName || set.exerciseName == secondExerciseName {
+        for set in exerciseSets ?? [] where set.exerciseName == firstExerciseName || set.exerciseName == secondExerciseName {
             set.supersetGroupID = groupID
             set.updatedAt = .now
         }
@@ -73,7 +74,7 @@ extension Workout {
 
     func removeSuperset(containing exerciseName: String) {
         guard let groupID = supersetID(for: exerciseName) else { return }
-        for set in exerciseSets where set.supersetGroupID == groupID {
+        for set in exerciseSets ?? [] where set.supersetGroupID == groupID {
             set.supersetGroupID = nil
             set.updatedAt = .now
         }
@@ -82,13 +83,13 @@ extension Workout {
 
     /// Removes group identifiers that no longer represent exactly two exercises.
     func normalizeSupersets() {
-        let grouped = Dictionary(grouping: exerciseSets.compactMap { set in
+        let grouped = Dictionary(grouping: (exerciseSets ?? []).compactMap { set in
             set.supersetGroupID.map { ($0, set) }
         }, by: \.0)
         for (groupID, entries) in grouped {
             let names = Set(entries.map { $0.1.exerciseName })
             if names.count != 2 {
-                for set in exerciseSets where set.supersetGroupID == groupID {
+                for set in exerciseSets ?? [] where set.supersetGroupID == groupID {
                     set.supersetGroupID = nil
                 }
             }
@@ -141,7 +142,7 @@ extension Workout {
     }
 
     private func orderedSets(ofExerciseNamed name: String) -> [ExerciseSet] {
-        exerciseSets
+        (exerciseSets ?? [])
             .filter { $0.exerciseName == name }
             .sorted { $0.order < $1.order }
     }
@@ -154,7 +155,7 @@ extension Workout {
         let newWorkout = Workout(title: title, date: .now)
         context.insert(newWorkout)
 
-        let grouped = Dictionary(grouping: exerciseSets, by: \.exerciseName)
+        let grouped = Dictionary(grouping: exerciseSets ?? [], by: \.exerciseName)
         let sortedNames = grouped.keys.sorted { name1, name2 in
             let order1 = grouped[name1]?.map(\.exerciseOrder).min() ?? Int.max
             let order2 = grouped[name2]?.map(\.exerciseOrder).min() ?? Int.max

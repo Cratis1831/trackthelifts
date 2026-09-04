@@ -132,7 +132,7 @@ enum SubscriptionAccessPolicy {
     }
 
     static func userCreatedRoutineCount(from templates: [WorkoutTemplate]) -> Int {
-        templates.filter { !$0.isPrebuilt }.count
+        templates.filter { !$0.isStarterRoutine }.count
     }
 
     static func canCreateRoutine(existingCount: Int, tier: SubscriptionTier) -> Bool {

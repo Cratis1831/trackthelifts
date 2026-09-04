@@ -47,7 +47,7 @@ struct CreateWorkoutView: View {
     /// passes the groups down, instead of re-grouping/re-sorting per exercise row.
     private var exerciseGroups: [(name: String, sets: [ExerciseSet])] {
         guard let workout = savedWorkout else { return [] }
-        let grouped = Dictionary(grouping: workout.exerciseSets, by: \.exerciseName)
+        let grouped = Dictionary(grouping: workout.exerciseSets ?? [], by: \.exerciseName)
         return grouped
             .map { (name: $0.key, sets: $0.value.sorted { $0.order < $1.order }) }
             .sorted { lhs, rhs in
@@ -464,11 +464,11 @@ struct CreateWorkoutView: View {
                     }
 
                     if let workout = savedWorkout {
-                        let nextExerciseOrder = (workout.exerciseSets.map(\.exerciseOrder).max() ?? -1) + 1
+                        let nextExerciseOrder = ((workout.exerciseSets ?? []).map(\.exerciseOrder).max() ?? -1) + 1
                         let newExerciseSet = ExerciseSet(
                             weight: 0,
                             reps: 0,
-                            order: workout.exerciseSets.filter { $0.exercise == selectedTemplate }.count,
+                            order: (workout.exerciseSets ?? []).filter { $0.exercise == selectedTemplate }.count,
                             exerciseOrder: nextExerciseOrder,
                             exercise: selectedTemplate,
                             workout: workout
@@ -684,7 +684,7 @@ struct CreateWorkoutView: View {
         // guard here previously only fired for empty workouts, which left a workout that had sets
         // persisted as `isActive` with `activeWorkoutID` still pointing at it: the session never
         // ended, so "Workout In Progress" kept blocking new workouts even after canceling.
-        let hadLoggedSets = savedWorkout?.exerciseSets.contains { $0.reps > 0 } ?? false
+        let hadLoggedSets = (savedWorkout?.exerciseSets ?? []).contains { $0.reps > 0 }
         if let workout = savedWorkout {
             AppReviewPromptController.shared.clearPendingPersonalRecord(for: workout.id)
             modelContext.delete(workout)
@@ -710,7 +710,7 @@ struct CreateWorkoutView: View {
             return
         }
 
-        let loggedSets = workout.exerciseSets.filter { $0.reps > 0 }
+        let loggedSets = (workout.exerciseSets ?? []).filter { $0.reps > 0 }
         if loggedSets.isEmpty {
             showNoCompletedSetsAlert = true
             return
@@ -727,7 +727,7 @@ struct CreateWorkoutView: View {
     private func markLoggedSetsCompleteAndFinish() {
         guard let workout = savedWorkout else { return }
 
-        for set in workout.exerciseSets where set.reps > 0 {
+        for set in workout.exerciseSets ?? [] where set.reps > 0 {
             set.isCompleted = true
             set.updatedAt = .now
         }
@@ -754,7 +754,7 @@ struct CreateWorkoutView: View {
 
         do {
             try modelContext.save()
-            let completedSets = workout.exerciseSets.filter(\.isCompleted)
+            let completedSets = (workout.exerciseSets ?? []).filter(\.isCompleted)
             AnalyticsService.track(.workoutCompleted(
                 exerciseCount: Set(completedSets.compactMap { $0.exercise?.id }).count,
                 completedSetCount: completedSets.count,
@@ -801,7 +801,7 @@ struct CreateWorkoutView: View {
     private func addNewSet(for exercise: Exercise?, to workout: Workout) {
         guard let exercise = exercise else { return }
         
-        let existingSetsForExercise = workout.exerciseSets.filter { $0.exercise == exercise }
+        let existingSetsForExercise = (workout.exerciseSets ?? []).filter { $0.exercise == exercise }
         let lastSet = existingSetsForExercise.max { $0.order < $1.order }
         let newOrder = lastSet?.order ?? -1
 
@@ -832,7 +832,7 @@ struct CreateWorkoutView: View {
         workout.exerciseSets.removeAll { $0.id == set.id }
         modelContext.delete(set)
 
-        let remaining = workout.exerciseSets
+        let remaining = (workout.exerciseSets ?? [])
             .filter { $0.exercise?.id == exerciseID }
             .sorted { $0.order < $1.order }
         for (index, remainingSet) in remaining.enumerated() {

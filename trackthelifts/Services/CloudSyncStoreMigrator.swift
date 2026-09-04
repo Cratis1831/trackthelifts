@@ -33,6 +33,25 @@ enum CloudSyncStoreMigrator {
         FileManager.default.fileExists(atPath: configuration.url.path)
     }
 
+    /// Deletes a leftover SwiftData store and its `-wal`/`-shm` sidecars. Used when CloudKit
+    /// fails to open (`loadIssueModelContainer` / "error 1") so the next attempt can create a
+    /// fresh Development store instead of repeatedly opening the broken file.
+    static func removeStoreFiles(at url: URL) {
+        let fileManager = FileManager.default
+        let directory = url.deletingLastPathComponent()
+        let prefix = url.lastPathComponent
+        guard let items = try? fileManager.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: nil
+        ) else {
+            try? fileManager.removeItem(at: url)
+            return
+        }
+        for item in items where item.lastPathComponent.hasPrefix(prefix) {
+            try? fileManager.removeItem(at: item)
+        }
+    }
+
     /// CloudKit may only be the first store opened for this schema in the process. If local
     /// data still needs to be snapshotted, this launch must open local, write the JSON, and
     /// wait for a force-quit.

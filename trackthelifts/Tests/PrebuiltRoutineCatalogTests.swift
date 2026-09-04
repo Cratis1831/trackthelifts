@@ -60,7 +60,7 @@ final class PrebuiltRoutineSeedTests: XCTestCase {
 
         let templates = try container.mainContext.fetch(FetchDescriptor<WorkoutTemplate>())
         XCTAssertEqual(templates.count, PrebuiltRoutineCatalog.recipes.count)
-        XCTAssertTrue(templates.allSatisfy(\.isPrebuilt))
+        XCTAssertTrue(templates.allSatisfy(\.isStarterRoutine))
         XCTAssertEqual(SubscriptionAccessPolicy.userCreatedRoutineCount(from: templates), 0)
         XCTAssertTrue(
             SubscriptionAccessPolicy.canCreateRoutine(
@@ -99,7 +99,7 @@ final class PrebuiltRoutineSeedTests: XCTestCase {
         let starter = try container.mainContext.fetch(FetchDescriptor<WorkoutTemplate>()).first
         let copy = try XCTUnwrap(starter).duplicateTemplate(in: container.mainContext)
 
-        XCTAssertFalse(copy.isPrebuilt)
+        XCTAssertFalse(copy.isStarterRoutine)
         XCTAssertEqual(
             SubscriptionAccessPolicy.userCreatedRoutineCount(
                 from: try container.mainContext.fetch(FetchDescriptor<WorkoutTemplate>())

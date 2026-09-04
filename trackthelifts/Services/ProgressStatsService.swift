@@ -90,7 +90,7 @@ enum ProgressStatsService {
         let now = Date()
 
         let workoutVolumes: [(date: Date, volume: Double)] = completedWorkouts(in: context).map { workout in
-            let volume = workout.exerciseSets
+            let volume = (workout.exerciseSets ?? [])
                 .filter { $0.isCompleted }
                 .reduce(0.0) { $0 + $1.weight * Double($1.reps) }
             return (workout.completedAt ?? workout.date, volume)

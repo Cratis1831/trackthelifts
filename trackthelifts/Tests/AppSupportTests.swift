@@ -36,8 +36,25 @@ final class AppSupportTests: XCTestCase {
         let notes = ReleaseCatalog.releases.first?.notes.joined(separator: " ") ?? ""
         XCTAssertTrue(notes.contains("Try Pro free for 1 week"))
         XCTAssertTrue(notes.contains("Apple Health"))
-        XCTAssertTrue(notes.contains("do not count toward your three custom routines"))
+        XCTAssertTrue(notes.contains("Push, Pull, Legs, and Full Body"))
+        XCTAssertFalse(notes.contains("three custom routines"))
         XCTAssertFalse(notes.contains("Weekly Pro"))
         XCTAssertFalse(notes.contains("iCloud Sync stays off"))
+        XCTAssertEqual(ReleaseCatalog.current?.version, "1.0.8")
+    }
+
+    func testWhatsNewPresentsOncePerVersionUntilReinstall() {
+        let defaults = UserDefaults(suiteName: "WhatsNewPreferenceTests")!
+        defaults.removePersistentDomain(forName: "WhatsNewPreferenceTests")
+        let preference = WhatsNewPreference(userDefaults: defaults)
+
+        XCTAssertFalse(preference.shouldPresent(currentVersion: "1.0.8", hasCompletedOnboarding: false))
+        XCTAssertTrue(preference.shouldPresent(currentVersion: "1.0.8", hasCompletedOnboarding: true))
+
+        preference.markCurrentVersionSeen("1.0.8")
+        XCTAssertFalse(preference.shouldPresent(currentVersion: "1.0.8", hasCompletedOnboarding: true))
+
+        preference.markCurrentVersionSeen("1.0.6")
+        XCTAssertTrue(preference.shouldPresent(currentVersion: "1.0.8", hasCompletedOnboarding: true))
     }
 }

@@ -40,13 +40,17 @@ struct AppRelease: Identifiable {
 }
 
 enum ReleaseCatalog {
+    static var current: AppRelease? {
+        releases.first { $0.version == AppVersion.marketingVersion }
+    }
+
     static let releases = [
         AppRelease(
             version: "1.0.8",
             notes: [
                 "Try Pro free for 1 week on Monthly: unlimited routines, RPE and RIR, charts, supersets, and every accent theme.",
                 "Save completed workouts to Apple Health as Strength Training when you turn that on in Settings.",
-                "Start from free Push, Pull, Legs, and Full Body routines. They do not count toward your three custom routines.",
+                "Start from free Push, Pull, Legs, and Full Body routines.",
             ]
         ),
         AppRelease(
@@ -70,4 +74,58 @@ enum ReleaseCatalog {
             ]
         )
     ]
+}
+
+/// Remembers which marketing version's What's New sheet the user has already dismissed.
+/// Clearing app data or reinstalling resets this, so the current notes show again.
+@Observable
+final class WhatsNewPreference {
+    static let shared = WhatsNewPreference()
+
+    @ObservationIgnored
+    private let userDefaults: UserDefaults
+
+    @ObservationIgnored
+    private let seenVersionKey = "lastSeenWhatsNewVersion"
+
+    private(set) var lastSeenVersion: String {
+        didSet { userDefaults.set(lastSeenVersion, forKey: seenVersionKey) }
+    }
+
+    init(userDefaults: UserDefaults = .standard) {
+        self.userDefaults = userDefaults
+        self.lastSeenVersion = userDefaults.string(forKey: seenVersionKey) ?? ""
+    }
+
+    func shouldPresent(
+        currentVersion: String = AppVersion.marketingVersion,
+        hasCompletedOnboarding: Bool
+    ) -> Bool {
+        guard hasCompletedOnboarding, !currentVersion.isEmpty, currentVersion != "—" else { return false }
+        guard let current = ReleaseCatalog.releases.first(where: { $0.version == currentVersion }),
+              !current.notes.isEmpty else { return false }
+        return lastSeenVersion != currentVersion
+    }
+
+    func markCurrentVersionSeen(_ version: String = AppVersion.marketingVersion) {
+        lastSeenVersion = version
+    }
+}
+
+extension Optional {
+    /// CloudKit requires to-many relationships to be optional. These helpers keep append/remove
+    /// working when the stored array is `nil` (a record that arrived before its children).
+    mutating func append<Element>(_ element: Element) where Wrapped == [Element] {
+        var items = self ?? []
+        items.append(element)
+        self = items
+    }
+
+    mutating func removeAll<Element>(
+        where shouldBeRemoved: (Element) -> Bool
+    ) where Wrapped == [Element] {
+        var items = self ?? []
+        items.removeAll(where: shouldBeRemoved)
+        self = items
+    }
 }

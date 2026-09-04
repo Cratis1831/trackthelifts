@@ -37,10 +37,10 @@ enum CloudSyncMergeService {
             guard let survivor = ordered.first else { continue }
 
             for duplicate in ordered.dropFirst() {
-                for set in duplicate.exerciseSets {
+                for set in duplicate.exerciseSets ?? [] {
                     set.exercise = survivor
                 }
-                for templateExercise in duplicate.templateExercises {
+                for templateExercise in duplicate.templateExercises ?? [] {
                     templateExercise.exercise = survivor
                 }
                 if survivor.bodypart == nil {
@@ -67,7 +67,7 @@ enum CloudSyncMergeService {
             guard let survivor = ordered.first else { continue }
 
             for duplicate in ordered.dropFirst() {
-                for exercise in duplicate.exercises {
+                for exercise in duplicate.exercises ?? [] {
                     exercise.bodypart = survivor
                 }
                 context.delete(duplicate)

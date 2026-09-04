@@ -21,6 +21,7 @@ struct ContentView: View {
     @EnvironmentObject private var revenueCatService: RevenueCatService
     @State private var selectedTab: AppTab = .profile
     private var cloudSyncPreference = CloudSyncPreference.shared
+    private var whatsNewPreference = WhatsNewPreference.shared
 
     var body: some View {
         ZStack {
@@ -48,6 +49,13 @@ struct ContentView: View {
         }
         .animation(.easeOut(duration: 0.3), value: hasCompletedOnboarding)
         .animation(.easeOut(duration: 0.25), value: showsCloudSyncAnnouncement)
+        .sheet(isPresented: whatsNewSheetBinding) {
+            if let release = ReleaseCatalog.current {
+                WhatsNewUpdateSheet(release: release) {
+                    whatsNewPreference.markCurrentVersionSeen()
+                }
+            }
+        }
         .watchesRestTimerCompletion()
         .onAppear {
             UIApplication.shared.enableTapToDismissKeyboard()
@@ -148,9 +156,28 @@ struct ContentView: View {
     // MARK: - iCloud Sync announcement
 
     /// One-time card telling existing users iCloud Sync arrived. Held back until onboarding is
-    /// done so a brand-new user's first frame isn't two overlays deep.
+    /// done and the version What's New sheet has been dismissed so the first frame isn't two
+    /// overlays deep.
     private var showsCloudSyncAnnouncement: Bool {
-        hasCompletedOnboarding && !cloudSyncPreference.hasSeenAnnouncement && !cloudSyncPreference.isEnabled
+        hasCompletedOnboarding
+            && !showsWhatsNew
+            && !cloudSyncPreference.hasSeenAnnouncement
+            && !cloudSyncPreference.isEnabled
+    }
+
+    private var showsWhatsNew: Bool {
+        whatsNewPreference.shouldPresent(hasCompletedOnboarding: hasCompletedOnboarding)
+    }
+
+    private var whatsNewSheetBinding: Binding<Bool> {
+        Binding(
+            get: { showsWhatsNew },
+            set: { isPresented in
+                if !isPresented {
+                    whatsNewPreference.markCurrentVersionSeen()
+                }
+            }
+        )
     }
 
     private var cloudSyncAnnouncementCard: some View {

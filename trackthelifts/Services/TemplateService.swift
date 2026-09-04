@@ -14,7 +14,7 @@ enum TemplateService {
         let template = WorkoutTemplate(name: name)
         context.insert(template)
 
-        let grouped = Dictionary(grouping: workout.exerciseSets, by: \.exerciseName)
+        let grouped = Dictionary(grouping: workout.exerciseSets ?? [], by: \.exerciseName)
         let sortedGroups = grouped.sorted { lhs, rhs in
             (lhs.value.map(\.exerciseOrder).min() ?? .max) < (rhs.value.map(\.exerciseOrder).min() ?? .max)
         }

@@ -20,11 +20,13 @@ class WorkoutTemplate {
     var isDeleted: Bool = false
     var cloudKitRecordID: String?
     var lastSyncDate: Date?
-    /// Bundled starter routine. Free users can use these without spending a custom-routine slot.
-    var isPrebuilt: Bool = false
+    /// Bundled starter routine. Optional because CloudKit cannot add a non-optional field
+    /// to an already-mirrored record type.
+    var isPrebuilt: Bool? = false
 
+    /// Optional because CloudKit rejects non-optional to-many relationships even with `= []`.
     @Relationship(deleteRule: .cascade, inverse: \WorkoutTemplateExercise.template)
-    var templateExercises: [WorkoutTemplateExercise] = []
+    var templateExercises: [WorkoutTemplateExercise]? = []
 
     init(
         id: UUID = UUID(),
@@ -35,7 +37,7 @@ class WorkoutTemplate {
         isDeleted: Bool = false,
         cloudKitRecordID: String? = nil,
         lastSyncDate: Date? = nil,
-        isPrebuilt: Bool = false
+        isPrebuilt: Bool? = false
     ) {
         self.id = id
         self.name = name
@@ -50,8 +52,10 @@ class WorkoutTemplate {
 }
 
 extension WorkoutTemplate {
+    var isStarterRoutine: Bool { isPrebuilt == true }
+
     var containsSupersets: Bool {
-        templateExercises.contains { $0.supersetGroupID != nil }
+        (templateExercises ?? []).contains { $0.supersetGroupID != nil }
     }
 
     /// Creates a new in-progress `Workout` pre-seeded with this template's exercises,
@@ -62,7 +66,7 @@ extension WorkoutTemplate {
 
         var copiedSupersetIDs: [UUID: UUID] = [:]
 
-        for (exerciseIndex, templateExercise) in templateExercises.sorted(by: { $0.order < $1.order }).enumerated() {
+        for (exerciseIndex, templateExercise) in (templateExercises ?? []).sorted(by: { $0.order < $1.order }).enumerated() {
             guard let exercise = templateExercise.exercise else { continue }
             for setIndex in 0..<max(templateExercise.targetSets, 1) {
                 let set = ExerciseSet(
@@ -96,7 +100,7 @@ extension WorkoutTemplate {
 
         var copiedSupersetIDs: [UUID: UUID] = [:]
 
-        for templateExercise in templateExercises.sorted(by: { $0.order < $1.order }) {
+        for templateExercise in (templateExercises ?? []).sorted(by: { $0.order < $1.order }) {
             guard let exercise = templateExercise.exercise else { continue }
             let newTemplateExercise = WorkoutTemplateExercise(
                 order: templateExercise.order,
