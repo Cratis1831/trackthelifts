@@ -96,8 +96,11 @@ class RevenueCatService: ObservableObject {
             // Load offerings
             await loadOfferings()
             
+            AnalyticsService.configureActivationPal(userId: Purchases.shared.appUserID)
+            
             isConfigured = true
             print("RevenueCat configured successfully")
+            await ForgeLyteSession.shared.bootstrap()
         } catch {
             lastError = .notConfigured
             print("Failed to configure RevenueCat: \(error)")
@@ -334,6 +337,22 @@ class RevenueCatService: ObservableObject {
     
     // MARK: - Feature Access Methods
     
+    func identifyForgeLyteUser(_ userKey: String) async {
+        guard isConfigured, !userKey.isEmpty else { return }
+        if Purchases.shared.appUserID == userKey {
+            AnalyticsService.configureActivationPal(userId: userKey)
+            return
+        }
+
+        do {
+            let (customerInfo, _) = try await Purchases.shared.logIn(userKey)
+            updateSubscriptionStatus(from: customerInfo)
+            AnalyticsService.configureActivationPal(userId: Purchases.shared.appUserID)
+        } catch {
+            print("RevenueCat logIn failed: \(error)")
+        }
+    }
+
     func canAccess(_ feature: ProFeature) -> Bool {
         SubscriptionAccessPolicy.canAccess(
             feature,

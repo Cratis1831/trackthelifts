@@ -11,19 +11,20 @@
 		41E8F9B62E57805500D8D36F /* TrackTheLifts.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 41E8F9B42E57805500D8D36F /* TrackTheLifts.storekit */; };
 		41E8F9E62E5780B200D8D36F /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 41E8F9E52E5780B200D8D36F /* RevenueCat */; };
 		41E8F9E82E5780B200D8D36F /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 41E8F9E72E5780B200D8D36F /* RevenueCatUI */; };
-		7A20000130B0000100000001 /* TelemetryDeck in Frameworks */ = {isa = PBXBuildFile; productRef = 7A20000330B0000100000001 /* TelemetryDeck */; };
 		7A10000130A0000100000001 /* SubscriptionAccessPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A10000330A0000100000001 /* SubscriptionAccessPolicyTests.swift */; };
 		7A10000E30A0000100000001 /* AppReviewPromptControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A10000F30A0000100000001 /* AppReviewPromptControllerTests.swift */; };
 		7A10001030A0000100000001 /* AppSupportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A10001130A0000100000001 /* AppSupportTests.swift */; };
+		7A20000130B0000100000001 /* TelemetryDeck in Frameworks */ = {isa = PBXBuildFile; productRef = 7A20000330B0000100000001 /* TelemetryDeck */; };
 		7A20000430B0000100000001 /* AnalyticsEventTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A20000530B0000100000001 /* AnalyticsEventTests.swift */; };
 		7A30000130C0000100000001 /* ExerciseDataTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A30000230C0000100000001 /* ExerciseDataTests.swift */; };
 		7A40000D30D0000100000001 /* RestTimerActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A40000B30D0000100000001 /* RestTimerActivityAttributes.swift */; };
+		7A40000F30D0000100000001 /* TrackTheLiftsWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 7A40000130D0000100000001 /* TrackTheLiftsWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		7A50000130E0000100000001 /* CloudSyncPreferenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A50000330E0000100000001 /* CloudSyncPreferenceTests.swift */; };
 		7A50000230E0000100000001 /* CloudSyncMergeServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A50000430E0000100000001 /* CloudSyncMergeServiceTests.swift */; };
 		7A60000130F0000100000001 /* CloudSyncStoreMigratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A60000230F0000100000001 /* CloudSyncStoreMigratorTests.swift */; };
 		7A8000013100000100000001 /* HealthKitWorkoutPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A8000023100000100000001 /* HealthKitWorkoutPolicyTests.swift */; };
 		7A9000113200000100000001 /* PrebuiltRoutineCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A9000123200000100000001 /* PrebuiltRoutineCatalogTests.swift */; };
-		7A40000F30D0000100000001 /* TrackTheLiftsWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 7A40000130D0000100000001 /* TrackTheLiftsWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		7AA000013300000100000001 /* ForgeLyteAPITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AA000023300000100000001 /* ForgeLyteAPITests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -68,22 +69,16 @@
 		7A20000530B0000100000001 /* AnalyticsEventTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsEventTests.swift; sourceTree = "<group>"; };
 		7A30000230C0000100000001 /* ExerciseDataTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseDataTests.swift; sourceTree = "<group>"; };
 		7A40000130D0000100000001 /* TrackTheLiftsWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TrackTheLiftsWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		7A40000B30D0000100000001 /* RestTimerActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RestTimerActivityAttributes.swift; path = TrackTheLiftsWidgets/RestTimerActivityAttributes.swift; sourceTree = "<group>"; };
 		7A50000330E0000100000001 /* CloudSyncPreferenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudSyncPreferenceTests.swift; sourceTree = "<group>"; };
 		7A50000430E0000100000001 /* CloudSyncMergeServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudSyncMergeServiceTests.swift; sourceTree = "<group>"; };
 		7A60000230F0000100000001 /* CloudSyncStoreMigratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudSyncStoreMigratorTests.swift; sourceTree = "<group>"; };
 		7A8000023100000100000001 /* HealthKitWorkoutPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitWorkoutPolicyTests.swift; sourceTree = "<group>"; };
 		7A9000123200000100000001 /* PrebuiltRoutineCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrebuiltRoutineCatalogTests.swift; sourceTree = "<group>"; };
-		7A40000B30D0000100000001 /* RestTimerActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RestTimerActivityAttributes.swift; path = TrackTheLiftsWidgets/RestTimerActivityAttributes.swift; sourceTree = "<group>"; };
+		7AA000023300000100000001 /* ForgeLyteAPITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForgeLyteAPITests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		7A40000330D0000100000001 /* Exceptions for "TrackTheLiftsWidgets" folder in "TrackTheLiftsWidgets" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = 7A40000430D0000100000001 /* TrackTheLiftsWidgets */;
-		};
 		41E8F9F12E5780B300D8D36F /* Exceptions for "trackthelifts" folder in "trackthelifts" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -95,12 +90,19 @@
 				Tests/CloudSyncPreferenceTests.swift,
 				Tests/CloudSyncStoreMigratorTests.swift,
 				Tests/ExerciseDataTests.swift,
+				Tests/ForgeLyteAPITests.swift,
 				Tests/HealthKitWorkoutPolicyTests.swift,
 				Tests/PrebuiltRoutineCatalogTests.swift,
 				Tests/SubscriptionAccessPolicyTests.swift,
-				trackthelifts.entitlements,
 			);
 			target = 41E8F9A42E57804200D8D36F /* trackthelifts */;
+		};
+		7A40000330D0000100000001 /* Exceptions for "TrackTheLiftsWidgets" folder in "TrackTheLiftsWidgets" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 7A40000430D0000100000001 /* TrackTheLiftsWidgets */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -185,6 +187,7 @@
 				7A60000230F0000100000001 /* CloudSyncStoreMigratorTests.swift */,
 				7A10000330A0000100000001 /* SubscriptionAccessPolicyTests.swift */,
 				7A30000230C0000100000001 /* ExerciseDataTests.swift */,
+				7AA000023300000100000001 /* ForgeLyteAPITests.swift */,
 				7A8000023100000100000001 /* HealthKitWorkoutPolicyTests.swift */,
 				7A9000123200000100000001 /* PrebuiltRoutineCatalogTests.swift */,
 			);
@@ -221,6 +224,26 @@
 			productReference = 41E8F9A52E57804200D8D36F /* trackthelifts.app */;
 			productType = "com.apple.product-type.application";
 		};
+		7A10000930A0000100000001 /* tracktheliftsTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7A10000D30A0000100000001 /* Build configuration list for PBXNativeTarget "tracktheliftsTests" */;
+			buildPhases = (
+				7A10000830A0000100000001 /* Sources */,
+				7A10000630A0000100000001 /* Frameworks */,
+				7A10000730A0000100000001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				7A10000A30A0000100000001 /* PBXTargetDependency */,
+			);
+			name = tracktheliftsTests;
+			packageProductDependencies = (
+			);
+			productName = tracktheliftsTests;
+			productReference = 7A10000430A0000100000001 /* tracktheliftsTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		7A40000430D0000100000001 /* TrackTheLiftsWidgets */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 7A40000830D0000100000001 /* Build configuration list for PBXNativeTarget "TrackTheLiftsWidgets" */;
@@ -242,26 +265,6 @@
 			productName = TrackTheLiftsWidgets;
 			productReference = 7A40000130D0000100000001 /* TrackTheLiftsWidgets.appex */;
 			productType = "com.apple.product-type.app-extension";
-		};
-		7A10000930A0000100000001 /* tracktheliftsTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 7A10000D30A0000100000001 /* Build configuration list for PBXNativeTarget "tracktheliftsTests" */;
-			buildPhases = (
-				7A10000830A0000100000001 /* Sources */,
-				7A10000630A0000100000001 /* Frameworks */,
-				7A10000730A0000100000001 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				7A10000A30A0000100000001 /* PBXTargetDependency */,
-			);
-			name = tracktheliftsTests;
-			packageProductDependencies = (
-			);
-			productName = tracktheliftsTests;
-			productReference = 7A10000430A0000100000001 /* tracktheliftsTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -342,13 +345,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		7A40000530D0000100000001 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		7A10000830A0000100000001 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -361,8 +357,16 @@
 				7A60000130F0000100000001 /* CloudSyncStoreMigratorTests.swift in Sources */,
 				7A10000130A0000100000001 /* SubscriptionAccessPolicyTests.swift in Sources */,
 				7A30000130C0000100000001 /* ExerciseDataTests.swift in Sources */,
+				7AA000013300000100000001 /* ForgeLyteAPITests.swift in Sources */,
 				7A8000013100000100000001 /* HealthKitWorkoutPolicyTests.swift in Sources */,
 				7A9000113200000100000001 /* PrebuiltRoutineCatalogTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7A40000530D0000100000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -504,141 +508,81 @@
 			name = Release;
 		};
 		41E8F9B12E57804300D8D36F /* Debug */ = {
-	buildSettings = {
-		"ASSETCATALOG_COMPILER_APPICON_NAME" = AppIcon;
-		"ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME" = AccentColor;
-		"CODE_SIGN_ENTITLEMENTS" = "trackthelifts/trackthelifts.entitlements";
-		"CODE_SIGN_STYLE" = Automatic;
-		"CURRENT_PROJECT_VERSION" = 1;
-		"DEVELOPMENT_TEAM" = X4Y9269GC5;
-		"ENABLE_PREVIEWS" = YES;
-		"GENERATE_INFOPLIST_FILE" = YES;
-		"INFOPLIST_FILE" = "trackthelifts/Info.plist";
-		"INFOPLIST_KEY_CFBundleDisplayName" = "ForgeLyte Lift";
-		"INFOPLIST_KEY_ITSAppUsesNonExemptEncryption" = NO;
-		"INFOPLIST_KEY_NSPhotoLibraryUsageDescription" = "Choose a profile photo. Your photo stays on this device and is never uploaded.";
-		"INFOPLIST_KEY_UIApplicationSceneManifest_Generation" = YES;
-		"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents" = YES;
-		"INFOPLIST_KEY_UISupportedInterfaceOrientations" = UIInterfaceOrientationPortrait;
-		"INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad" = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-		"INFOPLIST_KEY_UIUserInterfaceStyle" = Dark;
-		"IPHONEOS_DEPLOYMENT_TARGET" = "17.0";
-		"LD_RUNPATH_SEARCH_PATHS" = (
-			"$(inherited)",
-			"@executable_path/Frameworks",
-		);
-		"MARKETING_VERSION" = "2.0.0";
-		"PRODUCT_BUNDLE_IDENTIFIER" = "com.ashkansdev.track-the-lifts";
-		"PRODUCT_NAME" = "$(TARGET_NAME)";
-		"SUPPORTED_PLATFORMS" = "iphoneos iphonesimulator";
-		"SUPPORTS_MACCATALYST" = NO;
-		"SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD" = NO;
-		"SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD" = NO;
-		"SWIFT_EMIT_LOC_STRINGS" = YES;
-		"SWIFT_VERSION" = "5.0";
-		"TARGETED_DEVICE_FAMILY" = 1;
-	};
-	isa = XCBuildConfiguration;
-	name = Debug;
-};
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = trackthelifts/trackthelifts.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = X4Y9269GC5;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = trackthelifts/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "ForgeLyte Lift";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Choose a profile photo. Your photo stays on this device and is never uploaded.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 2.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ashkansdev.track-the-lifts";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
 		41E8F9B22E57804300D8D36F /* Release */ = {
-	buildSettings = {
-		"ASSETCATALOG_COMPILER_APPICON_NAME" = AppIcon;
-		"ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME" = AccentColor;
-		"CODE_SIGN_ENTITLEMENTS" = "trackthelifts/trackthelifts.entitlements";
-		"CODE_SIGN_STYLE" = Automatic;
-		"CURRENT_PROJECT_VERSION" = 1;
-		"DEVELOPMENT_TEAM" = X4Y9269GC5;
-		"ENABLE_PREVIEWS" = YES;
-		"GENERATE_INFOPLIST_FILE" = YES;
-		"INFOPLIST_FILE" = "trackthelifts/Info.plist";
-		"INFOPLIST_KEY_CFBundleDisplayName" = "ForgeLyte Lift";
-		"INFOPLIST_KEY_ITSAppUsesNonExemptEncryption" = NO;
-		"INFOPLIST_KEY_NSPhotoLibraryUsageDescription" = "Choose a profile photo. Your photo stays on this device and is never uploaded.";
-		"INFOPLIST_KEY_UIApplicationSceneManifest_Generation" = YES;
-		"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents" = YES;
-		"INFOPLIST_KEY_UISupportedInterfaceOrientations" = UIInterfaceOrientationPortrait;
-		"INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad" = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-		"INFOPLIST_KEY_UIUserInterfaceStyle" = Dark;
-		"IPHONEOS_DEPLOYMENT_TARGET" = "17.0";
-		"LD_RUNPATH_SEARCH_PATHS" = (
-			"$(inherited)",
-			"@executable_path/Frameworks",
-		);
-		"MARKETING_VERSION" = "2.0.0";
-		"PRODUCT_BUNDLE_IDENTIFIER" = "com.ashkansdev.track-the-lifts";
-		"PRODUCT_NAME" = "$(TARGET_NAME)";
-		"SUPPORTED_PLATFORMS" = "iphoneos iphonesimulator";
-		"SUPPORTS_MACCATALYST" = NO;
-		"SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD" = NO;
-		"SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD" = NO;
-		"SWIFT_EMIT_LOC_STRINGS" = YES;
-		"SWIFT_VERSION" = "5.0";
-		"TARGETED_DEVICE_FAMILY" = 1;
-	};
-	isa = XCBuildConfiguration;
-	name = Release;
-};
-		7A40000930D0000100000001 /* Debug */ = {
-	buildSettings = {
-		"ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME" = AccentColor;
-		"CODE_SIGN_STYLE" = Automatic;
-		"CURRENT_PROJECT_VERSION" = 1;
-		"DEVELOPMENT_TEAM" = X4Y9269GC5;
-		"GENERATE_INFOPLIST_FILE" = YES;
-		"INFOPLIST_FILE" = "TrackTheLiftsWidgets/Info.plist";
-		"INFOPLIST_KEY_CFBundleDisplayName" = "ForgeLyte Lift";
-		"IPHONEOS_DEPLOYMENT_TARGET" = "17.0";
-		"LD_RUNPATH_SEARCH_PATHS" = (
-			"$(inherited)",
-			"@executable_path/Frameworks",
-			"@executable_path/../../Frameworks",
-		);
-		"MARKETING_VERSION" = "2.0.0";
-		"PRODUCT_BUNDLE_IDENTIFIER" = "com.ashkansdev.track-the-lifts.Widgets";
-		"PRODUCT_NAME" = "$(TARGET_NAME)";
-		"SKIP_INSTALL" = YES;
-		"SUPPORTED_PLATFORMS" = "iphoneos iphonesimulator";
-		"SUPPORTS_MACCATALYST" = NO;
-		"SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD" = NO;
-		"SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD" = NO;
-		"SWIFT_EMIT_LOC_STRINGS" = YES;
-		"SWIFT_VERSION" = "5.0";
-		"TARGETED_DEVICE_FAMILY" = 1;
-	};
-	isa = XCBuildConfiguration;
-	name = Debug;
-};
-		7A40000A30D0000100000001 /* Release */ = {
-	buildSettings = {
-		"ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME" = AccentColor;
-		"CODE_SIGN_STYLE" = Automatic;
-		"CURRENT_PROJECT_VERSION" = 1;
-		"DEVELOPMENT_TEAM" = X4Y9269GC5;
-		"GENERATE_INFOPLIST_FILE" = YES;
-		"INFOPLIST_FILE" = "TrackTheLiftsWidgets/Info.plist";
-		"INFOPLIST_KEY_CFBundleDisplayName" = "ForgeLyte Lift";
-		"IPHONEOS_DEPLOYMENT_TARGET" = "17.0";
-		"LD_RUNPATH_SEARCH_PATHS" = (
-			"$(inherited)",
-			"@executable_path/Frameworks",
-			"@executable_path/../../Frameworks",
-		);
-		"MARKETING_VERSION" = "2.0.0";
-		"PRODUCT_BUNDLE_IDENTIFIER" = "com.ashkansdev.track-the-lifts.Widgets";
-		"PRODUCT_NAME" = "$(TARGET_NAME)";
-		"SKIP_INSTALL" = YES;
-		"SUPPORTED_PLATFORMS" = "iphoneos iphonesimulator";
-		"SUPPORTS_MACCATALYST" = NO;
-		"SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD" = NO;
-		"SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD" = NO;
-		"SWIFT_EMIT_LOC_STRINGS" = YES;
-		"SWIFT_VERSION" = "5.0";
-		"TARGETED_DEVICE_FAMILY" = 1;
-	};
-	isa = XCBuildConfiguration;
-	name = Release;
-};
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = trackthelifts/trackthelifts.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = X4Y9269GC5;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = trackthelifts/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "ForgeLyte Lift";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Choose a profile photo. Your photo stays on this device and is never uploaded.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 2.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ashkansdev.track-the-lifts";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
 		7A10000B30A0000100000001 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -685,6 +629,66 @@
 			};
 			name = Release;
 		};
+		7A40000930D0000100000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = X4Y9269GC5;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TrackTheLiftsWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "ForgeLyte Lift";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 2.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ashkansdev.track-the-lifts.Widgets";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		7A40000A30D0000100000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = X4Y9269GC5;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TrackTheLiftsWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "ForgeLyte Lift";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 2.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ashkansdev.track-the-lifts.Widgets";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -706,20 +710,20 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		7A40000830D0000100000001 /* Build configuration list for PBXNativeTarget "TrackTheLiftsWidgets" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				7A40000930D0000100000001 /* Debug */,
-				7A40000A30D0000100000001 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		7A10000D30A0000100000001 /* Build configuration list for PBXNativeTarget "tracktheliftsTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				7A10000B30A0000100000001 /* Debug */,
 				7A10000C30A0000100000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7A40000830D0000100000001 /* Build configuration list for PBXNativeTarget "TrackTheLiftsWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7A40000930D0000100000001 /* Debug */,
+				7A40000A30D0000100000001 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

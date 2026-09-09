@@ -23,23 +23,83 @@ struct ManualFoodEntryView: View {
     @State private var fat = ""
     @State private var quantity = "1"
 
-    init(existingLog: FoodLog? = nil, selectedDay: Date, mealType: MealType = .lunch) {
+    private let sourceType: FoodSourceType
+    private let sourceFoodID: String?
+    private let isEstimated: Bool
+    private let draftServingDescription: String?
+    private let draftServingWeightGrams: Double?
+    private let draftBarcode: String?
+    private let draftFiber: Double?
+    private let draftSugar: Double?
+    private let draftSodium: Double?
+
+    init(
+        existingLog: FoodLog? = nil,
+        selectedDay: Date,
+        mealType: MealType = .lunch,
+        draft: FoodEntryDraft? = nil
+    ) {
         self.existingLog = existingLog
         self.selectedDay = selectedDay
         self.mealType = existingLog?.mealType ?? mealType
         _selectedMeal = State(initialValue: existingLog?.mealType ?? mealType)
-        _name = State(initialValue: existingLog?.displayName ?? "")
-        _brand = State(initialValue: existingLog?.brand ?? "")
-        _calories = State(initialValue: existingLog.map { String(Int($0.calories.rounded())) } ?? "")
-        _protein = State(initialValue: existingLog.map { String(Int($0.proteinGrams.rounded())) } ?? "")
-        _carbs = State(initialValue: existingLog.map { String(Int($0.carbsGrams.rounded())) } ?? "")
-        _fat = State(initialValue: existingLog.map { String(Int($0.fatGrams.rounded())) } ?? "")
-        _quantity = State(initialValue: existingLog.map { String($0.quantity) } ?? "1")
+
+        if let existingLog {
+            _name = State(initialValue: existingLog.displayName)
+            _brand = State(initialValue: existingLog.brand ?? "")
+            _calories = State(initialValue: String(Int(existingLog.calories.rounded())))
+            _protein = State(initialValue: String(Int(existingLog.proteinGrams.rounded())))
+            _carbs = State(initialValue: String(Int(existingLog.carbsGrams.rounded())))
+            _fat = State(initialValue: String(Int(existingLog.fatGrams.rounded())))
+            _quantity = State(initialValue: String(existingLog.quantity))
+            sourceType = existingLog.sourceType
+            sourceFoodID = existingLog.sourceFoodID
+            isEstimated = existingLog.isEstimated
+            draftServingDescription = existingLog.unit
+            draftServingWeightGrams = existingLog.weightGrams
+            draftBarcode = nil
+            draftFiber = existingLog.fiberGrams
+            draftSugar = existingLog.sugarGrams
+            draftSodium = existingLog.sodiumMilligrams
+        } else if let draft {
+            _name = State(initialValue: draft.name)
+            _brand = State(initialValue: draft.brand ?? "")
+            _calories = State(initialValue: String(Int(draft.calories.rounded())))
+            _protein = State(initialValue: String(Int(draft.proteinGrams.rounded())))
+            _carbs = State(initialValue: String(Int(draft.carbsGrams.rounded())))
+            _fat = State(initialValue: String(Int(draft.fatGrams.rounded())))
+            _quantity = State(initialValue: "1")
+            sourceType = draft.sourceType
+            sourceFoodID = draft.sourceFoodID
+            isEstimated = draft.isEstimated
+            draftServingDescription = draft.servingDescription
+            draftServingWeightGrams = draft.servingWeightGrams
+            draftBarcode = draft.barcode
+            draftFiber = draft.fiberGrams
+            draftSugar = draft.sugarGrams
+            draftSodium = draft.sodiumMilligrams
+        } else {
+            sourceType = .manual
+            sourceFoodID = nil
+            isEstimated = false
+            draftServingDescription = nil
+            draftServingWeightGrams = nil
+            draftBarcode = nil
+            draftFiber = nil
+            draftSugar = nil
+            draftSodium = nil
+        }
     }
 
     private var canSave: Bool {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && (Double(calories) ?? -1) >= 0
+    }
+
+    private var title: String {
+        if existingLog != nil { return "Edit Food" }
+        if sourceType == .manual { return "Manual Entry" }
+        return "Log Food"
     }
 
     var body: some View {
@@ -70,11 +130,17 @@ struct ManualFoodEntryView: View {
                             labeledField("Carbs (g)", text: $carbs, placeholder: "0", keyboard: .decimalPad)
                             labeledField("Fat (g)", text: $fat, placeholder: "0", keyboard: .decimalPad)
                         }
+
+                        if sourceType != .manual {
+                            Text(sourceType.displayName)
+                                .font(.appCaption)
+                                .foregroundColor(.appTextTertiary)
+                        }
                     }
                     .padding(20)
                 }
             }
-            .navigationTitle(existingLog == nil ? "Manual Entry" : "Edit Food")
+            .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -137,14 +203,21 @@ struct ManualFoodEntryView: View {
             let log = FoodLog(
                 loggedAt: loggedAt,
                 mealType: selectedMeal,
-                sourceType: .manual,
+                sourceType: sourceType,
+                sourceFoodID: sourceFoodID,
                 displayName: trimmedName,
                 brand: brandValue.isEmpty ? nil : brandValue,
                 quantity: quantityValue,
+                unit: draftServingDescription ?? "serving",
+                weightGrams: draftServingWeightGrams,
                 calories: caloriesValue,
                 proteinGrams: proteinValue,
                 carbsGrams: carbsValue,
-                fatGrams: fatValue
+                fatGrams: fatValue,
+                fiberGrams: draftFiber,
+                sugarGrams: draftSugar,
+                sodiumMilligrams: draftSodium,
+                isEstimated: isEstimated
             )
             modelContext.insert(log)
             upsertCustomFood(
@@ -179,6 +252,12 @@ struct ManualFoodEntryView: View {
             match.proteinGrams = protein
             match.carbsGrams = carbs
             match.fatGrams = fat
+            match.fiberGrams = draftFiber ?? match.fiberGrams
+            match.sugarGrams = draftSugar ?? match.sugarGrams
+            match.sodiumMilligrams = draftSodium ?? match.sodiumMilligrams
+            match.barcode = draftBarcode ?? match.barcode
+            match.servingDescription = draftServingDescription ?? match.servingDescription
+            match.servingWeightGrams = draftServingWeightGrams ?? match.servingWeightGrams
             match.lastUsedAt = .now
             return
         }
@@ -186,10 +265,16 @@ struct ManualFoodEntryView: View {
         let food = CustomFood(
             name: name,
             brand: brand,
+            barcode: draftBarcode,
+            servingDescription: draftServingDescription ?? "1 serving",
+            servingWeightGrams: draftServingWeightGrams,
             calories: calories,
             proteinGrams: protein,
             carbsGrams: carbs,
             fatGrams: fat,
+            fiberGrams: draftFiber,
+            sugarGrams: draftSugar,
+            sodiumMilligrams: draftSodium,
             lastUsedAt: .now
         )
         modelContext.insert(food)

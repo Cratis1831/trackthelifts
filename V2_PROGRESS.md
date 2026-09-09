@@ -4,7 +4,7 @@ Living checklist for the nutrition/product-model work described in `forgelyte_li
 
 **Branch:** `feature/v2.0-nutrition`  
 **Started:** 8 September 2026  
-**Current cut:** Phase A — iOS product change + local diary (backend and live food APIs come later)
+**Current cut:** Phase B — backend skeleton + iOS catalogue search (AI/barcode camera still Phase C)
 
 Design rule for every UI change: reuse the existing dark canvas, surface cards, borders, type, `IconTile`, `EmptyStateView`, `AppPrimaryButtonStyle` / `AppSecondaryButtonStyle`, and accent-as-highlight language. Do not introduce a second visual system.
 
@@ -38,7 +38,7 @@ Design rule for every UI change: reuse the existing dark canvas, surface cards, 
 - [x] Local SwiftData models: `FoodLog`, `CustomFood` on a **separate local-only** store.
 - [x] Nutrition dashboard (day totals, macros, meals) matching current cards/typography.
 - [x] Manual add/edit/delete food + local recent/custom search.
-- [x] Free manual-log limit (3); barcode / AI / photo CTAs paywall for Free, honest "next update" for Pro until the backend exists.
+- [x] Free manual-log limit (3); barcode / AI / photo CTAs paywall for Free, honest "next update" for Pro until native camera/AI exist.
 - [x] Settings → Food Data Sources (USDA + Open Food Facts attribution).
 - [x] Settings → Clear Nutrition History.
 - [x] iCloud workout sync no longer requires Pro (still opt-in).
@@ -54,14 +54,16 @@ See Phase B and C below.
 
 ---
 
-## Phase B — Vercel backend skeleton (next)
+## Phase B — Vercel backend skeleton
 
-- [ ] Decide repo location (recommendation: separate backend repo, not the marketing site).
-- [ ] Neon `foods_core` + `off_products` (kept physically separate).
-- [ ] `POST /api/bootstrap` (verified `appTransactionID` → HMAC `user_key` → short-lived session).
-- [ ] RevenueCat server-side entitlement checks + webhook.
-- [ ] `GET /api/foods/search` and `GET /api/foods/barcode/:code` with USDA then OFF fallback, OFF rate limits, no OFF search-as-you-type.
-- [ ] iOS API client; no provider secrets in the app binary.
+- [x] Repo location: [`Cratis1831/forgelyte_server`](https://github.com/Cratis1831/forgelyte_server) (cloned to `../forgelyte_server`). Not the marketing site.
+- [x] Neon schema: `foods_core` + `off_products` kept physically separate (`migrations/001_init.sql`). Apply with `npm run migrate` after `DATABASE_URL` is set.
+- [x] `POST /api/bootstrap` — verified Apple `AppTransaction` JWS → HMAC `fl_…` `user_key` → 7-day session. No install-ID fallback.
+- [x] RevenueCat server-side entitlement checks (`Pro`) with a short cache + `POST /api/revenuecat/webhook`.
+- [x] `GET /api/foods/search` and `GET /api/foods/barcode/:code` — cache → USDA → rate-limited OFF; OFF never written to `foods_core`.
+- [x] iOS API client on this branch (`ForgeLyteAPI` / `ForgeLyteSession`); USDA/OFF/OpenAI keys stay on the server.
+
+Still needed to go live: Vercel project, Neon database, env vars from `forgelyte_server/.env.example`, RevenueCat webhook URL, then set the iOS host if it is not `https://forgelyte-server.vercel.app`.
 
 ---
 
@@ -87,6 +89,12 @@ See Phase B and C below.
 ---
 
 ## Session log
+
+### 2026-09-08 — Phase B backend + catalogue search
+
+- Scaffolded `forgelyte_server` from the Furry Pals Vercel/Neon/App Transaction pattern (no sticker/credits/blob code).
+- iOS bootstraps a ForgeLyte session after RevenueCat configure, logs into RevenueCat with the HMAC `user_key`, and searches the catalogue after a pause (not per keystroke).
+- Native barcode camera, Luna describe/photo/label, and nutrition backup remain Phase C.
 
 ### 2026-09-08 — branch + Phase A implementation
 
