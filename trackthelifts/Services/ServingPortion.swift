@@ -56,6 +56,42 @@ enum ServingPortionMath {
     static let gramsPerOunce = 28.349523125
     static let gramsPerPound = 453.59237
 
+    /// Catalogue rows often say `100 g` (or `1 bar (60 g)`) without a numeric `weight_g`.
+    /// Use any explicit grams first, then parse the serving label.
+    static func inferredGramsPerServing(weightGrams: Double?, servingText: String?) -> Double? {
+        if let weightGrams, weightGrams > 0 {
+            return weightGrams
+        }
+        return grams(fromServingText: servingText)
+    }
+
+    static func grams(fromServingText text: String?) -> Double? {
+        let compact = (text ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: ",", with: ".")
+        guard !compact.isEmpty else { return nil }
+
+        if let paren = firstWeight(in: compact, pattern: #"\((\d+(?:\.\d+)?)\s*(g|grams?|ml)\b"#) {
+            return paren
+        }
+        if let grams = firstWeight(in: compact, pattern: #"(\d+(?:\.\d+)?)\s*(g|grams?|ml)\b"#) {
+            return grams
+        }
+        if let oz = firstWeight(in: compact, pattern: #"\((\d+(?:\.\d+)?)\s*(oz|ounces?)\b"#) {
+            return oz * gramsPerOunce
+        }
+        if let oz = firstWeight(in: compact, pattern: #"(\d+(?:\.\d+)?)\s*(oz|ounces?)\b"#) {
+            return oz * gramsPerOunce
+        }
+        if let kg = firstWeight(in: compact, pattern: #"(\d+(?:\.\d+)?)\s*(kg|kilograms?)\b"#) {
+            return kg * 1000
+        }
+        if let lb = firstWeight(in: compact, pattern: #"(\d+(?:\.\d+)?)\s*(lb|lbs|pounds?)\b"#) {
+            return lb * gramsPerPound
+        }
+        return nil
+    }
+
     static func grams(
         amount: Double,
         unit: FoodServingUnit,
@@ -149,5 +185,18 @@ enum ServingPortionMath {
             else { return amount }
             return grams / gramsPerServing
         }
+    }
+
+    private static func firstWeight(in text: String, pattern: String) -> Double? {
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else {
+            return nil
+        }
+        let range = NSRange(text.startIndex..<text.endIndex, in: text)
+        guard
+            let match = regex.firstMatch(in: text, options: [], range: range),
+            match.numberOfRanges > 1,
+            let amountRange = Range(match.range(at: 1), in: text)
+        else { return nil }
+        return Double(text[amountRange])
     }
 }

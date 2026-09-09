@@ -66,7 +66,10 @@ struct ManualFoodEntryView: View {
             sourceFoodID = existingLog.sourceFoodID
             isEstimated = existingLog.isEstimated
             draftServingDescription = existingLog.unit
-            gramsPerServing = existingLog.weightGrams
+            gramsPerServing = ServingPortionMath.inferredGramsPerServing(
+                weightGrams: existingLog.weightGrams,
+                servingText: existingLog.unit
+            )
             draftBarcode = nil
             draftSugar = existingLog.sugarGrams
             draftSodium = existingLog.sodiumMilligrams
@@ -91,7 +94,10 @@ struct ManualFoodEntryView: View {
             sourceFoodID = draft.sourceFoodID
             isEstimated = draft.isEstimated
             draftServingDescription = draft.servingDescription
-            gramsPerServing = draft.servingWeightGrams
+            gramsPerServing = ServingPortionMath.inferredGramsPerServing(
+                weightGrams: draft.servingWeightGrams,
+                servingText: draft.servingDescription
+            )
             draftBarcode = draft.barcode
             draftSugar = draft.sugarGrams
             draftSodium = draft.sodiumMilligrams
@@ -199,7 +205,10 @@ struct ManualFoodEntryView: View {
     }
 
     private var availableUnits: [FoodServingUnit] {
-        gramsPerServing != nil ? FoodServingUnit.allCases : [.serving]
+        if let gramsPerServing, gramsPerServing > 0 {
+            return FoodServingUnit.allCases
+        }
+        return [.serving]
     }
 
     private var servingHint: String? {
@@ -207,7 +216,10 @@ struct ManualFoodEntryView: View {
             return draftServingDescription
         }
         if selectedUnit == .serving {
-            return "\(ServingPortionMath.formattedAmount(gramsPerServing)) g each"
+            return "1 serving = \(ServingPortionMath.formattedAmount(gramsPerServing)) g"
+        }
+        if selectedUnit != .gram {
+            return "\(ServingPortionMath.formattedAmount(gramsPerServing)) g per serving"
         }
         return nil
     }

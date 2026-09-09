@@ -353,7 +353,19 @@ final class NutritionAccessPolicyTests: XCTestCase {
         XCTAssertEqual(grams, back, accuracy: 0.0001)
         XCTAssertEqual(FoodServingUnit.parse("serving"), .serving)
         XCTAssertEqual(FoodServingUnit.parse("g"), .gram)
+        XCTAssertEqual(ServingPortionMath.grams(fromServingText: "30g (1 oz)"), 30)
         XCTAssertEqual(FoodServingUnit.parse("100 g"), .serving)
+        XCTAssertEqual(ServingPortionMath.grams(fromServingText: "100 g"), 100)
+        XCTAssertEqual(ServingPortionMath.grams(fromServingText: "1 bar (60 g)"), 60)
+        XCTAssertEqual(
+            ServingPortionMath.inferredGramsPerServing(weightGrams: nil, servingText: "100 g"),
+            100
+        )
+        XCTAssertEqual(
+            ServingPortionMath.inferredGramsPerServing(weightGrams: 40, servingText: "100 g"),
+            40
+        )
+        XCTAssertNil(ServingPortionMath.grams(fromServingText: "1 cup"))
     }
 
     func testNutritionRoundingLimitsDecimals() {

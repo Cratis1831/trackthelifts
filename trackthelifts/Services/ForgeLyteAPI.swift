@@ -344,7 +344,10 @@ struct RemoteFood: Decodable, Identifiable, Hashable {
             sodiumMilligrams: nutrition.sodiumMilligrams,
             quantity: 1,
             servingDescription: serving.unit.map { $0 == "g" ? "\(NutritionRounding.servingText(serving.weightGrams ?? 100)) g" : $0 },
-            servingWeightGrams: serving.weightGrams,
+            servingWeightGrams: ServingPortionMath.inferredGramsPerServing(
+                weightGrams: serving.weightGrams,
+                servingText: serving.unit
+            ),
             barcode: barcode,
             sourceType: sourceType,
             sourceFoodID: source.externalID ?? id,

@@ -38,6 +38,7 @@ final class ForgeLyteAPITests: XCTestCase {
         XCTAssertEqual(food.servingLabel, "bar")
         XCTAssertEqual(food.energyLabel, "190 kcal")
         XCTAssertEqual(food.macrosLabel, "P 21 · C 22 · F 7 · Fi 3")
+        XCTAssertEqual(food.draft.servingWeightGrams, 60)
         XCTAssertEqual(food.sourceType.displayName, "Open Food Facts · ODbL")
     }
 
@@ -47,6 +48,24 @@ final class ForgeLyteAPITests: XCTestCase {
         XCTAssertEqual(FoodSourceType.fromAPI("AI_ESTIMATE"), .aiEstimate)
         XCTAssertEqual(FoodSourceType.fromAPI("LABEL_SCAN_CONTRIBUTION"), .labelScan)
         XCTAssertEqual(FoodSourceType.fromAPI("USER_CONTRIBUTION"), .userContribution)
+    }
+
+    func testDraftInfersGramsWhenServingIsLabeled100g() throws {
+        let json = """
+        {
+          "id": "OPEN_FOOD_FACTS:03030406",
+          "name": "Quaker",
+          "brand": "Quaker",
+          "barcode": "03030406",
+          "serving": { "amount": 1, "unit": "100 g" },
+          "nutrition": { "calories": 400, "protein_g": 11, "carbs_g": 75, "fat_g": 12, "fiber_g": 11 },
+          "source": { "type": "OPEN_FOOD_FACTS", "external_id": "03030406", "estimated": false }
+        }
+        """.data(using: .utf8)!
+        let food = try JSONDecoder().decode(RemoteFood.self, from: json)
+        XCTAssertNil(food.serving.weightGrams)
+        XCTAssertEqual(food.draft.servingWeightGrams, 100)
+        XCTAssertEqual(food.draft.servingDescription, "100 g")
     }
 
     func testBarcodeNormalizationIgnoresFormattingAndLeadingZeros() {
