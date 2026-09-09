@@ -106,13 +106,21 @@ enum MealDescribe {
     }
 
     static func gramPortion(_ item: DescribedMealItem) -> Double? {
-        if let grams = item.estimatedWeightGrams, grams > 0 {
-            return grams
-        }
         let unit = item.unit.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         if ["g", "gram", "grams"].contains(unit), item.quantity > 0 {
             return item.quantity
         }
+        if ["oz", "ounce", "ounces"].contains(unit), item.quantity > 0 {
+            return item.quantity * ServingPortionMath.gramsPerOunce
+        }
+        if ["kg", "kilogram", "kilograms"].contains(unit), item.quantity > 0 {
+            return item.quantity * 1000
+        }
+        if ["lb", "lbs", "pound", "pounds"].contains(unit), item.quantity > 0 {
+            return item.quantity * ServingPortionMath.gramsPerPound
+        }
+        // Do not use estimated_weight_g for cookie/egg/slice counts. The describe
+        // schema requires a number, and models often fill 100 g.
         return nil
     }
 

@@ -335,13 +335,14 @@ struct RemoteFood: Decodable, Identifiable, Hashable {
         if let unit = serving.unit?.trimmingCharacters(in: .whitespacesAndNewlines),
            !unit.isEmpty,
            unit.lowercased() != "serving",
-           unit.lowercased() != "g" {
+           unit.lowercased() != "g",
+           unit.lowercased() != "1 serving" {
             return unit
         }
         if let grams = serving.weightGrams, grams > 0 {
             return "\(NutritionRounding.servingText(grams)) g"
         }
-        return "100 g"
+        return "1 serving"
     }
 
     var energyLabel: String {
@@ -376,7 +377,7 @@ struct RemoteFood: Decodable, Identifiable, Hashable {
             sugarGrams: nutrition.sugarGrams,
             sodiumMilligrams: nutrition.sodiumMilligrams,
             quantity: 1,
-            servingDescription: serving.unit.map { $0 == "g" ? "\(NutritionRounding.servingText(serving.weightGrams ?? 100)) g" : $0 },
+            servingDescription: servingDescription(from: serving),
             servingWeightGrams: ServingPortionMath.inferredGramsPerServing(
                 weightGrams: serving.weightGrams,
                 servingText: serving.unit
@@ -386,6 +387,15 @@ struct RemoteFood: Decodable, Identifiable, Hashable {
             sourceFoodID: source.externalID ?? id,
             isEstimated: source.estimated ?? sourceType.isEstimated
         )
+    }
+
+    private func servingDescription(from serving: Serving) -> String? {
+        let unit = serving.unit?.trimmingCharacters(in: .whitespacesAndNewlines)
+        if unit == "g" {
+            guard let grams = serving.weightGrams, grams > 0 else { return unit }
+            return "\(NutritionRounding.servingText(grams)) g"
+        }
+        return unit
     }
 }
 

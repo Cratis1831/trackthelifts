@@ -66,6 +66,25 @@ final class ForgeLyteAPITests: XCTestCase {
         XCTAssertNil(food.serving.weightGrams)
         XCTAssertEqual(food.draft.servingWeightGrams, 100)
         XCTAssertEqual(food.draft.servingDescription, "100 g")
+        XCTAssertEqual(food.servingLabel, "100 g")
+    }
+
+    func testDraftDoesNotInvent100gWhenServingWeightIsMissing() throws {
+        let json = """
+        {
+          "id": "LABEL_SCAN:local",
+          "name": "Scanned food",
+          "brand": null,
+          "barcode": null,
+          "serving": { "amount": 1, "unit": "1 serving" },
+          "nutrition": { "calories": 190, "protein_g": 21, "carbs_g": 22, "fat_g": 7 },
+          "source": { "type": "LABEL_SCAN_CONTRIBUTION", "external_id": null, "estimated": false }
+        }
+        """.data(using: .utf8)!
+        let food = try JSONDecoder().decode(RemoteFood.self, from: json)
+        XCTAssertEqual(food.servingLabel, "1 serving")
+        XCTAssertNil(food.draft.servingWeightGrams)
+        XCTAssertEqual(food.draft.calories, 190)
     }
 
     func testBarcodeNormalizationIgnoresFormattingAndLeadingZeros() {
@@ -326,6 +345,34 @@ final class ForgeLyteAPITests: XCTestCase {
 
         XCTAssertEqual(MealDescribe.scaleFactor(item: item, serving: match.serving), 0.6)
         XCTAssertEqual(MealDescribe.draft(item: item, match: match).calories, 222)
+    }
+
+    func testDescribeDoesNotTreatRequiredEstimated100gAsThePortion() throws {
+        let match = try JSONDecoder().decode(RemoteFood.self, from: Data("""
+        {
+          "id": "OPEN_FOOD_FACTS:oreo",
+          "name": "OREO ORIGINAL",
+          "brand": "Nabisco",
+          "barcode": null,
+          "serving": { "amount": 1, "unit": "11 g", "weight_g": 11 },
+          "nutrition": { "calories": 52, "protein_g": 0.6, "carbs_g": 8, "fat_g": 2 },
+          "nutrition_per_100g": { "calories": 472, "protein_g": 5.3, "carbs_g": 70, "fat_g": 20 },
+          "source": { "type": "OPEN_FOOD_FACTS", "external_id": "oreo", "estimated": false }
+        }
+        """.utf8))
+        let item = DescribedMealItem(
+            name: "oreo",
+            quantity: 1,
+            unit: "cookie",
+            estimatedWeightGrams: 100,
+            confidence: "medium",
+            matches: [match]
+        )
+        let draft = MealDescribe.draft(item: item, match: match)
+        XCTAssertNil(MealDescribe.gramPortion(item))
+        XCTAssertEqual(MealDescribe.scaleFactor(item: item, match: match), 1)
+        XCTAssertEqual(draft.calories, 52)
+        XCTAssertNotEqual(draft.calories, 472)
     }
 
     func testUnmatchedDescribeItemStaysEstimatedUntilEdited() {
