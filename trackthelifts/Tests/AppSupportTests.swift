@@ -55,6 +55,10 @@ final class AppSupportTests: XCTestCase {
 
         preference.markCurrentVersionSeen("1.0.8")
         XCTAssertTrue(preference.shouldPresent(currentVersion: "2.0.0", hasCompletedOnboarding: true))
+
+        preference.markCurrentVersionSeen("2.0.0")
+        preference.resetSeenVersion()
+        XCTAssertTrue(preference.shouldPresent(currentVersion: "2.0.0", hasCompletedOnboarding: true))
     }
 
     func testProductChangeAnnouncementPresentsOnceAfterOnboarding() {
@@ -66,5 +70,7 @@ final class AppSupportTests: XCTestCase {
         XCTAssertTrue(preference.shouldPresent(hasCompletedOnboarding: true))
         preference.markSeen()
         XCTAssertFalse(preference.shouldPresent(hasCompletedOnboarding: true))
+        preference.resetSeen()
+        XCTAssertTrue(preference.shouldPresent(hasCompletedOnboarding: true))
     }
 }

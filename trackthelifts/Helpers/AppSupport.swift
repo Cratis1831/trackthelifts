@@ -121,6 +121,10 @@ final class WhatsNewPreference {
     func markCurrentVersionSeen(_ version: String = AppVersion.marketingVersion) {
         lastSeenVersion = version
     }
+
+    func resetSeenVersion() {
+        lastSeenVersion = ""
+    }
 }
 
 extension Optional {

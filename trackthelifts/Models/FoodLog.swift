@@ -47,7 +47,7 @@ enum FoodSourceType: String, Codable, CaseIterable {
         case .manual: return "Manual entry"
         case .custom: return "Your food"
         case .usda: return "USDA FoodData Central"
-        case .openFoodFacts: return "Open Food Facts"
+        case .openFoodFacts: return "Open Food Facts · ODbL"
         case .aiEstimate: return "AI estimate"
         case .labelScan: return "Nutrition Facts scan"
         case .userContribution: return "Community contribution"
@@ -129,5 +129,24 @@ final class FoodLog {
         self.sodiumMilligrams = sodiumMilligrams
         self.isEstimated = isEstimated || sourceType.isEstimated
         self.createdAt = createdAt
+    }
+}
+
+enum FoodNameFormatting {
+    /// Title-cases all-lowercase names (`chicken breast` → `Chicken Breast`).
+    /// Mixed-case catalogue names (USDA, brands) are left as-is.
+    static func displayName(_ raw: String) -> String {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return trimmed }
+        if trimmed == trimmed.lowercased() {
+            return trimmed.localizedCapitalized
+        }
+        return trimmed
+    }
+
+    static func optionalDisplayName(_ raw: String?) -> String? {
+        guard let raw else { return nil }
+        let formatted = displayName(raw)
+        return formatted.isEmpty ? nil : formatted
     }
 }

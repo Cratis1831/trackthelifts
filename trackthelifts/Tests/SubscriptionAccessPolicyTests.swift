@@ -10,8 +10,10 @@ final class SubscriptionAccessPolicyTests: XCTestCase {
     }
 
     func testTrialIncludesEveryNutritionFeature() {
-        XCTAssertEqual(ProFeature.trialIncluded.count, ProFeature.allCases.count)
-        for feature in ProFeature.allCases {
+        XCTAssertEqual(ProFeature.trialIncluded, ProFeature.merchandised)
+        XCTAssertFalse(ProFeature.merchandised.contains(.foodPhoto))
+        XCTAssertTrue(ProFeature.merchandised.contains(.labelScan))
+        for feature in ProFeature.merchandised {
             XCTAssertTrue(feature.isIncludedInFreeTrial)
             XCTAssertTrue(
                 SubscriptionAccessPolicy.canAccess(feature, tier: .pro, isInFreeTrial: true),
@@ -86,23 +88,25 @@ final class SubscriptionAccessPolicyTests: XCTestCase {
         XCTAssertEqual(RestTimerPresentation.progress(remaining: 30, totalDuration: 0), 0)
     }
 
-    func testOnboardingFlowHasEightOrderedPages() {
-        XCTAssertEqual(OnboardingPage.allCases.count, 8)
+    func testOnboardingFlowHasTenOrderedPages() {
+        XCTAssertEqual(OnboardingPage.allCases.count, 10)
         XCTAssertEqual(OnboardingPage.welcome.next, .workouts)
         XCTAssertEqual(OnboardingPage.workouts.next, .routines)
         XCTAssertEqual(OnboardingPage.routines.next, .progress)
         XCTAssertEqual(OnboardingPage.progress.next, .personalization)
         XCTAssertEqual(OnboardingPage.personalization.next, .ready)
-        XCTAssertEqual(OnboardingPage.ready.next, .profile)
-        XCTAssertEqual(OnboardingPage.profile.next, .trial)
-        XCTAssertNil(OnboardingPage.trial.next)
-        XCTAssertTrue(OnboardingPage.trial.isFinal)
-        XCTAssertFalse(OnboardingPage.profile.isFinal)
+        XCTAssertEqual(OnboardingPage.ready.next, .nutritionDiary)
+        XCTAssertEqual(OnboardingPage.nutritionDiary.next, .nutritionLogging)
+        XCTAssertEqual(OnboardingPage.nutritionLogging.next, .trial)
+        XCTAssertEqual(OnboardingPage.trial.next, .profile)
+        XCTAssertNil(OnboardingPage.profile.next)
+        XCTAssertTrue(OnboardingPage.profile.isFinal)
+        XCTAssertFalse(OnboardingPage.trial.isFinal)
         XCTAssertFalse(OnboardingPage.ready.isFinal)
     }
 
-    func testOnboardingSkipRoutesToProfileSetup() {
-        XCTAssertEqual(OnboardingPage.skipDestination, .profile)
+    func testOnboardingSkipRoutesToNutritionThenProfile() {
+        XCTAssertEqual(OnboardingPage.skipDestination, .nutritionDiary)
     }
 
     func testProfileNamePolicyNormalizesAndValidatesNames() {
@@ -151,13 +155,33 @@ final class SubscriptionAccessPolicyTests: XCTestCase {
             "Start 1-Week Free Trial"
         )
         XCTAssertEqual(
-            SubscriptionOfferPresentation.legalFooter(
-                plan: .monthly,
-                price: "$1.99",
-                intro: weeklyTrial,
+            SubscriptionOfferPresentation.trialRenewalCaption(price: "$39.99", plan: .annual),
+            "then $39.99/year"
+        )
+
+        let threeDayTrial = IntroOfferSummary(
+            paymentMode: .freeTrial,
+            periodCount: 3,
+            periodUnit: .day
+        )
+        XCTAssertEqual(SubscriptionOfferPresentation.trialCardCaption(for: threeDayTrial), "3 days free")
+        XCTAssertEqual(
+            SubscriptionOfferPresentation.purchaseButtonTitle(
+                plan: .annual,
+                price: "$39.99",
+                intro: threeDayTrial,
                 isIntroEligible: true
             ),
-            "Free for 1 week, then $1.99/month. Cancel anytime in Settings at least 24 hours before the trial ends."
+            "Start 3-Day Free Trial"
+        )
+        XCTAssertEqual(
+            SubscriptionOfferPresentation.legalFooter(
+                plan: .annual,
+                price: "$39.99",
+                intro: threeDayTrial,
+                isIntroEligible: true
+            ),
+            "Free for 3 days, then $39.99/year. Cancel anytime in Settings at least 24 hours before the trial ends."
         )
     }
 
@@ -211,6 +235,39 @@ final class SubscriptionAccessPolicyTests: XCTestCase {
             "Try Pro Free"
         )
     }
+
+    func testYearlySavingsPercentUsesLocalMonthlyVersusAnnualPrices() {
+        XCTAssertEqual(
+            SubscriptionOfferPresentation.yearlySavingsPercent(
+                monthlyPrice: Decimal(string: "5.99")!,
+                annualPrice: Decimal(string: "39.99")!
+            ),
+            44
+        )
+        XCTAssertEqual(
+            SubscriptionOfferPresentation.yearlySavingsPercent(
+                monthlyPrice: Decimal(string: "12.90")!,
+                annualPrice: Decimal(string: "69.90")!
+            ),
+            55
+        )
+        XCTAssertEqual(
+            SubscriptionOfferPresentation.yearlySavingsPercent(
+                monthlyPrice: Decimal(string: "499")!,
+                annualPrice: Decimal(string: "3999")!
+            ),
+            33
+        )
+        XCTAssertNil(
+            SubscriptionOfferPresentation.yearlySavingsPercent(
+                monthlyPrice: Decimal(string: "5.99")!,
+                annualPrice: Decimal(string: "79.99")!
+            )
+        )
+        XCTAssertNil(
+            SubscriptionOfferPresentation.yearlySavingsPercent(monthlyPrice: 0, annualPrice: 39.99)
+        )
+    }
 }
 
 final class NutritionAccessPolicyTests: XCTestCase {
@@ -230,7 +287,8 @@ final class NutritionAccessPolicyTests: XCTestCase {
         XCTAssertTrue(NutritionAccessPolicy.canUseAdvancedEntry(.calorieTracking, tier: .free))
         XCTAssertFalse(NutritionAccessPolicy.canUseAdvancedEntry(.barcodeScan, tier: .free))
         XCTAssertFalse(NutritionAccessPolicy.canUseAdvancedEntry(.aiDescribe, tier: .free))
-        XCTAssertTrue(NutritionAccessPolicy.canUseAdvancedEntry(.foodPhoto, tier: .pro))
+        XCTAssertFalse(NutritionAccessPolicy.canUseAdvancedEntry(.labelScan, tier: .free))
+        XCTAssertTrue(NutritionAccessPolicy.canUseAdvancedEntry(.labelScan, tier: .pro))
     }
 
     func testNutritionTotalsSnapshot() {
@@ -240,7 +298,8 @@ final class NutritionAccessPolicyTests: XCTestCase {
             calories: 190,
             proteinGrams: 35,
             carbsGrams: 0,
-            fatGrams: 4
+            fatGrams: 4,
+            fiberGrams: 2
         )
         let rice = FoodLog(
             mealType: .lunch,
@@ -248,12 +307,178 @@ final class NutritionAccessPolicyTests: XCTestCase {
             calories: 200,
             proteinGrams: 4,
             carbsGrams: 45,
-            fatGrams: 1
+            fatGrams: 1,
+            fiberGrams: 1
         )
         let totals = NutritionMath.totals(from: [chicken, rice])
         XCTAssertEqual(totals.calories, 390)
         XCTAssertEqual(totals.proteinGrams, 39)
         XCTAssertEqual(totals.carbsGrams, 45)
         XCTAssertEqual(totals.fatGrams, 5)
+        XCTAssertEqual(totals.fiberGrams, 3)
+    }
+
+    func testHalfServingScalesCaloriesAndMacros() {
+        let factor = ServingPortionMath.factor(
+            referenceAmount: 1,
+            referenceUnit: .serving,
+            amount: 0.5,
+            unit: .serving,
+            gramsPerServing: 100
+        )
+        XCTAssertEqual(factor, 0.5)
+        XCTAssertEqual(
+            ServingPortionMath.grams(amount: 0.5, unit: .serving, gramsPerServing: 100) ?? 0,
+            50,
+            accuracy: 0.001
+        )
+        XCTAssertEqual(
+            ServingPortionMath.factor(
+                referenceAmount: 100,
+                referenceUnit: .gram,
+                amount: 50,
+                unit: .gram,
+                gramsPerServing: 100
+            ),
+            0.5
+        )
+        let ouncesGrams = ServingPortionMath.grams(amount: 1, unit: .ounce, gramsPerServing: nil) ?? 0
+        XCTAssertEqual(ouncesGrams, ServingPortionMath.gramsPerOunce, accuracy: 0.0001)
+    }
+
+    func testServingUnitConversionKeepsGrams() {
+        let grams = ServingPortionMath.grams(amount: 100, unit: .gram, gramsPerServing: 100)!
+        let ounces = ServingPortionMath.amount(grams: grams, unit: .ounce, gramsPerServing: 100)!
+        let back = ServingPortionMath.grams(amount: ounces, unit: .ounce, gramsPerServing: 100)!
+        XCTAssertEqual(grams, back, accuracy: 0.0001)
+        XCTAssertEqual(FoodServingUnit.parse("serving"), .serving)
+        XCTAssertEqual(FoodServingUnit.parse("g"), .gram)
+        XCTAssertEqual(FoodServingUnit.parse("100 g"), .serving)
+    }
+
+    func testNutritionRoundingLimitsDecimals() {
+        XCTAssertEqual(NutritionRounding.calories(199.4), 199)
+        XCTAssertEqual(NutritionRounding.calories(199.5), 200)
+        XCTAssertEqual(NutritionRounding.macro(12.34), 12)
+        XCTAssertEqual(NutritionRounding.macro(12.5), 13)
+        XCTAssertEqual(NutritionRounding.serving(1.23456789), 1.23457)
+        XCTAssertEqual(NutritionRounding.caloriesText(199.6), "200")
+        XCTAssertEqual(NutritionRounding.macroText(31), "31")
+        XCTAssertEqual(NutritionRounding.macroText(31.4), "31")
+        XCTAssertEqual(NutritionRounding.servingText(28.349523125), "28.34952")
+        XCTAssertEqual(
+            NutritionRounding.macrosCaption(
+                calories: 247.4,
+                protein: 21.25,
+                carbs: 2,
+                fat: 7.14,
+                fiber: 3.05
+            ),
+            "247 kcal · P 21 · C 2 · F 7 · Fi 3"
+        )
+    }
+
+    func testMacroEnergyUsesFourFourNine() {
+        let grams = MacroEnergy.grams(
+            calories: 2000,
+            proteinPercent: 40,
+            carbPercent: 40,
+            fatPercent: 20
+        )
+        XCTAssertEqual(grams.protein, 200)
+        XCTAssertEqual(grams.carbs, 200)
+        XCTAssertEqual(grams.fat, 44)
+        XCTAssertEqual(
+            MacroEnergy.calories(proteinGrams: 200, carbsGrams: 200, fatGrams: 44),
+            1996
+        )
+
+        let percents = MacroEnergy.percents(proteinGrams: 200, carbsGrams: 200, fatGrams: 44)
+        XCTAssertEqual(percents.protein, 40)
+        XCTAssertEqual(percents.carbs, 40)
+        XCTAssertEqual(percents.fat, 20)
+
+        let split = MacroEnergy.resolved(
+            calories: 2123,
+            proteinPercent: 40,
+            carbPercent: 40,
+            fatPercent: 20
+        )
+        XCTAssertEqual(split.protein, 212)
+        XCTAssertEqual(split.carbs, 212)
+        XCTAssertEqual(split.fat, 47)
+        XCTAssertEqual(split.calories, 2119)
+    }
+
+    func testServingUnitConversionKeepsGramsAndDisplayRounding() {
+        let ouncesGrams = ServingPortionMath.grams(amount: 1, unit: .ounce, gramsPerServing: nil) ?? 0
+        XCTAssertEqual(ouncesGrams, ServingPortionMath.gramsPerOunce, accuracy: 0.000000001)
+        XCTAssertEqual(
+            ServingPortionMath.grams(amount: 1, unit: .pound, gramsPerServing: nil) ?? 0,
+            ServingPortionMath.gramsPerPound,
+            accuracy: 0.000000001
+        )
+        XCTAssertEqual(
+            ServingPortionMath.grams(amount: 1, unit: .kilogram, gramsPerServing: nil) ?? 0,
+            1000,
+            accuracy: 0.000000001
+        )
+
+        let grams = ServingPortionMath.grams(amount: 100, unit: .gram, gramsPerServing: 100)!
+        let ounces = ServingPortionMath.amount(grams: grams, unit: .ounce, gramsPerServing: 100)!
+        let back = ServingPortionMath.grams(amount: ounces, unit: .ounce, gramsPerServing: 100)!
+        XCTAssertEqual(grams, back, accuracy: 0.0000001)
+        XCTAssertEqual(
+            ServingPortionMath.factor(
+                referenceAmount: 100,
+                referenceUnit: .gram,
+                amount: 3.5274,
+                unit: .ounce,
+                gramsPerServing: 100
+            ),
+            1,
+            accuracy: 0.001
+        )
+    }
+
+    func testHalfServingScalesThenRoundsForDisplay() {
+        let factor = ServingPortionMath.factor(
+            referenceAmount: 1,
+            referenceUnit: .serving,
+            amount: 0.5,
+            unit: .serving,
+            gramsPerServing: 100
+        )
+        XCTAssertEqual(factor, 0.5)
+        XCTAssertEqual(NutritionRounding.calories(247 * factor), 124)
+        XCTAssertEqual(NutritionRounding.macro(21.3 * factor), 11)
+        XCTAssertEqual(NutritionRounding.serving(0.5), 0.5)
+    }
+
+    func testMealCopyLookbackSkipsTheCurrentMeal() {
+        let calendar = Calendar(identifier: .gregorian)
+        var components = DateComponents(year: 2026, month: 9, day: 9, hour: 12)
+        let today = calendar.date(from: components)!
+        components.day = 8
+        let yesterday = calendar.date(from: components)!
+        let todayLunch = FoodLog(loggedAt: today, mealType: .lunch, displayName: "Today", calories: 100, proteinGrams: 1, carbsGrams: 1, fatGrams: 1)
+        let yesterdayLunch = FoodLog(loggedAt: yesterday, mealType: .lunch, displayName: "Yesterday lunch", calories: 400, proteinGrams: 30, carbsGrams: 10, fatGrams: 8)
+        let yesterdayDinner = FoodLog(loggedAt: yesterday, mealType: .dinner, displayName: "Yesterday dinner", calories: 600, proteinGrams: 40, carbsGrams: 20, fatGrams: 15)
+
+        let sources = MealCopying.sources(
+            from: [todayLunch, yesterdayLunch, yesterdayDinner],
+            relativeTo: today,
+            excluding: .lunch,
+            calendar: calendar
+        )
+        XCTAssertEqual(sources.map(\.meal), [.lunch, .dinner])
+        XCTAssertEqual(sources.first?.calories, 400)
+
+        let copies = MealCopying.copy([yesterdayLunch], to: .breakfast, on: today, now: today, calendar: calendar)
+        XCTAssertEqual(copies.count, 1)
+        XCTAssertEqual(copies[0].mealType, .breakfast)
+        XCTAssertEqual(copies[0].displayName, "Yesterday lunch")
+        XCTAssertEqual(copies[0].calories, 400)
+        XCTAssertNotEqual(copies[0].id, yesterdayLunch.id)
     }
 }

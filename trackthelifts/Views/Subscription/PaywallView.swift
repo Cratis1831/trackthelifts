@@ -41,31 +41,22 @@ struct PaywallView: View {
         )
     }
 
-    /// The monthly package from the current offering, used to compute annual savings.
-    private var monthlyPackage: Package? {
-        revenueCatService.monthlyPackage
-    }
-
     private var selectedIntroEligible: Bool {
         guard let selectedPackage else { return false }
         return revenueCatService.isEligibleForFreeTrial(selectedPackage)
     }
 
-    /// Savings shown above the compact plan selector, calculated from localized StoreKit prices.
+    /// Savings versus paying this storefront's monthly price for 12 months.
     private var annualSavingsPercent: Int? {
         guard
-            let monthlyPackage,
-            let annualPackage = revenueCatService.availablePackages.first(where: {
-                $0.packageType == .annual
-                    || $0.storeProduct.productIdentifier.lowercased().contains("annual")
-                    || $0.storeProduct.productIdentifier.lowercased().contains("year")
-            })
+            let monthlyPackage = revenueCatService.monthlyPackage,
+            let annualPackage = revenueCatService.annualPackage
         else { return nil }
 
-        let annual = NSDecimalNumber(decimal: annualPackage.storeProduct.price).doubleValue
-        let monthlyForYear = NSDecimalNumber(decimal: monthlyPackage.storeProduct.price).doubleValue * 12
-        guard monthlyForYear > 0, annual < monthlyForYear else { return nil }
-        return Int((((monthlyForYear - annual) / monthlyForYear) * 100).rounded())
+        return SubscriptionOfferPresentation.yearlySavingsPercent(
+            monthlyPrice: monthlyPackage.storeProduct.price,
+            annualPrice: annualPackage.storeProduct.price
+        )
     }
 
     private var legalFooterText: String {
@@ -81,8 +72,9 @@ struct PaywallView: View {
     }
 
     private var displayedFeatures: [ProFeature] {
-        guard let focusedFeature else { return ProFeature.allCases }
-        return [focusedFeature] + ProFeature.allCases.filter { $0 != focusedFeature }
+        let features = ProFeature.merchandised
+        guard let focusedFeature, features.contains(focusedFeature) else { return features }
+        return [focusedFeature] + features.filter { $0 != focusedFeature }
     }
 
     var body: some View {
@@ -115,13 +107,6 @@ struct PaywallView: View {
                                     description: feature.description
                                 )
                             }
-
-                            FeatureRow(
-                                icon: "sparkles",
-                                iconColor: Color(red: 0.95, green: 0.72, blue: 0.20),
-                                title: "Ongoing Nutrition Features",
-                                description: "Food database, AI logging, and backup as they ship"
-                            )
                         }
 
                         // Pricing Plans
@@ -167,24 +152,27 @@ struct PaywallView: View {
         .onChange(of: revenueCatService.hasEligibleMonthlyTrial) {
             selectDefaultPackageIfNeeded()
         }
-        .alert("Purchase Error", isPresented: $showingError) {
-            Button("OK") { }
-        } message: {
-            Text(errorMessage)
+        .onChange(of: revenueCatService.hasEligibleAnnualTrial) {
+            selectDefaultPackageIfNeeded()
         }
-        .alert("Restore Failed", isPresented: $showRestoreErrorAlert) {
-            Button("OK") { }
-        } message: {
-            Text(revenueCatService.lastError?.localizedDescription ?? "Couldn't restore your purchases. Please try again.")
-        }
-        .alert("Restore Purchases", isPresented: $showRestoreResultAlert) {
-            Button("OK") {
-                if revenueCatService.currentTier == .pro {
-                    dismiss()
-                }
+        .appNotice(
+            "Purchase Error",
+            isPresented: $showingError,
+            message: errorMessage
+        )
+        .appNotice(
+            "Restore Failed",
+            isPresented: $showRestoreErrorAlert,
+            message: revenueCatService.lastError?.localizedDescription ?? "Couldn't restore your purchases. Please try again."
+        )
+        .appNotice(
+            "Restore Purchases",
+            isPresented: $showRestoreResultAlert,
+            message: restoreResultMessage
+        ) {
+            if revenueCatService.currentTier == .pro {
+                dismiss()
             }
-        } message: {
-            Text(restoreResultMessage)
         }
     }
 
@@ -383,8 +371,11 @@ struct PackageCard: View {
         return SubscriptionOfferPresentation.trialCardCaption(for: summary)
     }
 
-    var unitCaption: String {
-        trialCaption ?? planKind.unitCaption
+    private var renewalCaption: String {
+        SubscriptionOfferPresentation.trialRenewalCaption(
+            price: package.storeProduct.localizedPriceString,
+            plan: planKind
+        )
     }
 
     var body: some View {
@@ -397,17 +388,29 @@ struct PackageCard: View {
                     .minimumScaleFactor(0.8)
 
                 VStack(spacing: 1) {
-                    Text(package.storeProduct.localizedPriceString)
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.appTextPrimary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.62)
-
-                    Text(unitCaption)
-                        .font(.system(size: 8.5, weight: .medium))
-                        .foregroundColor(trialCaption == nil ? Color.appTextSecondary : .appAccent)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
+                    if let trialCaption {
+                        Text(trialCaption)
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundColor(.appTextPrimary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                        Text(renewalCaption)
+                            .font(.system(size: 8.5, weight: .medium))
+                            .foregroundColor(.appAccent)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.75)
+                    } else {
+                        Text(package.storeProduct.localizedPriceString)
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.appTextPrimary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.62)
+                        Text(planKind.unitCaption)
+                            .font(.system(size: 8.5, weight: .medium))
+                            .foregroundColor(Color.appTextSecondary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                    }
                 }
 
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")

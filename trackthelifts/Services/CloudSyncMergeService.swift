@@ -10,15 +10,17 @@ import SwiftData
 /// device: the seeded exercise library (and its body parts) exists independently on every
 /// device, so the merged store ends up with duplicate `Exercise`/`Bodypart` rows. Same-named
 /// records are merged into a single survivor — every set and routine entry is repointed to the
-/// survivor *before* the duplicate is deleted, so no logged history is ever lost. Workouts are
-/// never touched: two workouts are always genuinely distinct entries.
+/// survivor *before* the duplicate is deleted, so no logged history is ever lost. Bundled
+/// starter routines are collapsed the same way. Workouts are never touched: two workouts are
+/// always genuinely distinct entries.
 enum CloudSyncMergeService {
     /// Runs both merge passes and saves once if anything changed. Idempotent and safe to call
     /// repeatedly (launch + every batch of remote changes).
     static func mergeDuplicates(in context: ModelContext) {
         let mergedExercises = mergeDuplicateExercises(in: context)
         let mergedBodyparts = mergeDuplicateBodyparts(in: context)
-        guard mergedExercises || mergedBodyparts else { return }
+        let mergedStarters = PrebuiltRoutineCatalog.removeDuplicateStarters(in: context)
+        guard mergedExercises || mergedBodyparts || mergedStarters else { return }
         do {
             try context.save()
         } catch {

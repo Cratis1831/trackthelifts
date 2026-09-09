@@ -140,6 +140,20 @@ struct AppSecondaryButtonStyle: ButtonStyle {
     }
 }
 
+struct AppDestructiveButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(.body, design: .default, weight: .semibold))
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity, minHeight: AppDesign.controlHeight)
+            .padding(.horizontal, 14)
+            .background(Color.red.opacity(configuration.isPressed ? 0.82 : 0.92))
+            .clipShape(RoundedRectangle(cornerRadius: AppDesign.compactRadius, style: .continuous))
+            .scaleEffect(configuration.isPressed ? 0.985 : 1)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+    }
+}
+
 struct AppStatusBadge: View {
     let text: String
     var color: Color = .appAccent

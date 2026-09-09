@@ -73,45 +73,60 @@ enum PrebuiltRoutineCatalog {
         in modelContext: ModelContext,
         preferences: UserDefaults = .standard
     ) {
+        let didDedupe = removeDuplicateStarters(in: modelContext)
         let existingTemplates = (try? modelContext.fetch(FetchDescriptor<WorkoutTemplate>())) ?? []
         let installedVersion = preferences.integer(forKey: catalogVersionKey)
-        guard existingTemplates.isEmpty || installedVersion < catalogVersion else { return }
 
-        let existingIDs = Set(existingTemplates.map(\.id))
-        let exercises = (try? modelContext.fetch(FetchDescriptor<Exercise>())) ?? []
-        var exercisesByName: [String: Exercise] = [:]
-        for exercise in exercises {
-            exercisesByName[ExerciseData.normalizedName(exercise.name)] = exercise
-        }
-
-        for recipe in recipes {
-            guard existingIDs.contains(recipe.id) == false else { continue }
-
-            let resolved = recipe.exercises.compactMap { target -> (Exercise, ExerciseTarget)? in
-                exercisesByName[ExerciseData.normalizedName(target.name)].map { ($0, target) }
-            }
-            guard !resolved.isEmpty else { continue }
-
-            let template = WorkoutTemplate(
-                id: recipe.id,
-                name: recipe.name,
-                isPrebuilt: true
+        var didInsert = false
+        if existingTemplates.isEmpty || installedVersion < catalogVersion {
+            var existingIDs = Set(existingTemplates.map(\.id))
+            var existingStarterNames = Set(
+                existingTemplates
+                    .filter(\.isStarterRoutine)
+                    .map { ExerciseData.normalizedName($0.name) }
             )
-            modelContext.insert(template)
+            let exercises = (try? modelContext.fetch(FetchDescriptor<Exercise>())) ?? []
+            var exercisesByName: [String: Exercise] = [:]
+            for exercise in exercises {
+                exercisesByName[ExerciseData.normalizedName(exercise.name)] = exercise
+            }
 
-            for (index, (exercise, target)) in resolved.enumerated() {
-                let templateExercise = WorkoutTemplateExercise(
-                    order: index,
-                    targetSets: target.sets,
-                    targetReps: target.reps,
-                    targetWeight: 0,
-                    template: template,
-                    exercise: exercise
+            for recipe in recipes {
+                let nameKey = ExerciseData.normalizedName(recipe.name)
+                guard existingIDs.contains(recipe.id) == false else { continue }
+                guard existingStarterNames.contains(nameKey) == false else { continue }
+
+                let resolved = recipe.exercises.compactMap { target -> (Exercise, ExerciseTarget)? in
+                    exercisesByName[ExerciseData.normalizedName(target.name)].map { ($0, target) }
+                }
+                guard !resolved.isEmpty else { continue }
+
+                let template = WorkoutTemplate(
+                    id: recipe.id,
+                    name: recipe.name,
+                    isPrebuilt: true
                 )
-                modelContext.insert(templateExercise)
-                template.templateExercises.append(templateExercise)
+                modelContext.insert(template)
+                existingIDs.insert(recipe.id)
+                existingStarterNames.insert(nameKey)
+                didInsert = true
+
+                for (index, (exercise, target)) in resolved.enumerated() {
+                    let templateExercise = WorkoutTemplateExercise(
+                        order: index,
+                        targetSets: target.sets,
+                        targetReps: target.reps,
+                        targetWeight: 0,
+                        template: template,
+                        exercise: exercise
+                    )
+                    modelContext.insert(templateExercise)
+                    template.templateExercises.append(templateExercise)
+                }
             }
         }
+
+        guard didDedupe || didInsert || installedVersion < catalogVersion else { return }
 
         do {
             try modelContext.save()
@@ -119,5 +134,43 @@ enum PrebuiltRoutineCatalog {
         } catch {
             print("Failed to install starter routines: \(error)")
         }
+    }
+
+    /// iCloud can import a second copy of each bundled routine (different UUID, same name)
+    /// after the local seed. Keep one starter per catalog name; leave user-created routines.
+    @discardableResult
+    static func removeDuplicateStarters(in modelContext: ModelContext) -> Bool {
+        guard let templates = try? modelContext.fetch(FetchDescriptor<WorkoutTemplate>()) else {
+            return false
+        }
+        let recipesByName = Dictionary(
+            uniqueKeysWithValues: recipes.map { (ExerciseData.normalizedName($0.name), $0) }
+        )
+        let grouped = Dictionary(grouping: templates.filter(\.isStarterRoutine)) {
+            ExerciseData.normalizedName($0.name)
+        }
+        var didChange = false
+
+        for (name, duplicates) in grouped where duplicates.count > 1 {
+            let survivor = starterSurvivor(duplicates, recipe: recipesByName[name])
+            for extra in duplicates where extra.persistentModelID != survivor.persistentModelID {
+                modelContext.delete(extra)
+                didChange = true
+            }
+        }
+        return didChange
+    }
+
+    private static func starterSurvivor(
+        _ duplicates: [WorkoutTemplate],
+        recipe: Recipe?
+    ) -> WorkoutTemplate {
+        if let recipe, let canonical = duplicates.first(where: { $0.id == recipe.id }) {
+            return canonical
+        }
+        return duplicates.sorted { lhs, rhs in
+            if lhs.createdAt != rhs.createdAt { return lhs.createdAt < rhs.createdAt }
+            return lhs.id.uuidString < rhs.id.uuidString
+        }[0]
     }
 }

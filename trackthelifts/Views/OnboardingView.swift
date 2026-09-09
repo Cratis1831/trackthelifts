@@ -12,8 +12,10 @@ enum OnboardingPage: Int, CaseIterable, Identifiable {
     case progress
     case personalization
     case ready
-    case profile
+    case nutritionDiary
+    case nutritionLogging
     case trial
+    case profile
 
     var id: Int { rawValue }
 
@@ -21,9 +23,10 @@ enum OnboardingPage: Int, CaseIterable, Identifiable {
         Self.allCases.first { $0.rawValue == rawValue + 1 }
     }
 
-    var isFinal: Bool { self == .trial }
+    var isFinal: Bool { self == .profile }
 
-    static let skipDestination = OnboardingPage.profile
+    /// Skip the lifting tour and land on nutrition, then trial, then name.
+    static let skipDestination = OnboardingPage.nutritionDiary
 
     var analyticsPage: OnboardingAnalyticsPage {
         switch self {
@@ -33,8 +36,10 @@ enum OnboardingPage: Int, CaseIterable, Identifiable {
         case .progress: return .progress
         case .personalization: return .personalization
         case .ready: return .ready
-        case .profile: return .profile
+        case .nutritionDiary: return .nutritionDiary
+        case .nutritionLogging: return .nutritionLogging
         case .trial: return .trial
+        case .profile: return .profile
         }
     }
 }
@@ -55,8 +60,12 @@ struct OnboardingView: View {
         currentPage != .profile || ProfileNamePolicy.isValid(nameDraft)
     }
 
+    private var isPro: Bool {
+        revenueCatService.currentTier == .pro
+    }
+
     private var showsSkip: Bool {
-        currentPage != .profile
+        currentPage != .profile && !(currentPage == .trial && isPro)
     }
 
     private var skipTitle: String {
@@ -66,6 +75,7 @@ struct OnboardingView: View {
     private var primaryButtonTitle: String {
         switch currentPage {
         case .trial:
+            if isPro { return "Continue" }
             return (revenueCatService.hasEligibleAnnualTrial || revenueCatService.hasEligibleMonthlyTrial)
                 ? "Start Free Trial"
                 : "See All Plans"
@@ -95,14 +105,13 @@ struct OnboardingView: View {
                         .tag(OnboardingPage.personalization)
                     ReadyOnboardingPage(isActive: currentPage == .ready)
                         .tag(OnboardingPage.ready)
-                    ProfileNameOnboardingPage(
-                        name: $nameDraft,
-                        isActive: currentPage == .profile,
-                        onSubmit: advance
-                    )
-                    .tag(OnboardingPage.profile)
+                    NutritionDiaryOnboardingPage(isActive: currentPage == .nutritionDiary)
+                        .tag(OnboardingPage.nutritionDiary)
+                    NutritionLoggingOnboardingPage(isActive: currentPage == .nutritionLogging)
+                        .tag(OnboardingPage.nutritionLogging)
                     TrialOnboardingPage(
                         isActive: currentPage == .trial,
+                        isPro: isPro,
                         isTrialEligible: revenueCatService.hasEligibleAnnualTrial
                             || revenueCatService.hasEligibleMonthlyTrial,
                         trialDurationText: trialDurationText,
@@ -116,6 +125,12 @@ struct OnboardingView: View {
                         onSeeAllPlans: showAllPlans
                     )
                     .tag(OnboardingPage.trial)
+                    ProfileNameOnboardingPage(
+                        name: $nameDraft,
+                        isActive: currentPage == .profile,
+                        onSubmit: advance
+                    )
+                    .tag(OnboardingPage.profile)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
 
@@ -148,20 +163,20 @@ struct OnboardingView: View {
         }
         .onChange(of: currentPage) {
             trackOnboardingStep()
-            if currentPage == .trial, !ProfileNamePolicy.isValid(nameDraft) {
-                currentPage = .profile
-            }
         }
         .onChange(of: revenueCatService.currentTier) {
-            if revenueCatService.currentTier == .pro {
-                finishOnboarding()
+            if isPro {
+                isPaywallPresented = false
+                if currentPage == .trial {
+                    goToProfile()
+                }
             }
         }
-        .alert("Purchase Error", isPresented: $showingPurchaseError) {
-            Button("OK") { }
-        } message: {
-            Text(purchaseErrorMessage)
-        }
+        .appNotice(
+            "Purchase Error",
+            isPresented: $showingPurchaseError,
+            message: purchaseErrorMessage
+        )
     }
 
     private var trialDurationText: String {
@@ -225,9 +240,13 @@ struct OnboardingView: View {
         case .profile:
             answer = ProfileNamePolicy.isValid(nameDraft) ? "named" : nil
         case .trial:
-            answer = (revenueCatService.hasEligibleAnnualTrial || revenueCatService.hasEligibleMonthlyTrial)
-                ? "trial_eligible"
-                : "see_plans"
+            if isPro {
+                answer = "subscribed"
+            } else {
+                answer = (revenueCatService.hasEligibleAnnualTrial || revenueCatService.hasEligibleMonthlyTrial)
+                    ? "trial_eligible"
+                    : "see_plans"
+            }
         default:
             answer = nil
         }
@@ -236,38 +255,44 @@ struct OnboardingView: View {
             id: currentPage.analyticsPage.rawValue,
             answer: answer
         )
-        if currentPage == .trial {
+        if currentPage == .trial, !isPro {
             ActivationPal.paywallShown("onboarding")
         }
     }
 
     private func handleSkip() {
+        AnalyticsService.track(.onboardingSkipped(fromPage: currentPage.analyticsPage))
+        didSkip = true
+
         if currentPage == .trial {
             ActivationPal.paywallDismissed()
-            finishOnboarding()
+            goToProfile()
             return
         }
 
-        AnalyticsService.track(.onboardingSkipped(fromPage: currentPage.analyticsPage))
-        didSkip = true
+        let destination: OnboardingPage =
+            (currentPage == .nutritionDiary || currentPage == .nutritionLogging)
+            ? .trial
+            : .skipDestination
+
         withAnimation(.easeInOut(duration: 0.25)) {
-            currentPage = .skipDestination
+            currentPage = destination
         }
     }
 
     private func advance() {
         if currentPage == .trial {
+            if isPro {
+                goToProfile()
+                return
+            }
             startTrialOrShowPlans()
             return
         }
 
         if currentPage == .profile {
-            guard persistNameIfValid() else { return }
-            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-            if revenueCatService.currentTier == .pro {
-                finishOnboarding()
-                return
-            }
+            finishOnboarding()
+            return
         }
 
         if let next = currentPage.next {
@@ -277,13 +302,19 @@ struct OnboardingView: View {
         }
     }
 
+    private func goToProfile() {
+        withAnimation(.easeInOut(duration: 0.25)) {
+            currentPage = .profile
+        }
+    }
+
     private func startTrialOrShowPlans() {
         if revenueCatService.hasEligibleAnnualTrial, let annualPackage = revenueCatService.annualPackage {
             ActivationPal.paywallPlanSelected("yearly")
             Task {
                 let success = await revenueCatService.purchasePackage(annualPackage)
                 if success {
-                    finishOnboarding()
+                    goToProfile()
                 } else if let error = revenueCatService.lastError {
                     if case .userCancelled = error { return }
                     purchaseErrorMessage = error.localizedDescription
@@ -298,7 +329,7 @@ struct OnboardingView: View {
             Task {
                 let success = await revenueCatService.purchasePackage(monthlyPackage)
                 if success {
-                    finishOnboarding()
+                    goToProfile()
                 } else if let error = revenueCatService.lastError {
                     if case .userCancelled = error { return }
                     purchaseErrorMessage = error.localizedDescription

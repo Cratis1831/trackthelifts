@@ -651,7 +651,7 @@ struct ReadyOnboardingPage: View {
         OnboardingPageLayout(
             eyebrow: "Ready",
             title: "Your first set starts here.",
-            detail: "Your history, previous values, and progress update as you train. One final detail and you're ready to lift.",
+            detail: "Your history, previous values, and progress update as you train. Nutrition is optional Pro — next is a look at the food diary.",
             phase: phase
         ) {
             ReadySpecimen(phase: phase)
@@ -716,7 +716,213 @@ private struct ReadySpecimen: View {
     }
 }
 
-// MARK: - Page 7: Profile name
+// MARK: - Page 7: Food diary
+
+struct NutritionDiaryOnboardingPage: View {
+    let isActive: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var phase = 0
+
+    var body: some View {
+        OnboardingPageLayout(
+            eyebrow: "Nutrition",
+            title: "See the day at a glance.",
+            detail: "Calories, protein, carbs, and fat in a food diary on this iPhone. Set targets you already have — ForgeLyte Lift is not a diet coach.",
+            phase: phase
+        ) {
+            NutritionDiarySpecimen(phase: phase)
+        }
+        .onboardingPhaseSequence(
+            isActive: isActive,
+            reduceMotion: reduceMotion,
+            phase: $phase
+        )
+    }
+}
+
+private struct NutritionDiarySpecimen: View {
+    let phase: Int
+
+    var body: some View {
+        OnboardingSpecimenCard {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack {
+                    SpecimenLabel(text: "Today")
+                    Spacer()
+                    Text("1,847 / 2,120")
+                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                        .foregroundColor(.appTextSecondary)
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        Text("1847")
+                            .font(.system(size: 28, weight: .semibold, design: .rounded))
+                            .foregroundColor(.appTextPrimary)
+                        Text("kcal")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.appTextSecondary)
+                    }
+
+                    GeometryReader { proxy in
+                        ZStack(alignment: .leading) {
+                            RoundedRectangle(cornerRadius: 3, style: .continuous)
+                                .fill(Color.appBorder)
+                            RoundedRectangle(cornerRadius: 3, style: .continuous)
+                                .fill(Color.appAccent)
+                                .frame(width: proxy.size.width * (phase >= 3 ? 0.87 : 0.08))
+                        }
+                    }
+                    .frame(height: 6)
+                }
+
+                HStack(spacing: 8) {
+                    diaryMacro("P", "142 g", fill: phase >= 3 ? 0.78 : 0.12)
+                    diaryMacro("C", "168 g", fill: phase >= 3 ? 0.64 : 0.12)
+                    diaryMacro("F", "58 g", fill: phase >= 3 ? 0.52 : 0.12)
+                }
+
+                Divider().overlay(Color.appBorder)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("Lunch")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.appTextPrimary)
+                        Spacer()
+                        Text("612 kcal")
+                            .font(.system(size: 11, weight: .medium, design: .monospaced))
+                            .foregroundColor(.appTextSecondary)
+                    }
+
+                    diaryFood("Chicken rice bowl", "P 48 · C 52 · F 18")
+                        .opacity(phase >= 2 ? 1 : 0.2)
+                    diaryFood("Greek yogurt", "P 18 · C 12 · F 4")
+                        .opacity(phase >= 3 ? 1 : 0.2)
+                        .offset(y: phase >= 3 ? 0 : 8)
+                }
+            }
+        }
+        .accessibilityHidden(true)
+    }
+
+    private func diaryMacro(_ label: String, _ value: String, fill: CGFloat) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(label)
+                .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                .foregroundColor(.appTextTertiary)
+            Text(value)
+                .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                .foregroundColor(.appTextPrimary)
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 2, style: .continuous)
+                        .fill(Color.appBorder)
+                    RoundedRectangle(cornerRadius: 2, style: .continuous)
+                        .fill(Color.appAccent)
+                        .frame(width: proxy.size.width * fill)
+                }
+            }
+            .frame(height: 4)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(9)
+        .background(Color.appElevatedSurface)
+        .clipShape(RoundedRectangle(cornerRadius: AppDesign.compactRadius, style: .continuous))
+    }
+
+    private func diaryFood(_ name: String, _ macros: String) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(name)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.appTextPrimary)
+                Text(macros)
+                    .font(.system(size: 11))
+                    .foregroundColor(.appTextSecondary)
+            }
+            Spacer()
+        }
+        .padding(.vertical, 2)
+    }
+}
+
+// MARK: - Page 8: How you log food
+
+struct NutritionLoggingOnboardingPage: View {
+    let isActive: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var phase = 0
+
+    var body: some View {
+        OnboardingPageLayout(
+            eyebrow: "Logging",
+            title: "Log food the way it happens.",
+            detail: "Search the catalogue, scan a barcode, snap a Nutrition Facts label, or describe a meal in plain language.",
+            phase: phase
+        ) {
+            NutritionLoggingSpecimen(phase: phase)
+        }
+        .onboardingPhaseSequence(
+            isActive: isActive,
+            reduceMotion: reduceMotion,
+            phase: $phase
+        )
+    }
+}
+
+private struct NutritionLoggingSpecimen: View {
+    let phase: Int
+
+    private let methods: [(color: Color, symbol: String, title: String, detail: String)] = [
+        (Color(red: 0.20, green: 0.48, blue: 0.96), "magnifyingglass", "Search", "USDA and Open Food Facts"),
+        (Color(red: 0.36, green: 0.72, blue: 0.42), "barcode.viewfinder", "Barcode", "Packaged foods in one scan"),
+        (Color(red: 0.95, green: 0.55, blue: 0.19), "doc.text.viewfinder", "Nutrition Facts", "Snap the label on the package"),
+        (Color.appAccent, "text.bubble.fill", "Describe", "Tell AI what you ate"),
+    ]
+
+    var body: some View {
+        OnboardingSpecimenCard {
+            VStack(spacing: 10) {
+                HStack {
+                    SpecimenLabel(text: "Add food")
+                    Spacer()
+                    AppStatusBadge(text: "Pro", color: .appAccent)
+                        .opacity(phase >= 3 ? 1 : 0)
+                }
+
+                ForEach(Array(methods.enumerated()), id: \.offset) { index, method in
+                    HStack(spacing: 10) {
+                        IconTile(color: method.color, size: 30) {
+                            Image(systemName: method.symbol)
+                                .font(.system(size: 12, weight: .semibold))
+                        }
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(method.title)
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.appTextPrimary)
+                            Text(method.detail)
+                                .font(.system(size: 11))
+                                .foregroundColor(.appTextSecondary)
+                        }
+                        Spacer()
+                        Image(systemName: "plus")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(.appTextTertiary)
+                    }
+                    .padding(9)
+                    .background(Color.appElevatedSurface)
+                    .clipShape(RoundedRectangle(cornerRadius: AppDesign.compactRadius, style: .continuous))
+                    .opacity(phase >= min(3, index + 1) ? 1 : 0.18)
+                    .offset(x: phase >= min(3, index + 1) ? 0 : 14)
+                }
+            }
+        }
+        .accessibilityHidden(true)
+    }
+}
+
+// MARK: - Page 10: Profile name
 
 struct ProfileNameOnboardingPage: View {
     @Binding var name: String
@@ -825,10 +1031,11 @@ struct ProfileNameOnboardingPage: View {
     }
 }
 
-// MARK: - Page 8: Pro trial
+// MARK: - Page 9: Pro trial
 
 struct TrialOnboardingPage: View {
     let isActive: Bool
+    let isPro: Bool
     let isTrialEligible: Bool
     let trialDurationText: String
     let monthlyPriceText: String?
@@ -840,13 +1047,19 @@ struct TrialOnboardingPage: View {
     @State private var phase = 0
 
     private var title: String {
-        isTrialEligible
+        if isPro {
+            return "You're on Pro. One last step."
+        }
+        return isTrialEligible
             ? "Try Pro nutrition free for \(trialDurationText)."
             : "Add nutrition when you're ready."
     }
 
     private var detail: String {
-        isTrialEligible
+        if isPro {
+            return "Your trial or subscription is active. Tell us what to call you, then start training."
+        }
+        return isTrialEligible
             ? "Training stays free. Pro adds calorie tracking, food search, barcode scanning, and AI meal logging."
             : "Training stays free. Upgrade to Pro for calorie tracking, food search, barcode scanning, and AI meal logging."
     }
@@ -859,9 +1072,14 @@ struct TrialOnboardingPage: View {
             phase: phase
         ) {
             VStack(spacing: 16) {
-                TrialSpecimen(phase: phase, isTrialEligible: isTrialEligible, trialDurationText: trialDurationText)
+                TrialSpecimen(
+                    phase: phase,
+                    isPro: isPro,
+                    isTrialEligible: isTrialEligible,
+                    trialDurationText: trialDurationText
+                )
 
-                if isTrialEligible {
+                if isTrialEligible, !isPro {
                     Button("See all plans", action: onSeeAllPlans)
                         .font(.system(size: 15, weight: .medium))
                         .foregroundColor(.appAccent)
@@ -911,6 +1129,7 @@ struct TrialOnboardingPage: View {
 
 private struct TrialSpecimen: View {
     let phase: Int
+    let isPro: Bool
     let isTrialEligible: Bool
     let trialDurationText: String
 
@@ -929,7 +1148,7 @@ private struct TrialSpecimen: View {
                         Text("ForgeLyte Lift Pro")
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(.appTextPrimary)
-                        Text("Included in your trial")
+                        Text(isPro ? "Included with Pro" : "Included in your trial")
                             .font(.system(size: 11))
                             .foregroundColor(.appTextSecondary)
                     }
@@ -937,10 +1156,10 @@ private struct TrialSpecimen: View {
                     Spacer()
 
                     AppStatusBadge(
-                        text: isTrialEligible ? "\(trialDurationText) free" : "Pro",
+                        text: isPro ? "Pro" : (isTrialEligible ? "\(trialDurationText) free" : "Pro"),
                         color: .appAccent
                     )
-                    .trialBadgeJiggle(isActive: phase >= 3)
+                    .trialBadgeJiggle(isActive: phase >= 3 && !isPro)
                 }
 
                 Divider().overlay(Color.appBorder)

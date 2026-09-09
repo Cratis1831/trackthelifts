@@ -26,7 +26,6 @@ struct HistoryView: View {
     @State private var workoutToNameTemplate: Workout?
     @State private var templateName: String = ""
     @State private var workoutToDelete: Workout?
-    @State private var showingDeleteConfirmation = false
 
     var body: some View {
         NavigationStack {
@@ -55,7 +54,6 @@ struct HistoryView: View {
                                         onRepeat: { repeatWorkout(workout) },
                                         onDelete: {
                                             workoutToDelete = workout
-                                            showingDeleteConfirmation = true
                                         }
                                     )
                                 }
@@ -78,54 +76,43 @@ struct HistoryView: View {
         }) {
             CreateWorkoutView(existingWorkout: resumingWorkout)
         }
-        .alert("Workout In Progress", isPresented: $showActiveWorkoutAlert) {
-            Button("OK") { }
-        } message: {
-            Text("Finish or discard your current workout before starting another one.")
-        }
-        .alert("Save as Routine", isPresented: Binding(
-            get: { workoutToNameTemplate != nil },
-            set: { if !$0 { workoutToNameTemplate = nil } }
-        )) {
-            TextField("Template Name", text: $templateName)
-            Button("Save") {
-                if let workout = workoutToNameTemplate {
-                    do {
-                        _ = try TemplateService.makeTemplate(from: workout, name: templateName, in: modelContext)
-                        AnalyticsService.track(.routineSaved(source: .pastWorkout))
-                    } catch {
-                        print("Failed to save routine from workout: \(error)")
+        .appNotice(
+            "Workout In Progress",
+            isPresented: $showActiveWorkoutAlert,
+            message: "Finish or discard your current workout before starting another one."
+        )
+        .appPrompt(
+            "Save as Routine",
+            item: $workoutToNameTemplate,
+            message: "This will create a routine you can start again later.",
+            text: $templateName,
+            placeholder: "Template Name",
+            onConfirm: { workout in
+                do {
+                    _ = try TemplateService.makeTemplate(from: workout, name: templateName, in: modelContext)
+                    AnalyticsService.track(.routineSaved(source: .pastWorkout))
+                } catch {
+                    print("Failed to save routine from workout: \(error)")
+                }
+            }
+        )
+        .appConfirm(
+            item: $workoutToDelete,
+            title: { _ in "Delete Workout" },
+            message: { _ in "Are you sure you want to delete this workout? This cannot be undone." },
+            confirmTitle: "Delete",
+            onConfirm: { workout in
+                let healthKitUUID = workout.healthKitWorkoutUUID
+                modelContext.delete(workout)
+                try? modelContext.save()
+                if let healthKitUUID {
+                    Task {
+                        await HealthKitWorkoutService.shared.deleteWorkout(uuid: healthKitUUID)
                     }
                 }
-                workoutToNameTemplate = nil
+                Haptics.impact(.medium)
             }
-            Button("Cancel", role: .cancel) {
-                workoutToNameTemplate = nil
-            }
-        } message: {
-            Text("This will create a routine you can start again later.")
-        }
-        .alert("Delete Workout", isPresented: $showingDeleteConfirmation) {
-            Button("Delete", role: .destructive) {
-                if let workout = workoutToDelete {
-                    let healthKitUUID = workout.healthKitWorkoutUUID
-                    modelContext.delete(workout)
-                    try? modelContext.save()
-                    if let healthKitUUID {
-                        Task {
-                            await HealthKitWorkoutService.shared.deleteWorkout(uuid: healthKitUUID)
-                        }
-                    }
-                    Haptics.impact(.medium)
-                }
-                workoutToDelete = nil
-            }
-            Button("Cancel", role: .cancel) {
-                workoutToDelete = nil
-            }
-        } message: {
-            Text("Are you sure you want to delete this workout? This cannot be undone.")
-        }
+        )
     }
 
     private func repeatWorkout(_ workout: Workout) {

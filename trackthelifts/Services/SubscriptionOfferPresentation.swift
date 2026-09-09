@@ -75,14 +75,18 @@ enum SubscriptionOfferPresentation {
         "\(offer.periodCount) \(unitName(offer.periodUnit, count: offer.periodCount))"
     }
 
-    /// Title-cased duration used in CTAs, e.g. `1-Week`.
+    /// Title-cased duration used in CTAs, e.g. `1-Week` or `3-Day`.
     static func hyphenatedDuration(for offer: IntroOfferSummary) -> String {
-        "\(offer.periodCount)-\(unitName(offer.periodUnit, count: offer.periodCount).capitalized)"
+        "\(offer.periodCount)-\(unitName(offer.periodUnit, count: 1).capitalized)"
     }
 
     static func trialCardCaption(for offer: IntroOfferSummary) -> String? {
         guard offer.isFreeTrial else { return nil }
         return "\(durationPhrase(for: offer)) free"
+    }
+
+    static func trialRenewalCaption(price: String, plan: SubscriptionPlanKind) -> String {
+        "then \(price)/\(plan.unitCaption)"
     }
 
     static func purchaseButtonTitle(
@@ -114,6 +118,28 @@ enum SubscriptionOfferPresentation {
             return "Free for \(durationPhrase(for: intro)), then \(price)/\(period). Cancel anytime in Settings at least 24 hours before the trial ends."
         }
         return "Subscription automatically renews unless canceled at least 24 hours before the end of the current period."
+    }
+
+    /// Percent cheaper yearly is versus paying the local monthly price for 12 months.
+    /// Uses StoreKit decimals for the current storefront — not a US-only constant.
+    static func yearlySavingsPercent(monthlyPrice: Decimal, annualPrice: Decimal) -> Int? {
+        let yearlyIfMonthly = monthlyPrice * 12
+        guard yearlyIfMonthly > 0, annualPrice > 0, annualPrice < yearlyIfMonthly else { return nil }
+
+        let saved = yearlyIfMonthly - annualPrice
+        let percent = NSDecimalNumber(decimal: saved)
+            .dividing(by: NSDecimalNumber(decimal: yearlyIfMonthly))
+            .multiplying(by: 100)
+            .rounding(accordingToBehavior: NSDecimalNumberHandler(
+                roundingMode: .plain,
+                scale: 0,
+                raiseOnExactness: false,
+                raiseOnOverflow: false,
+                raiseOnUnderflow: false,
+                raiseOnDivideByZero: false
+            ))
+        let value = percent.intValue
+        return value > 0 ? value : nil
     }
 
     static func settingsUpgradeTitle(

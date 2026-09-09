@@ -108,6 +108,52 @@ final class PrebuiltRoutineSeedTests: XCTestCase {
         )
     }
 
+    func testSeedCollapsesDuplicateStarterRoutinesAndKeepsCustomCopies() throws {
+        let container = try makeContainer()
+        ExerciseData.seedIfNeeded(in: container.mainContext, preferences: preferences)
+        PrebuiltRoutineCatalog.seedIfNeeded(in: container.mainContext, preferences: preferences)
+
+        let pushID = PrebuiltRoutineCatalog.recipes.first { $0.name == "Push" }!.id
+        let duplicate = WorkoutTemplate(
+            name: "Push",
+            createdAt: Date(timeIntervalSince1970: 50),
+            isPrebuilt: true
+        )
+        container.mainContext.insert(duplicate)
+        let customPush = WorkoutTemplate(name: "Push", isPrebuilt: false)
+        container.mainContext.insert(customPush)
+        try container.mainContext.save()
+
+        PrebuiltRoutineCatalog.seedIfNeeded(in: container.mainContext, preferences: preferences)
+
+        let templates = try container.mainContext.fetch(FetchDescriptor<WorkoutTemplate>())
+        let starterPush = templates.filter { $0.isStarterRoutine && $0.name == "Push" }
+        XCTAssertEqual(starterPush.count, 1)
+        XCTAssertEqual(starterPush.first?.id, pushID)
+        XCTAssertEqual(templates.filter { !$0.isStarterRoutine && $0.name == "Push" }.count, 1)
+        XCTAssertEqual(templates.filter(\.isStarterRoutine).count, PrebuiltRoutineCatalog.recipes.count)
+    }
+
+    func testSeedDoesNotAddASecondStarterWhenOneAlreadyExistsUnderAnotherID() throws {
+        let container = try makeContainer()
+        ExerciseData.seedIfNeeded(in: container.mainContext, preferences: preferences)
+
+        let existingPush = WorkoutTemplate(
+            name: "Push",
+            createdAt: Date(timeIntervalSince1970: 0),
+            isPrebuilt: true
+        )
+        container.mainContext.insert(existingPush)
+        try container.mainContext.save()
+
+        PrebuiltRoutineCatalog.seedIfNeeded(in: container.mainContext, preferences: preferences)
+
+        let pushStarters = try container.mainContext.fetch(FetchDescriptor<WorkoutTemplate>())
+            .filter { $0.isStarterRoutine && $0.name == "Push" }
+        XCTAssertEqual(pushStarters.count, 1)
+        XCTAssertEqual(pushStarters.first?.id, existingPush.id)
+    }
+
     private func makeContainer() throws -> ModelContainer {
         let schema = Schema([
             Workout.self, Exercise.self, Bodypart.self,

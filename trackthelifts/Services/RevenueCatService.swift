@@ -19,8 +19,10 @@ class RevenueCatService: ObservableObject {
     @Published var lastError: RevenueCatError?
     @Published var availablePackages: [Package] = []
     @Published private(set) var introEligibleProductIDs: Set<String> = []
+    @Published private(set) var introEligibilityLoaded = false
     @Published private(set) var isInFreeTrial = false
-    private var introEligibilityLoaded = false
+    /// Survives RevenueCat anonymous ID reset on reinstall; StoreKit eligibility is Apple ID based.
+    @Published private(set) var hasPriorPaidOrTrialHistory = false
     #if DEBUG
     private static let debugTierOverrideKey = "debugSubscriptionTierOverride"
 
@@ -131,6 +133,7 @@ class RevenueCatService: ObservableObject {
             
             updateSubscriptionStatus(from: customerInfo)
             print("Checked subscription status successfully")
+            await refreshIntroEligibility()
         } catch {
             lastError = .restoreFailed(error)
             print("Failed to check subscription status: \(error)")
@@ -168,6 +171,7 @@ class RevenueCatService: ObservableObject {
             }
             
             updateSubscriptionStatus(from: result.customerInfo)
+            await refreshIntroEligibility()
             
             if !result.userCancelled {
                 print("Purchase successful: \(package.storeProduct.productIdentifier)")
@@ -212,6 +216,7 @@ class RevenueCatService: ObservableObject {
             }
             
             updateSubscriptionStatus(from: customerInfo)
+            await refreshIntroEligibility()
             AnalyticsService.track(.purchaseRestoreCompleted(hasActiveEntitlement: currentTier == .pro))
             print("Purchases restored successfully")
             return true
@@ -287,10 +292,9 @@ class RevenueCatService: ObservableObject {
 
     func isEligibleForFreeTrial(_ package: Package) -> Bool {
         guard package.introOfferSummary?.isFreeTrial == true else { return false }
-        if introEligibilityLoaded {
-            return introEligibleProductIDs.contains(package.storeProduct.productIdentifier)
-        }
-        return true
+        guard introEligibilityLoaded else { return false }
+        guard !hasPriorPaidOrTrialHistory else { return false }
+        return introEligibleProductIDs.contains(package.storeProduct.productIdentifier)
     }
 
     func preferredPaywallPackage() -> Package? {
@@ -310,6 +314,8 @@ class RevenueCatService: ObservableObject {
         }
 
         let result = await Purchases.shared.checkTrialOrIntroDiscountEligibility(packages: packages)
+        // Only `.eligible` may show trial copy. Ineligible/unknown after a prior trial
+        // (including delete-and-reinstall on the same Apple ID) must not advertise a new trial.
         introEligibleProductIDs = Set(result.compactMap { package, eligibility in
             eligibility.status == .eligible ? package.storeProduct.productIdentifier : nil
         })
@@ -376,6 +382,13 @@ class RevenueCatService: ObservableObject {
             entitlementTier = .free
             isInFreeTrial = false
         }
+
+        hasPriorPaidOrTrialHistory = customerInfo.entitlements.all["Pro"] != nil
+            || customerInfo.allPurchasedProductIdentifiers.contains { identifier in
+                let id = identifier.lowercased()
+                return id.contains("month") || id.contains("year") || id.contains("annual")
+                    || id.contains("lifetime")
+            }
 
         synchronizeThemeAccess()
         // Workout iCloud is free; do not gate the CloudKit store on the Pro entitlement.

@@ -38,8 +38,8 @@ entitlement. New Pro features are added by extending `ProFeature`.
 ## RevenueCat Products
 
 ### Product IDs
-- **Monthly Subscription**: `com.ashkansdev.track_the_lifts.Monthly` (auto-renewable, 1-week free trial then $1.99)
-- **Yearly Subscription**: `com.ashkansdev.track_the_lifts.Annual` (auto-renewable)
+- **Monthly Subscription**: `com.ashkansdev.track_the_lifts.Monthly` (auto-renewable, $5.99/month, no trial)
+- **Yearly Subscription**: `com.ashkansdev.track_the_lifts.Annual` (auto-renewable, 3-day free trial then $39.99/year)
 - **Lifetime**: `com.ashkansdev.track_the_lifts.Lifetime` (non-consumable, one-time)
 - Weekly (`com.ashkansdev.track_the_lifts.Weekly`) is removed from sale and archived in RevenueCat; do not attach it to the offering.
 

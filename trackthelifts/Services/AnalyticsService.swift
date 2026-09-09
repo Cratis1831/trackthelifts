@@ -8,8 +8,10 @@ enum OnboardingAnalyticsPage: String, CaseIterable {
     case progress
     case personalization
     case ready
-    case profile
+    case nutritionDiary
+    case nutritionLogging
     case trial
+    case profile
 }
 
 enum WorkoutAnalyticsSource: String {

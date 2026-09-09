@@ -13,7 +13,7 @@ struct FoodDataSourcesView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    Text("ForgeLyte may include nutrition data from public and community sources. Search results show the source on each food.")
+                    Text("ForgeLyte may include nutrition data from public and community sources. Each search result and logged food shows its source. USDA records can be cached. Open Food Facts records are stored separately and never mixed into the USDA catalogue.")
                         .font(.appBody)
                         .foregroundStyle(Color.appTextSecondary)
                         .fixedSize(horizontal: false, vertical: true)

@@ -29,6 +29,10 @@ final class NutritionPreference {
         didSet { userDefaults.set(fatGrams, forKey: Keys.fat) }
     }
 
+    var fiberGrams: Double {
+        didSet { userDefaults.set(fiberGrams, forKey: Keys.fiber) }
+    }
+
     var hasSetTargets: Bool {
         calories > 0
     }
@@ -39,6 +43,7 @@ final class NutritionPreference {
         proteinGrams = userDefaults.double(forKey: Keys.protein)
         carbsGrams = userDefaults.double(forKey: Keys.carbs)
         fatGrams = userDefaults.double(forKey: Keys.fat)
+        fiberGrams = userDefaults.double(forKey: Keys.fiber)
     }
 
     func reset() {
@@ -46,6 +51,7 @@ final class NutritionPreference {
         proteinGrams = 0
         carbsGrams = 0
         fatGrams = 0
+        fiberGrams = 0
     }
 
     private enum Keys {
@@ -53,5 +59,6 @@ final class NutritionPreference {
         static let protein = "nutritionTargetProteinGrams"
         static let carbs = "nutritionTargetCarbsGrams"
         static let fat = "nutritionTargetFatGrams"
+        static let fiber = "nutritionTargetFiberGrams"
     }
 }

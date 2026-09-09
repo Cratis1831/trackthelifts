@@ -94,6 +94,32 @@ final class CloudSyncMergeServiceTests: XCTestCase {
         )
     }
 
+    func testMergesDuplicateStarterRoutinesAndLeavesCustomRoutines() throws {
+        let catalogPush = WorkoutTemplate(
+            id: PrebuiltRoutineCatalog.recipes.first { $0.name == "Push" }!.id,
+            name: "Push",
+            createdAt: Date(timeIntervalSince1970: 10),
+            isPrebuilt: true
+        )
+        let syncedPush = WorkoutTemplate(
+            name: "Push",
+            createdAt: Date(timeIntervalSince1970: 0),
+            isPrebuilt: true
+        )
+        let customPush = WorkoutTemplate(name: "Push", isPrebuilt: false)
+        context.insert(catalogPush)
+        context.insert(syncedPush)
+        context.insert(customPush)
+        try context.save()
+
+        CloudSyncMergeService.mergeDuplicates(in: context)
+
+        let templates = try context.fetch(FetchDescriptor<WorkoutTemplate>())
+        XCTAssertEqual(templates.filter(\.isStarterRoutine).count, 1)
+        XCTAssertEqual(templates.filter(\.isStarterRoutine).first?.id, catalogPush.id)
+        XCTAssertEqual(templates.filter { !$0.isStarterRoutine }.count, 1)
+    }
+
     func testIsIdempotent() throws {
         context.insert(Exercise(name: "Deadlift", createdAt: Date(timeIntervalSince1970: 0)))
         context.insert(Exercise(name: "Deadlift", createdAt: Date(timeIntervalSince1970: 50)))

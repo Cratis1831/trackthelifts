@@ -43,6 +43,32 @@ enum ForgeLyteAPI {
         return try await request(url)
     }
 
+    static func describeMeal(_ text: String) async throws -> MealDescribeResponse {
+        let url = baseURL.appending(path: "api/foods/ai/describe")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 45
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder().encode(DescribeMealRequest(text: text))
+        return try await send(request)
+    }
+
+    static func scanNutritionLabel(_ jpeg: Data, barcode: String?) async throws -> RemoteFood {
+        let url = baseURL.appending(path: "api/foods/ai/label")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 45
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder().encode(
+            LabelScanRequest(
+                image: "data:image/jpeg;base64,\(jpeg.base64EncodedString())",
+                barcode: barcode
+            )
+        )
+        let payload: LabelScanResponse = try await send(request)
+        return payload.food
+    }
+
     static func bootstrap(signedAppTransaction: String) async throws -> BootstrapResponse {
         let url = baseURL.appending(path: "api/bootstrap")
         var request = URLRequest(url: url)
@@ -85,6 +111,9 @@ enum ForgeLyteAPI {
             throw ForgeLyteAPIError.proRequired
         }
         if (500...599).contains(http.statusCode) {
+            if let envelope = try? JSONDecoder().decode(APIErrorEnvelope.self, from: data) {
+                throw ForgeLyteAPIError.server(envelope.error.message)
+            }
             throw ForgeLyteAPIError.unavailable
         }
         if !(200...299).contains(http.statusCode) {
@@ -121,6 +150,77 @@ struct BarcodeLookupResponse: Decodable {
     var needsLabelScan: Bool { status == "LABEL_SCAN_REQUIRED" }
 }
 
+struct DescribeMealRequest: Encodable {
+    let text: String
+}
+
+private struct LabelScanRequest: Encodable {
+    let image: String
+    let barcode: String?
+}
+
+private struct LabelScanResponse: Decodable {
+    let food: RemoteFood
+}
+
+struct MealDescribeResponse: Decodable {
+    let estimated: Bool?
+    let items: [DescribedMealItem]
+
+    var isEstimated: Bool { estimated ?? true }
+}
+
+struct DescribedMealItem: Decodable, Hashable {
+    let name: String
+    let brand: String?
+    let quantity: Double
+    let unit: String
+    let estimatedWeightGrams: Double?
+    let confidence: String
+    let matches: [RemoteFood]
+
+    enum CodingKeys: String, CodingKey {
+        case name
+        case brand
+        case quantity
+        case unit
+        case confidence
+        case matches
+        case estimatedWeightGrams = "estimated_weight_g"
+    }
+
+    init(
+        name: String,
+        brand: String? = nil,
+        quantity: Double,
+        unit: String,
+        estimatedWeightGrams: Double?,
+        confidence: String,
+        matches: [RemoteFood]
+    ) {
+        self.name = name
+        self.brand = brand
+        self.quantity = quantity
+        self.unit = unit
+        self.estimatedWeightGrams = estimatedWeightGrams
+        self.confidence = confidence
+        self.matches = matches
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        name = try container.decode(String.self, forKey: .name)
+        let decodedBrand = try container.decodeIfPresent(String.self, forKey: .brand)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        brand = (decodedBrand?.isEmpty ?? true) ? nil : decodedBrand
+        quantity = try container.decodeIfPresent(Double.self, forKey: .quantity) ?? 1
+        unit = try container.decodeIfPresent(String.self, forKey: .unit) ?? "serving"
+        estimatedWeightGrams = try container.decodeIfPresent(Double.self, forKey: .estimatedWeightGrams)
+        confidence = try container.decodeIfPresent(String.self, forKey: .confidence) ?? "low"
+        matches = try container.decodeIfPresent([RemoteFood].self, forKey: .matches) ?? []
+    }
+}
+
 struct RemoteFood: Decodable, Identifiable, Hashable {
     let id: String
     let name: String
@@ -128,7 +228,19 @@ struct RemoteFood: Decodable, Identifiable, Hashable {
     let barcode: String?
     let serving: Serving
     let nutrition: Nutrition
+    let nutritionPer100g: Nutrition?
     let source: Source
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case brand
+        case barcode
+        case serving
+        case nutrition
+        case nutritionPer100g = "nutrition_per_100g"
+        case source
+    }
 
     struct Serving: Decodable, Hashable {
         let amount: Double?
@@ -178,11 +290,51 @@ struct RemoteFood: Decodable, Identifiable, Hashable {
         FoodSourceType.fromAPI(source.type)
     }
 
+    var listTitle: String {
+        FoodNameFormatting.displayName(name)
+    }
+
+    var listBrand: String? {
+        FoodNameFormatting.optionalDisplayName(brand)
+    }
+
+    var servingLabel: String {
+        if let unit = serving.unit?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !unit.isEmpty,
+           unit.lowercased() != "serving",
+           unit.lowercased() != "g" {
+            return unit
+        }
+        if let grams = serving.weightGrams, grams > 0 {
+            return "\(NutritionRounding.servingText(grams)) g"
+        }
+        return "100 g"
+    }
+
+    var energyLabel: String {
+        nutrition.calories.map { "\(NutritionRounding.caloriesText($0)) kcal" } ?? "Nutrition varies"
+    }
+
+    var macrosLabel: String {
+        func part(_ label: String, _ value: Double?) -> String? {
+            guard let value else { return nil }
+            return "\(label) \(NutritionRounding.macroText(value))"
+        }
+        return [
+            part("P", nutrition.proteinGrams),
+            part("C", nutrition.carbsGrams),
+            part("F", nutrition.fatGrams),
+            part("Fi", nutrition.fiberGrams)
+        ]
+        .compactMap { $0 }
+        .joined(separator: " · ")
+    }
+
     var draft: FoodEntryDraft {
         FoodEntryDraft(
             id: id,
-            name: name,
-            brand: brand,
+            name: FoodNameFormatting.displayName(name),
+            brand: FoodNameFormatting.optionalDisplayName(brand),
             calories: nutrition.calories ?? 0,
             proteinGrams: nutrition.proteinGrams ?? 0,
             carbsGrams: nutrition.carbsGrams ?? 0,
@@ -190,7 +342,8 @@ struct RemoteFood: Decodable, Identifiable, Hashable {
             fiberGrams: nutrition.fiberGrams,
             sugarGrams: nutrition.sugarGrams,
             sodiumMilligrams: nutrition.sodiumMilligrams,
-            servingDescription: serving.unit.map { $0 == "g" ? "\(Int(serving.weightGrams ?? 100)) g" : $0 },
+            quantity: 1,
+            servingDescription: serving.unit.map { $0 == "g" ? "\(NutritionRounding.servingText(serving.weightGrams ?? 100)) g" : $0 },
             servingWeightGrams: serving.weightGrams,
             barcode: barcode,
             sourceType: sourceType,
@@ -211,6 +364,7 @@ struct FoodEntryDraft: Identifiable, Hashable {
     var fiberGrams: Double?
     var sugarGrams: Double?
     var sodiumMilligrams: Double?
+    var quantity: Double
     var servingDescription: String?
     var servingWeightGrams: Double?
     var barcode: String?
@@ -223,8 +377,8 @@ extension CustomFood {
     var draft: FoodEntryDraft {
         FoodEntryDraft(
             id: id.uuidString,
-            name: name,
-            brand: brand,
+            name: FoodNameFormatting.displayName(name),
+            brand: FoodNameFormatting.optionalDisplayName(brand),
             calories: calories,
             proteinGrams: proteinGrams,
             carbsGrams: carbsGrams,
@@ -232,6 +386,7 @@ extension CustomFood {
             fiberGrams: fiberGrams,
             sugarGrams: sugarGrams,
             sodiumMilligrams: sodiumMilligrams,
+            quantity: 1,
             servingDescription: servingDescription,
             servingWeightGrams: servingWeightGrams,
             barcode: barcode,
@@ -278,15 +433,15 @@ enum ForgeLyteAPIError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidRequest:
-            return "The food search request was invalid."
+            return "That food request was invalid."
         case .invalidServerResponse:
-            return "ForgeLyte could not read the food catalogue response."
+            return "ForgeLyte could not read the food response."
         case .sessionExpired:
             return "Open ForgeLyte Lift again, then retry."
         case .proRequired:
-            return "ForgeLyte Pro is required to search the food catalogue."
+            return "ForgeLyte Pro is required for this food tool."
         case .unavailable:
-            return "The food catalogue is unavailable right now."
+            return "ForgeLyte couldn't complete that request right now."
         case .missingAppTransaction:
             return "The App Store could not verify this install yet."
         case .unreachable(let url):

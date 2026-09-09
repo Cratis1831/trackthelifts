@@ -32,4 +32,8 @@ final class ProductChangeAnnouncementPreference {
     func markSeen() {
         hasSeenAnnouncement = true
     }
+
+    func resetSeen() {
+        hasSeenAnnouncement = false
+    }
 }

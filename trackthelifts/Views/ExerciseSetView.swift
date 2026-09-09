@@ -68,17 +68,23 @@ struct ExerciseSetView: View {
                 Haptics.selection()
                 showClassificationDialog = true
             }
-            .confirmationDialog(
-                "Classify Set \(exerciseSet.order + 1)",
-                isPresented: $showClassificationDialog,
-                titleVisibility: .visible
-            ) {
-                ForEach(SetClassification.allCases, id: \.self) { classification in
-                    Button(classification.label + (classification == exerciseSet.classification ? " (current)" : "")) {
+            .fullScreenCover(isPresented: $showClassificationDialog) {
+                AppChoiceDialog(
+                    title: "Classify Set \(exerciseSet.order + 1)",
+                    options: Array(SetClassification.allCases),
+                    titleForOption: { classification in
+                        classification.label + (classification == exerciseSet.classification ? " (current)" : "")
+                    },
+                    onSelect: { classification in
                         setClassification(classification)
+                        showClassificationDialog = false
+                    },
+                    onCancel: {
+                        showClassificationDialog = false
                     }
-                }
-                Button("Cancel", role: .cancel) { }
+                )
+                .presentationBackground(.clear)
+                .presentationDragIndicator(.hidden)
             }
 
             // Column 2 & 3: Previous summary (last time this exercise/set-number was logged)

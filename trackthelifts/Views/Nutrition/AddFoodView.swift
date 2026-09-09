@@ -9,18 +9,40 @@ import SwiftData
 struct AddFoodView: View {
     let selectedDay: Date
     let customFoods: [CustomFood]
+    var initialMeal: MealType? = nil
 
     @EnvironmentObject private var revenueCatService: RevenueCatService
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    @Query(sort: \SavedMeal.lastUsedAt, order: .reverse) private var savedMeals: [SavedMeal]
     @State private var query = ""
-    @State private var selectedMeal: MealType = defaultMeal(for: .now)
+    @State private var selectedMeal: MealType
     @State private var isManualPresented = false
     @State private var selectedProFeature: ProFeature?
     @State private var comingSoonFeature: ProFeature?
     @State private var isScannerPresented = false
+    @State private var isDescribePresented = false
+    @State private var isLabelScannerPresented = false
+    @State private var labelBarcode: String?
     @State private var remoteFoods: [RemoteFood] = []
     @State private var isSearchingRemote = false
+    @State private var catalogueError: String?
     @State private var selectedDraft: FoodEntryDraft?
+
+    init(selectedDay: Date, customFoods: [CustomFood], initialMeal: MealType? = nil) {
+        self.selectedDay = selectedDay
+        self.customFoods = customFoods
+        self.initialMeal = initialMeal
+        _selectedMeal = State(initialValue: initialMeal ?? Self.defaultMeal(for: .now))
+    }
+
+    private var trimmedQuery: String {
+        query.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var isSearching: Bool {
+        !trimmedQuery.isEmpty
+    }
 
     private var filteredFoods: [CustomFood] {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -31,6 +53,12 @@ struct AddFoodView: View {
             $0.name.localizedCaseInsensitiveContains(trimmed)
             || ($0.brand?.localizedCaseInsensitiveContains(trimmed) ?? false)
         }
+    }
+
+    private var visibleSavedMeals: [SavedMeal] {
+        let trimmed = trimmedQuery
+        if trimmed.isEmpty { return savedMeals }
+        return savedMeals.filter { $0.name.localizedCaseInsensitiveContains(trimmed) }
     }
 
     private var canSearchCatalogue: Bool {
@@ -46,13 +74,23 @@ struct AddFoodView: View {
                     VStack(alignment: .leading, spacing: 20) {
                         mealPicker
                         searchField
-                        entryMethods
+                        if !isSearching {
+                            entryMethods
+                                .transition(.asymmetric(
+                                    insertion: .move(edge: .top).combined(with: .opacity),
+                                    removal: .opacity.combined(with: .scale(scale: 0.96, anchor: .top))
+                                ))
+                        }
+                        if !visibleSavedMeals.isEmpty {
+                            savedMealSection
+                        }
                         if !filteredFoods.isEmpty {
                             foodSection(title: query.isEmpty ? "Recent" : "Yours", foods: filteredFoods)
                         }
                         remoteResults
                     }
                     .padding(20)
+                    .animation(.easeInOut(duration: 0.28), value: isSearching)
                 }
             }
             .navigationTitle("Add Food")
@@ -61,6 +99,28 @@ struct AddFoodView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Close") { dismiss() }
                         .foregroundColor(.appAccent)
+                }
+                ToolbarItem(placement: .primaryAction) {
+                    if isSearching {
+                        Menu {
+                            Button("Add Manually", systemImage: "square.and.pencil") {
+                                isManualPresented = true
+                            }
+                            Button("Scan Barcode", systemImage: "barcode.viewfinder") {
+                                handleAdvanced(.barcodeScan)
+                            }
+                            Button("Scan Nutrition Facts", systemImage: "doc.text.viewfinder") {
+                                handleAdvanced(.labelScan)
+                            }
+                            Button("Describe with AI", systemImage: "text.bubble.fill") {
+                                handleAdvanced(.aiDescribe)
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                                .foregroundColor(.appAccent)
+                        }
+                        .accessibilityLabel("More ways to add food")
+                    }
                 }
             }
             .sheet(isPresented: $isManualPresented) {
@@ -77,13 +137,37 @@ struct AddFoodView: View {
                 NutritionComingSoonView(feature: feature)
             }
             .sheet(isPresented: $isScannerPresented) {
-                BarcodeScanView(customFoods: customFoods) { draft in
+                BarcodeScanView(
+                    customFoods: customFoods,
+                    onScanNutritionFacts: { code in
+                        isScannerPresented = false
+                        labelBarcode = code
+                        Task { @MainActor in
+                            try? await Task.sleep(for: .milliseconds(350))
+                            isLabelScannerPresented = true
+                        }
+                    }
+                ) { draft in
                     isScannerPresented = false
                     Task { @MainActor in
                         try? await Task.sleep(for: .milliseconds(350))
                         selectedDraft = draft
                     }
                 }
+            }
+            .sheet(isPresented: $isLabelScannerPresented, onDismiss: {
+                labelBarcode = nil
+            }) {
+                LabelScanView(barcode: labelBarcode) { draft in
+                    isLabelScannerPresented = false
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(350))
+                        selectedDraft = draft
+                    }
+                }
+            }
+            .sheet(isPresented: $isDescribePresented) {
+                AIDescribeView(selectedDay: selectedDay, mealType: selectedMeal)
             }
             .proPaywall(feature: $selectedProFeature)
             .task(id: query) {
@@ -128,8 +212,8 @@ struct AddFoodView: View {
             methodButton(title: "Scan Barcode", systemImage: "barcode.viewfinder", feature: .barcodeScan) {
                 handleAdvanced(.barcodeScan)
             }
-            methodButton(title: "Take Food Photo", systemImage: "camera.fill", feature: .foodPhoto) {
-                handleAdvanced(.foodPhoto)
+            methodButton(title: "Scan Nutrition Facts", systemImage: "doc.text.viewfinder", feature: .labelScan) {
+                handleAdvanced(.labelScan)
             }
             methodButton(title: "Describe with AI", systemImage: "text.bubble.fill", feature: .aiDescribe) {
                 handleAdvanced(.aiDescribe)
@@ -184,14 +268,26 @@ struct AddFoodView: View {
                             selectedDraft = food.draft
                         } label: {
                             foodRow(
-                                name: food.name,
-                                detail: catalogueDetail(food),
+                                name: food.listTitle,
+                                brand: food.listBrand,
+                                detail: "\(food.energyLabel) · \(food.servingLabel)",
+                                macros: food.macrosLabel,
                                 attribution: food.sourceType.displayName
                             )
                         }
                         .buttonStyle(.plain)
                     }
                 }
+            } else if let catalogueError {
+                catalogueStatusCard(
+                    title: "Catalogue unavailable",
+                    message: catalogueError
+                )
+            } else {
+                catalogueStatusCard(
+                    title: "No catalogue matches",
+                    message: "USDA and Open Food Facts didn’t return foods for this search. Try again, or add it manually."
+                )
             }
         }
     }
@@ -209,8 +305,17 @@ struct AddFoodView: View {
                     selectedDraft = food.draft
                 } label: {
                     foodRow(
-                        name: food.name,
-                        detail: "\(Int(food.calories.rounded())) kcal · \(food.servingDescription ?? "1 serving")"
+                        name: FoodNameFormatting.displayName(food.name),
+                        brand: FoodNameFormatting.optionalDisplayName(food.brand),
+                        detail: "\(NutritionRounding.caloriesText(food.calories)) kcal · \(food.servingDescription ?? "1 serving")",
+                        macros: [
+                            "P \(NutritionRounding.macroText(food.proteinGrams))",
+                            "C \(NutritionRounding.macroText(food.carbsGrams))",
+                            "F \(NutritionRounding.macroText(food.fatGrams))",
+                            food.fiberGrams.map { "Fi \(NutritionRounding.macroText($0))" }
+                        ]
+                        .compactMap { $0 }
+                        .joined(separator: " · ")
                     )
                 }
                 .buttonStyle(.plain)
@@ -218,15 +323,31 @@ struct AddFoodView: View {
         }
     }
 
-    private func foodRow(name: String, detail: String, attribution: String? = nil) -> some View {
+    private func foodRow(
+        name: String,
+        brand: String? = nil,
+        detail: String,
+        macros: String? = nil,
+        attribution: String? = nil
+    ) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 3) {
                 Text(name)
                     .font(.system(size: 15, weight: .medium))
                     .foregroundColor(.appTextPrimary)
+                if let brand, !brand.isEmpty {
+                    Text(brand)
+                        .font(.appCaption)
+                        .foregroundColor(.appTextSecondary)
+                }
                 Text(detail)
                     .font(.appCaption)
                     .foregroundColor(.appTextSecondary)
+                if let macros, !macros.isEmpty {
+                    Text(macros)
+                        .font(.appCaption)
+                        .foregroundColor(.appTextSecondary)
+                }
                 if let attribution {
                     Text(attribution)
                         .font(.appCaption)
@@ -236,12 +357,6 @@ struct AddFoodView: View {
             Spacer()
         }
         .appCard(padding: 12)
-    }
-
-    private func catalogueDetail(_ food: RemoteFood) -> String {
-        let calories = food.nutrition.calories.map { "\(Int($0.rounded())) kcal" } ?? "Nutrition varies"
-        let serving = food.serving.unit ?? food.serving.weightGrams.map { "\(Int($0)) g" } ?? "1 serving"
-        return "\(calories) · \(serving)"
     }
 
     private func methodButton(
@@ -272,11 +387,34 @@ struct AddFoodView: View {
         .buttonStyle(.plain)
     }
 
+    private func catalogueStatusCard(title: String, message: String) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.appTextPrimary)
+            Text(message)
+                .font(.appCaption)
+                .foregroundColor(.appTextSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Button("Try Again") {
+                Task { await searchRemoteIfNeeded(immediate: true) }
+            }
+            .buttonStyle(AppSecondaryButtonStyle())
+        }
+        .appCard()
+    }
+
     private func handleAdvanced(_ feature: ProFeature) {
         if revenueCatService.canAccess(feature) {
-            if feature == .barcodeScan {
+            switch feature {
+            case .barcodeScan:
                 isScannerPresented = true
-            } else {
+            case .labelScan:
+                labelBarcode = nil
+                isLabelScannerPresented = true
+            case .aiDescribe:
+                isDescribePresented = true
+            default:
                 comingSoonFeature = feature
             }
         } else {
@@ -284,24 +422,103 @@ struct AddFoodView: View {
         }
     }
 
-    private func searchRemoteIfNeeded() async {
+    private func searchRemoteIfNeeded(immediate: Bool = false) async {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmed.count >= 2, canSearchCatalogue else {
             remoteFoods = []
+            catalogueError = nil
             isSearchingRemote = false
             return
         }
 
-        try? await Task.sleep(for: .milliseconds(550))
-        guard !Task.isCancelled else { return }
+        if !immediate {
+            try? await Task.sleep(for: .milliseconds(550))
+            guard !Task.isCancelled else { return }
+        }
 
         isSearchingRemote = true
+        catalogueError = nil
         defer { isSearchingRemote = false }
         do {
             remoteFoods = try await ForgeLyteSession.shared.searchFoods(trimmed)
+            catalogueError = nil
         } catch {
             remoteFoods = []
+            catalogueError = error.localizedDescription
         }
+    }
+
+    private var savedMealSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Saved meals")
+                .font(.appUtility)
+                .tracking(1.2)
+                .textCase(.uppercase)
+                .foregroundColor(.appTextSecondary)
+
+            ForEach(visibleSavedMeals, id: \.id) { meal in
+                Button {
+                    addSavedMeal(meal)
+                } label: {
+                    foodRow(
+                        name: meal.name,
+                        detail: "\(meal.foods.count) food\(meal.foods.count == 1 ? "" : "s") · \(NutritionRounding.caloriesText(meal.foods.reduce(0) { $0 + $1.calories })) kcal"
+                    )
+                }
+                .buttonStyle(.plain)
+                .contextMenu {
+                    Button("Delete", role: .destructive) {
+                        modelContext.delete(meal)
+                        try? modelContext.save()
+                    }
+                }
+            }
+        }
+    }
+
+    private func addSavedMeal(_ meal: SavedMeal) {
+        let foods = meal.foods
+        guard !foods.isEmpty else { return }
+        let existingCount = (try? modelContext.fetch(FetchDescriptor<FoodLog>()))?.count ?? 0
+        if !NutritionAccessPolicy.canLogManually(
+            existingLogCount: existingCount + foods.count - 1,
+            tier: revenueCatService.currentTier
+        ) {
+            selectedProFeature = .calorieTracking
+            return
+        }
+        let loggedAt: Date = {
+            if Calendar.current.isDate(selectedDay, inSameDayAs: .now) {
+                return .now
+            }
+            return Calendar.current.date(bySettingHour: 12, minute: 0, second: 0, of: selectedDay) ?? selectedDay
+        }()
+        for food in foods {
+            modelContext.insert(
+                FoodLog(
+                    loggedAt: loggedAt,
+                    mealType: selectedMeal,
+                    sourceType: FoodSourceType(rawValue: food.sourceTypeRaw) ?? .custom,
+                    sourceFoodID: food.sourceFoodID,
+                    displayName: food.displayName,
+                    brand: food.brand,
+                    quantity: food.quantity,
+                    unit: food.unit,
+                    weightGrams: food.weightGrams,
+                    calories: food.calories,
+                    proteinGrams: food.proteinGrams,
+                    carbsGrams: food.carbsGrams,
+                    fatGrams: food.fatGrams,
+                    fiberGrams: food.fiberGrams,
+                    sugarGrams: food.sugarGrams,
+                    sodiumMilligrams: food.sodiumMilligrams,
+                    isEstimated: food.isEstimated
+                )
+            )
+        }
+        meal.lastUsedAt = .now
+        try? modelContext.save()
+        dismiss()
     }
 
     private static func defaultMeal(for date: Date) -> MealType {

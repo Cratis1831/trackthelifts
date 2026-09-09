@@ -162,11 +162,11 @@ struct ExerciseDetailView: View {
         .onAppear {
             setupInitialData()
         }
-        .alert("Error", isPresented: $showingError) {
-            Button("OK") { }
-        } message: {
-            Text(errorMessage)
-        }
+        .appNotice(
+            "Error",
+            isPresented: $showingError,
+            message: errorMessage
+        )
     }
     
     private func setupInitialData() {

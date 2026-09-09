@@ -36,6 +36,7 @@ extension FoodEntryDraft {
             fiberGrams: nil,
             sugarGrams: nil,
             sodiumMilligrams: nil,
+            quantity: 1,
             servingDescription: "1 serving",
             servingWeightGrams: nil,
             barcode: code,

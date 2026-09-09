@@ -37,7 +37,7 @@ struct ProBenefitsView: View {
                                 .foregroundColor(.appTextPrimary)
 
                             VStack(alignment: .leading, spacing: 12) {
-                                ForEach(ProFeature.allCases) { feature in
+                                ForEach(ProFeature.merchandised) { feature in
                                     FeatureRow(
                                         icon: feature.systemImage,
                                         iconColor: feature.iconColor,
@@ -115,16 +115,16 @@ struct ProBenefitsView: View {
                 }
             }
         }
-        .alert("Restore Failed", isPresented: $showRestoreErrorAlert) {
-            Button("OK") { }
-        } message: {
-            Text(revenueCatService.lastError?.localizedDescription ?? "Couldn't restore your purchases. Please try again.")
-        }
-        .alert("Restore Purchases", isPresented: $showRestoreResultAlert) {
-            Button("OK") { }
-        } message: {
-            Text(restoreResultMessage)
-        }
+        .appNotice(
+            "Restore Failed",
+            isPresented: $showRestoreErrorAlert,
+            message: revenueCatService.lastError?.localizedDescription ?? "Couldn't restore your purchases. Please try again."
+        )
+        .appNotice(
+            "Restore Purchases",
+            isPresented: $showRestoreResultAlert,
+            message: restoreResultMessage
+        )
     }
 }
 

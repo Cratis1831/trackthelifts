@@ -12,6 +12,7 @@ final class ForgeLyteSession {
     static let shared = ForgeLyteSession()
 
     private var isBootstrapping = false
+    private var searchCache = CatalogueSearchCache()
 
     func bootstrap(forceRefresh: Bool = false) async {
         if isBootstrapping { return }
@@ -42,11 +43,18 @@ final class ForgeLyteSession {
     }
 
     func searchFoods(_ query: String) async throws -> [RemoteFood] {
+        if let cached = searchCache.foods(for: query) {
+            return cached
+        }
         do {
-            return try await ForgeLyteAPI.searchFoods(query)
+            let foods = try await ForgeLyteAPI.searchFoods(query)
+            searchCache.store(foods, for: query)
+            return foods
         } catch ForgeLyteAPIError.sessionExpired {
             await bootstrap(forceRefresh: true)
-            return try await ForgeLyteAPI.searchFoods(query)
+            let foods = try await ForgeLyteAPI.searchFoods(query)
+            searchCache.store(foods, for: query)
+            return foods
         }
     }
 
@@ -56,6 +64,24 @@ final class ForgeLyteSession {
         } catch ForgeLyteAPIError.sessionExpired {
             await bootstrap(forceRefresh: true)
             return try await ForgeLyteAPI.lookupBarcode(barcode)
+        }
+    }
+
+    func describeMeal(_ text: String) async throws -> MealDescribeResponse {
+        do {
+            return try await ForgeLyteAPI.describeMeal(text)
+        } catch ForgeLyteAPIError.sessionExpired {
+            await bootstrap(forceRefresh: true)
+            return try await ForgeLyteAPI.describeMeal(text)
+        }
+    }
+
+    func scanNutritionLabel(_ jpeg: Data, barcode: String?) async throws -> RemoteFood {
+        do {
+            return try await ForgeLyteAPI.scanNutritionLabel(jpeg, barcode: barcode)
+        } catch ForgeLyteAPIError.sessionExpired {
+            await bootstrap(forceRefresh: true)
+            return try await ForgeLyteAPI.scanNutritionLabel(jpeg, barcode: barcode)
         }
     }
 
@@ -78,6 +104,37 @@ final class ForgeLyteSession {
             throw ForgeLyteAPIError.missingAppTransaction
         }
         return jws
+    }
+}
+
+struct CatalogueSearchCache {
+    var ttl: TimeInterval = 15 * 60
+    private var items: [String: (at: Date, foods: [RemoteFood])] = [:]
+
+    init(ttl: TimeInterval = 15 * 60) {
+        self.ttl = ttl
+    }
+
+    mutating func foods(for query: String, now: Date = .now) -> [RemoteFood]? {
+        let key = Self.key(query)
+        guard let item = items[key] else { return nil }
+        if now.timeIntervalSince(item.at) >= ttl {
+            items.removeValue(forKey: key)
+            return nil
+        }
+        return item.foods
+    }
+
+    mutating func store(_ foods: [RemoteFood], for query: String, now: Date = .now) {
+        guard !foods.isEmpty else { return }
+        if items.count >= 50 {
+            items.removeAll()
+        }
+        items[Self.key(query)] = (now, foods)
+    }
+
+    static func key(_ query: String) -> String {
+        query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 }
 

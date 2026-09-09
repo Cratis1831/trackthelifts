@@ -512,40 +512,37 @@ struct CreateWorkoutView: View {
                     }
                 }
             }
-            .alert("Cancel Workout", isPresented: $showCancelConfirmation) {
-                Button("No", role: .cancel) { }
-                Button("Yes", role: .destructive) {
-                    cancelWorkout()
-                }
-            } message: {
-                Text("Are you sure you want to cancel this workout? Any unsaved changes will be lost.")
-            }
-            .alert("Workout Name Required", isPresented: $showMissingNameAlert) {
-                Button("OK") { }
-            } message: {
-                Text("Give this workout a name before finishing it.")
-            }
-            .alert("No Sets Completed", isPresented: $showNoCompletedSetsAlert) {
-                Button("OK") { }
-            } message: {
-                Text("Log and check off at least one set before finishing this workout.")
-            }
-            .alert("Finish Workout?", isPresented: $showMarkSetsCompleteConfirmation) {
-                Button("Go Back", role: .cancel) { }
-                Button("Mark Complete & Finish") {
-                    markLoggedSetsCompleteAndFinish()
-                }
-            } message: {
-                Text("You've logged weight and reps but haven't checked any sets off yet. Completed sets are required to finish — mark your logged sets as complete and finish the workout?")
-            }
-            .alert("Couldn't Save", isPresented: Binding(
-                get: { saveErrorMessage != nil },
-                set: { if !$0 { saveErrorMessage = nil } }
-            )) {
-                Button("OK") { }
-            } message: {
-                Text(saveErrorMessage ?? "Something went wrong. Please try again.")
-            }
+            .appConfirm(
+                "Cancel Workout",
+                isPresented: $showCancelConfirmation,
+                message: "Are you sure you want to cancel this workout? Any unsaved changes will be lost.",
+                confirmTitle: "Yes",
+                cancelTitle: "No",
+                onConfirm: cancelWorkout
+            )
+            .appNotice(
+                "Workout Name Required",
+                isPresented: $showMissingNameAlert,
+                message: "Give this workout a name before finishing it."
+            )
+            .appNotice(
+                "No Sets Completed",
+                isPresented: $showNoCompletedSetsAlert,
+                message: "Log and check off at least one set before finishing this workout."
+            )
+            .appConfirm(
+                "Finish Workout?",
+                isPresented: $showMarkSetsCompleteConfirmation,
+                message: "You've logged weight and reps but haven't checked any sets off yet. Completed sets are required to finish — mark your logged sets as complete and finish the workout?",
+                confirmTitle: "Mark Complete & Finish",
+                confirmStyle: .primary,
+                cancelTitle: "Go Back",
+                onConfirm: markLoggedSetsCompleteAndFinish
+            )
+            .appNotice(
+                "Couldn't Save",
+                message: $saveErrorMessage
+            )
         }
         .overlay(alignment: .top) {
             if let prAnnouncement {

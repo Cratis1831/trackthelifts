@@ -28,7 +28,6 @@ struct ExerciseListView: View {
     @State private var searchText: String = ""
     @State private var showingExerciseDetail: Bool = false
     @State private var exerciseToEdit: Exercise?
-    @State private var showingDeleteConfirmation: Bool = false
     @State private var exerciseToDelete: Exercise?
     /// How many logged sets reference `exerciseToDelete`, counted (not fetched) when the delete
     /// confirmation is requested. Replaces a `@Query` over every ExerciseSet in the store, which
@@ -80,25 +79,23 @@ struct ExerciseListView: View {
                     }
                 })
             }
-            .alert("Delete Exercise", isPresented: $showingDeleteConfirmation) {
-                Button("Delete", role: .destructive) {
-                    confirmDelete()
-                }
-                Button("Cancel", role: .cancel) { }
-            } message: {
-                if let exercise = exerciseToDelete {
+            .appConfirm(
+                item: $exerciseToDelete,
+                title: { _ in "Delete Exercise" },
+                message: { exercise in
                     if deleteUsageCount > 0 {
-                        Text("This exercise is used in \(deleteUsageCount) workout set(s). Deleting it will affect your workout history.")
-                    } else {
-                        Text("Are you sure you want to delete '\(exercise.name)'?")
+                        return "This exercise is used in \(deleteUsageCount) workout set(s). Deleting it will affect your workout history."
                     }
-                }
-            }
-            .alert("Cannot Delete", isPresented: $showingDeleteError) {
-                Button("OK") { }
-            } message: {
-                Text(deleteErrorMessage ?? "An error occurred")
-            }
+                    return "Are you sure you want to delete '\(exercise.name)'?"
+                },
+                confirmTitle: "Delete",
+                onConfirm: { _ in confirmDelete() }
+            )
+            .appNotice(
+                "Cannot Delete",
+                isPresented: $showingDeleteError,
+                message: deleteErrorMessage ?? "An error occurred"
+            )
     }
 
     @ViewBuilder
@@ -281,7 +278,6 @@ struct ExerciseListView: View {
                 predicate: #Predicate<ExerciseSet> { $0.exercise?.id == exerciseID }
             )
             deleteUsageCount = (try? modelContext.fetchCount(descriptor)) ?? 0
-            showingDeleteConfirmation = true
             break
         }
     }

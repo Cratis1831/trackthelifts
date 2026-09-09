@@ -112,7 +112,7 @@ struct WorkoutView: View {
                                     .textCase(.uppercase)
                                     .foregroundColor(.appTextPrimary)
 
-                                LazyVStack(spacing: 15) {
+                                VStack(spacing: 15) {
                                     ForEach(starterTemplates) { template in
                                         TemplateCard(template: template, onTap: {
                                             startWorkout(from: template)
@@ -150,7 +150,7 @@ struct WorkoutView: View {
                             }
 
                             if !userCreatedTemplates.isEmpty {
-                                LazyVStack(spacing: 15) {
+                                VStack(spacing: 15) {
                                     ForEach(userCreatedTemplates) { template in
                                         TemplateCard(template: template, onTap: {
                                             startWorkout(from: template)
@@ -222,33 +222,26 @@ struct WorkoutView: View {
                 beginSavingRoutine(from: workout)
             }
         }
-        .alert("Save as Routine", isPresented: Binding(
-            get: { workoutToNameAsTemplate != nil },
-            set: { if !$0 { workoutToNameAsTemplate = nil } }
-        )) {
-            TextField("Routine Name", text: $newTemplateName)
-            Button("Save") {
-                if let workout = workoutToNameAsTemplate {
-                    do {
-                        _ = try TemplateService.makeTemplate(from: workout, name: newTemplateName, in: modelContext)
-                        AnalyticsService.track(.routineSaved(source: .pastWorkout))
-                    } catch {
-                        print("Failed to save routine from workout: \(error)")
-                    }
+        .appPrompt(
+            "Save as Routine",
+            item: $workoutToNameAsTemplate,
+            message: "This will create a routine you can start again later.",
+            text: $newTemplateName,
+            placeholder: "Routine Name",
+            onConfirm: { workout in
+                do {
+                    _ = try TemplateService.makeTemplate(from: workout, name: newTemplateName, in: modelContext)
+                    AnalyticsService.track(.routineSaved(source: .pastWorkout))
+                } catch {
+                    print("Failed to save routine from workout: \(error)")
                 }
-                workoutToNameAsTemplate = nil
             }
-            Button("Cancel", role: .cancel) {
-                workoutToNameAsTemplate = nil
-            }
-        } message: {
-            Text("This will create a routine you can start again later.")
-        }
-        .alert("Workout In Progress", isPresented: $showActiveWorkoutAlert) {
-            Button("OK") { }
-        } message: {
-            Text("Finish or discard your current workout before starting another one.")
-        }
+        )
+        .appNotice(
+            "Workout In Progress",
+            isPresented: $showActiveWorkoutAlert,
+            message: "Finish or discard your current workout before starting another one."
+        )
     }
 
     private var myRoutinesHeaderTitle: String {
@@ -368,15 +361,16 @@ struct TemplateCard: View {
                 }
             }
             .padding(16)
-            .frame(maxWidth: .infinity, minHeight: 100, alignment: .topLeading)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
             .background(Color.appSurface)
-            .cornerRadius(AppDesign.cardRadius)
+            .clipShape(RoundedRectangle(cornerRadius: AppDesign.cardRadius, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: AppDesign.cardRadius)
-                    .stroke(Color.appBorder, lineWidth: 1)
+                RoundedRectangle(cornerRadius: AppDesign.cardRadius, style: .continuous)
+                    .strokeBorder(Color.appBorder, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
+        .fixedSize(horizontal: false, vertical: true)
     }
 }
 

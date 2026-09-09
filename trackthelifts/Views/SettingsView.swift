@@ -124,44 +124,42 @@ struct SettingsView: View {
         .fullScreenCover(isPresented: $isProBenefitsPresented) {
             ProBenefitsView()
         }
-        .alert("Notifications Disabled", isPresented: $showNotificationDeniedAlert) {
-            Button("OK") { }
-        } message: {
-            Text("Enable notifications for ForgeLyte Lift in iOS Settings to turn on workout reminders.")
-        }
-        .alert("Apple Health Access Off", isPresented: $showHealthKitDeniedAlert) {
-            Button("OK") { }
-        } message: {
-            Text("Enable Health access for ForgeLyte Lift in iOS Settings to save completed workouts to Apple Health.")
-        }
-        .alert("Restore Failed", isPresented: $showRestoreErrorAlert) {
-            Button("OK") { }
-        } message: {
-            Text(revenueCatService.lastError?.localizedDescription ?? "Couldn't restore your purchases. Please try again.")
-        }
-        .alert("Restore Purchases", isPresented: $showRestoreResultAlert) {
-            Button("OK") { }
-        } message: {
-            Text(restoreResultMessage)
-        }
-        .alert("Change Weight Unit?", isPresented: $showUnitChangeConfirmation) {
-            Button("Cancel", role: .cancel) {
-                cancelPendingWeightUnitChange()
-            }
-            Button("Convert") {
-                confirmPendingWeightUnitChange()
-            }
-        } message: {
-            Text("Switching to \(pendingUnit?.label ?? "") will convert all your logged weights. Continue?")
-        }
-        .alert("Clear Nutrition History?", isPresented: $showClearNutritionConfirmation) {
-            Button("Cancel", role: .cancel) { }
-            Button("Clear", role: .destructive) {
-                clearNutritionHistory()
-            }
-        } message: {
-            Text("This deletes food logs and custom foods stored on this iPhone. Workout history is not affected.")
-        }
+        .appNotice(
+            "Notifications Disabled",
+            isPresented: $showNotificationDeniedAlert,
+            message: "Enable notifications for ForgeLyte Lift in iOS Settings to turn on workout reminders."
+        )
+        .appNotice(
+            "Apple Health Access Off",
+            isPresented: $showHealthKitDeniedAlert,
+            message: "Enable Health access for ForgeLyte Lift in iOS Settings to save completed workouts to Apple Health."
+        )
+        .appNotice(
+            "Restore Failed",
+            isPresented: $showRestoreErrorAlert,
+            message: revenueCatService.lastError?.localizedDescription ?? "Couldn't restore your purchases. Please try again."
+        )
+        .appNotice(
+            "Restore Purchases",
+            isPresented: $showRestoreResultAlert,
+            message: restoreResultMessage
+        )
+        .appConfirm(
+            "Change Weight Unit?",
+            isPresented: $showUnitChangeConfirmation,
+            message: "Switching to \(pendingUnit?.label ?? "") will convert all your logged weights. Continue?",
+            confirmTitle: "Convert",
+            confirmStyle: .primary,
+            onConfirm: confirmPendingWeightUnitChange,
+            onCancel: cancelPendingWeightUnitChange
+        )
+        .appConfirm(
+            "Clear Nutrition History?",
+            isPresented: $showClearNutritionConfirmation,
+            message: "This deletes food logs and custom foods stored on this iPhone. Workout history is not affected.",
+            confirmTitle: "Clear",
+            onConfirm: clearNutritionHistory
+        )
     }
 
     // MARK: - Subscription
@@ -326,6 +324,8 @@ struct SettingsView: View {
                 debugSubscriptionRow
                 rowDivider
                 debugAPIHostRow
+                rowDivider
+                debugResetWhatsNewRow
                 #endif
             }
             .settingsCard()
@@ -716,6 +716,31 @@ struct SettingsView: View {
                 .foregroundColor(secondaryText)
         }
     }
+
+    private var debugResetWhatsNewRow: some View {
+        Button {
+            ProductChangeAnnouncementPreference.shared.resetSeen()
+        } label: {
+            HStack(spacing: 12) {
+                IconTile(color: Color(red: 0.40, green: 0.40, blue: 0.43)) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.appTextPrimary)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Reset v2.0 What's New")
+                        .font(.system(size: 16))
+                        .foregroundColor(.appTextPrimary)
+                    Text("Shows the v2.0 training-is-free sheet again. Debug builds only.")
+                        .font(.system(size: 10))
+                        .foregroundColor(secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer()
+            }
+        }
+        .buttonStyle(.plain)
+    }
     #endif
 
     // MARK: - Nutrition
@@ -765,8 +790,10 @@ struct SettingsView: View {
         do {
             let logs = try context.fetch(FetchDescriptor<FoodLog>())
             let foods = try context.fetch(FetchDescriptor<CustomFood>())
+            let meals = try context.fetch(FetchDescriptor<SavedMeal>())
             logs.forEach { context.delete($0) }
             foods.forEach { context.delete($0) }
+            meals.forEach { context.delete($0) }
             try context.save()
             NutritionPreference.shared.reset()
         } catch {

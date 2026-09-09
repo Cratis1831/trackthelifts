@@ -27,7 +27,7 @@ enum SubscriptionTier: String, CaseIterable, Identifiable {
                 "Preview calorie tracking with a few manual logs",
             ]
         case .pro:
-            return ["Everything in Free"] + ProFeature.allCases.map(\.title)
+            return ["Everything in Free"] + ProFeature.merchandised.map(\.title)
         }
     }
 }
@@ -98,11 +98,15 @@ enum ProFeature: String, CaseIterable, Identifiable {
         }
     }
 
+    static var merchandised: [ProFeature] {
+        allCases.filter { $0 != .foodPhoto }
+    }
+
     /// Every nutrition Pro feature is included in an active StoreKit trial.
     var isIncludedInFreeTrial: Bool { true }
 
     static var trialIncluded: [ProFeature] {
-        allCases.filter(\.isIncludedInFreeTrial)
+        merchandised
     }
 }
 
