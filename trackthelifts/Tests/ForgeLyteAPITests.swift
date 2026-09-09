@@ -44,6 +44,35 @@ final class ForgeLyteAPITests: XCTestCase {
         XCTAssertEqual(FoodSourceType.fromAPI("USER_CONTRIBUTION"), .userContribution)
     }
 
+    func testBarcodeNormalizationIgnoresFormattingAndLeadingZeros() {
+        XCTAssertEqual(Barcode.normalize(" 0123-4567-8901 "), "012345678901")
+        XCTAssertTrue(Barcode.matches("012345678901", "12345678901"))
+        XCTAssertTrue(Barcode.matches("0000000000000", "0000000000000"))
+        XCTAssertFalse(Barcode.matches("012345678901", "999"))
+        XCTAssertEqual(FoodEntryDraft.manualBarcode("012345678901").sourceType, .manual)
+        XCTAssertEqual(FoodEntryDraft.manualBarcode("012345678901").barcode, "012345678901")
+    }
+
+    func testBarcodeLookupResponseDetectsLabelScanFallback() throws {
+        let json = """
+        { "status": "LABEL_SCAN_REQUIRED", "food": null }
+        """.data(using: .utf8)!
+        let result = try JSONDecoder().decode(BarcodeLookupResponse.self, from: json)
+        XCTAssertTrue(result.needsLabelScan)
+        XCTAssertNil(result.food)
+    }
+
+    func testScanBoxIgnoresBarcodesOutsideTheViewfinder() {
+        let size = CGSize(width: 390, height: 720)
+        let box = BarcodeScanBox.rect(in: size)
+        XCTAssertGreaterThan(box.width, 100)
+        XCTAssertTrue(box.minX > 0)
+        XCTAssertTrue(BarcodeScanBox.contains(box.insetBy(dx: 12, dy: 8), in: size))
+        XCTAssertFalse(
+            BarcodeScanBox.contains(CGRect(x: 8, y: 8, width: 80, height: 24), in: size)
+        )
+    }
+
     func testSessionPayloadReadsForgeLyteUserKey() {
         let payload = Data(#"{"userKey":"fl_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLM","issuedAt":1,"expiresAt":2}"#.utf8)
             .base64EncodedString()

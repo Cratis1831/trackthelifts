@@ -4,7 +4,7 @@ Living checklist for the nutrition/product-model work described in `forgelyte_li
 
 **Branch:** `feature/v2.0-nutrition`  
 **Started:** 8 September 2026  
-**Current cut:** Phase B — backend skeleton + iOS catalogue search (AI/barcode camera still Phase C)
+**Current cut:** Phase C — native barcode scan (AI describe/photo/label still later)
 
 Design rule for every UI change: reuse the existing dark canvas, surface cards, borders, type, `IconTile`, `EmptyStateView`, `AppPrimaryButtonStyle` / `AppSecondaryButtonStyle`, and accent-as-highlight language. Do not introduce a second visual system.
 
@@ -38,7 +38,7 @@ Design rule for every UI change: reuse the existing dark canvas, surface cards, 
 - [x] Local SwiftData models: `FoodLog`, `CustomFood` on a **separate local-only** store.
 - [x] Nutrition dashboard (day totals, macros, meals) matching current cards/typography.
 - [x] Manual add/edit/delete food + local recent/custom search.
-- [x] Free manual-log limit (3); barcode / AI / photo CTAs paywall for Free, honest "next update" for Pro until native camera/AI exist.
+- [x] Free manual-log limit (3); barcode / AI / photo CTAs paywall for Free. Barcode scanning is live for Pro; AI / photo stay "next update" until Luna endpoints exist.
 - [x] Settings → Food Data Sources (USDA + Open Food Facts attribution).
 - [x] Settings → Clear Nutrition History.
 - [x] iCloud workout sync no longer requires Pro (still opt-in).
@@ -69,7 +69,7 @@ Still needed to go live: Vercel project, Neon database, env vars from `forgelyte
 
 ## Phase C — full food-entry methods
 
-- [ ] Native barcode scan → cache → USDA → OFF → label-scan fallback.
+- [x] Native barcode scan → local custom foods → server cache → USDA → OFF → manual entry if missing (label-scan fallback still later).
 - [ ] Luna text describe (`POST /api/foods/ai/describe`) with structured JSON and DB matching.
 - [ ] Luna vision meal photo + Nutrition Facts label; crop/resize/strip EXIF; discard images after processing.
 - [ ] User confirmation UI; AI estimates marked `estimated`.
@@ -90,11 +90,21 @@ Still needed to go live: Vercel project, Neon database, env vars from `forgelyte
 
 ## Session log
 
+### 2026-09-08 — Phase C barcode scanning
+
+- Pro Scan Barcode opens a VisionKit camera (or a typed UPC field on Simulator / no camera).
+- Lookup uses the existing `/api/foods/barcode/:code` path. Misses offer manual entry with the barcode attached; Nutrition Facts label scan remains later.
+
 ### 2026-09-08 — Phase B backend + catalogue search
 
 - Scaffolded `forgelyte_server` from the Furry Pals Vercel/Neon/App Transaction pattern (no sticker/credits/blob code).
 - iOS bootstraps a ForgeLyte session after RevenueCat configure, logs into RevenueCat with the HMAC `user_key`, and searches the catalogue after a pause (not per keystroke).
 - Native barcode camera, Luna describe/photo/label, and nutrition backup remain Phase C.
+
+### 2026-09-08 — local API testing
+
+- `forgelyte_server` can run with `npm run dev` at `http://127.0.0.1:3000`. Debug iOS builds use that host.
+- `npm run smoke` / local search-barcode-describe verified USDA, Open Food Facts, and OpenAI (`gpt-5.6-luna`) without putting keys in the app.
 
 ### 2026-09-08 — branch + Phase A implementation
 

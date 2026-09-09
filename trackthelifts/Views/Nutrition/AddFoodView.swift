@@ -17,6 +17,7 @@ struct AddFoodView: View {
     @State private var isManualPresented = false
     @State private var selectedProFeature: ProFeature?
     @State private var comingSoonFeature: ProFeature?
+    @State private var isScannerPresented = false
     @State private var remoteFoods: [RemoteFood] = []
     @State private var isSearchingRemote = false
     @State private var selectedDraft: FoodEntryDraft?
@@ -74,6 +75,15 @@ struct AddFoodView: View {
             }
             .sheet(item: $comingSoonFeature) { feature in
                 NutritionComingSoonView(feature: feature)
+            }
+            .sheet(isPresented: $isScannerPresented) {
+                BarcodeScanView(customFoods: customFoods) { draft in
+                    isScannerPresented = false
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(350))
+                        selectedDraft = draft
+                    }
+                }
             }
             .proPaywall(feature: $selectedProFeature)
             .task(id: query) {
@@ -264,7 +274,11 @@ struct AddFoodView: View {
 
     private func handleAdvanced(_ feature: ProFeature) {
         if revenueCatService.canAccess(feature) {
-            comingSoonFeature = feature
+            if feature == .barcodeScan {
+                isScannerPresented = true
+            } else {
+                comingSoonFeature = feature
+            }
         } else {
             selectedProFeature = feature
         }

@@ -135,6 +135,10 @@ struct ManualFoodEntryView: View {
                             Text(sourceType.displayName)
                                 .font(.appCaption)
                                 .foregroundColor(.appTextTertiary)
+                        } else if let draftBarcode, !draftBarcode.isEmpty {
+                            Text("Barcode \(draftBarcode)")
+                                .font(.appCaption)
+                                .foregroundColor(.appTextTertiary)
                         }
                     }
                     .padding(20)

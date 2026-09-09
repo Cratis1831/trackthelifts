@@ -7,7 +7,8 @@ import Foundation
 
 enum ForgeLyteAPI {
     static let productionHost = "https://forgelyte-server.vercel.app"
-    private static let debugOverrideKey = "forgelyteAPIBaseURL"
+    static let debugOverrideKey = "forgelyteAPIBaseURL"
+    static let localDefaultHost = "http://127.0.0.1:3000"
 
     static var baseURL: URL {
         #if DEBUG
@@ -16,8 +17,10 @@ enum ForgeLyteAPI {
            !override.isEmpty {
             return url
         }
-        #endif
+        return URL(string: localDefaultHost)!
+        #else
         return URL(string: productionHost)!
+        #endif
     }
 
     static func searchFoods(_ query: String) async throws -> [RemoteFood] {
@@ -65,7 +68,12 @@ enum ForgeLyteAPI {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response): (Data, URLResponse)
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch {
+            throw ForgeLyteAPIError.unreachable(baseURL)
+        }
         guard let http = response as? HTTPURLResponse else {
             throw ForgeLyteAPIError.invalidServerResponse
         }
@@ -264,6 +272,7 @@ enum ForgeLyteAPIError: LocalizedError {
     case proRequired
     case unavailable
     case missingAppTransaction
+    case unreachable(URL)
     case server(String)
 
     var errorDescription: String? {
@@ -280,6 +289,8 @@ enum ForgeLyteAPIError: LocalizedError {
             return "The food catalogue is unavailable right now."
         case .missingAppTransaction:
             return "The App Store could not verify this install yet."
+        case .unreachable(let url):
+            return "Can't reach the food API at \(url.absoluteString). On a physical iPhone, set Settings → Local API Host to your Mac's IP, like http://10.0.0.169:3000."
         case .server(let message):
             return message
         }

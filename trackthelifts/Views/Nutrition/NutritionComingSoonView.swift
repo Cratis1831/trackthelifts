@@ -24,7 +24,7 @@ struct NutritionComingSoonView: View {
                         .font(.system(size: 22, weight: .semibold))
                         .foregroundColor(.appTextPrimary)
 
-                    Text("This Pro tool is included in your subscription. Native barcode scanning and AI logging connect in a later 2.0 update — catalogue search and manual logging are available now.")
+                    Text("This Pro tool is included in your subscription. AI meal logging and Nutrition Facts scanning connect in a later 2.0 update — search, barcode, and manual logging are available now.")
                         .font(.appBody)
                         .foregroundColor(.appTextSecondary)
                         .multilineTextAlignment(.center)

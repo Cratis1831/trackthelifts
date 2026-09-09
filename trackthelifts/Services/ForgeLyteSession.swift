@@ -50,6 +50,15 @@ final class ForgeLyteSession {
         }
     }
 
+    func lookupBarcode(_ barcode: String) async throws -> BarcodeLookupResponse {
+        do {
+            return try await ForgeLyteAPI.lookupBarcode(barcode)
+        } catch ForgeLyteAPIError.sessionExpired {
+            await bootstrap(forceRefresh: true)
+            return try await ForgeLyteAPI.lookupBarcode(barcode)
+        }
+    }
+
     private func identifyRevenueCatIfNeeded() async {
         guard let userKey = ForgeLyteIdentityVault.userKey() else { return }
         await RevenueCatService.shared.identifyForgeLyteUser(userKey)

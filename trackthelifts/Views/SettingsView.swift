@@ -26,6 +26,9 @@ struct SettingsView: View {
     @State private var restoreResultMessage = ""
     @State private var showClearNutritionConfirmation = false
     @Environment(\.nutritionContainer) private var nutritionContainer
+    #if DEBUG
+    @AppStorage(ForgeLyteAPI.debugOverrideKey) private var debugAPIBaseURL = ""
+    #endif
 
     private let weightUnitPreference = WeightUnitPreference.shared
     @State private var selectedUnit: WeightUnit = WeightUnitPreference.shared.unit
@@ -321,6 +324,8 @@ struct SettingsView: View {
                 #if DEBUG
                 rowDivider
                 debugSubscriptionRow
+                rowDivider
+                debugAPIHostRow
                 #endif
             }
             .settingsCard()
@@ -679,6 +684,36 @@ struct SettingsView: View {
             .labelsHidden()
             .pickerStyle(.menu)
             .tint(.appAccent)
+        }
+    }
+
+    private var debugAPIHostRow: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 12) {
+                IconTile(color: Color(red: 0.40, green: 0.40, blue: 0.43)) {
+                    Image(systemName: "desktopcomputer")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.appTextPrimary)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Local API Host")
+                        .font(.system(size: 16))
+                        .foregroundColor(.appTextPrimary)
+                    Text("Simulator can use localhost. A physical iPhone needs your Mac’s LAN IP.")
+                        .font(.system(size: 10))
+                        .foregroundColor(secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            TextField(ForgeLyteAPI.localDefaultHost, text: $debugAPIBaseURL)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .keyboardType(.URL)
+                .foregroundColor(.appTextPrimary)
+                .appInputSurface()
+            Text("Current: \(ForgeLyteAPI.baseURL.absoluteString)")
+                .font(.system(size: 10))
+                .foregroundColor(secondaryText)
         }
     }
     #endif
