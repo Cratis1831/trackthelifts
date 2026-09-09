@@ -407,6 +407,7 @@ struct NutritionTargetsView: View {
         targets.carbsGrams = carbsGrams
         targets.fatGrams = fatGrams
         targets.fiberGrams = NutritionRounding.macro(Double(fiber) ?? 0)
+        NutritionBackupService.shared.markDirty()
         dismiss()
     }
 }

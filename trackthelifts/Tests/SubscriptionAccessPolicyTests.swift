@@ -493,4 +493,36 @@ final class NutritionAccessPolicyTests: XCTestCase {
         XCTAssertEqual(copies[0].calories, 400)
         XCTAssertNotEqual(copies[0].id, yesterdayLunch.id)
     }
+
+    func testNutritionBackupPayloadRoundTripsDiaryRows() throws {
+        let log = FoodLog(
+            loggedAt: Date(timeIntervalSince1970: 1_778_000_000),
+            mealType: .lunch,
+            displayName: "Oats",
+            calories: 150,
+            proteinGrams: 6,
+            carbsGrams: 27,
+            fatGrams: 3,
+            fiberGrams: 4
+        )
+        let defaults = UserDefaults(suiteName: "nutrition-backup-test-\(UUID().uuidString)")!
+        let targets = NutritionPreference(userDefaults: defaults)
+        targets.calories = 2100
+        targets.proteinGrams = 160
+        let payload = NutritionBackupPayload.capture(
+            logs: [log],
+            customFoods: [],
+            savedMeals: [],
+            targets: targets,
+            clientRev: 4,
+            now: Date(timeIntervalSince1970: 1_778_000_000)
+        )
+        XCTAssertFalse(payload.isEmpty)
+        let data = try NutritionBackupCodec.encoder.encode(payload)
+        let decoded = try NutritionBackupCodec.decoder.decode(NutritionBackupPayload.self, from: data)
+        XCTAssertEqual(decoded.clientRev, 4)
+        XCTAssertEqual(decoded.logs.first?.displayName, "Oats")
+        XCTAssertEqual(decoded.targets.calories, 2100)
+        XCTAssertEqual(decoded.logs.first?.makeLog().calories, 150)
+    }
 }

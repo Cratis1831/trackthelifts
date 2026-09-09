@@ -42,6 +42,33 @@ final class ForgeLyteSession {
         }
     }
 
+    func fetchNutritionSnapshot() async throws -> NutritionBackupPayload? {
+        do {
+            return try await ForgeLyteAPI.fetchNutritionSnapshot()
+        } catch ForgeLyteAPIError.sessionExpired {
+            await bootstrap(forceRefresh: true)
+            return try await ForgeLyteAPI.fetchNutritionSnapshot()
+        }
+    }
+
+    func pushNutritionSnapshot(_ snapshot: NutritionBackupPayload) async throws {
+        do {
+            try await ForgeLyteAPI.putNutritionSnapshot(snapshot)
+        } catch ForgeLyteAPIError.sessionExpired {
+            await bootstrap(forceRefresh: true)
+            try await ForgeLyteAPI.putNutritionSnapshot(snapshot)
+        }
+    }
+
+    func deleteNutritionSnapshot() async throws {
+        do {
+            try await ForgeLyteAPI.deleteNutritionSnapshot()
+        } catch ForgeLyteAPIError.sessionExpired {
+            await bootstrap(forceRefresh: true)
+            try await ForgeLyteAPI.deleteNutritionSnapshot()
+        }
+    }
+
     func searchFoods(_ query: String) async throws -> [RemoteFood] {
         if let cached = searchCache.foods(for: query) {
             return cached

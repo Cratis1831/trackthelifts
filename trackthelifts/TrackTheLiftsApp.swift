@@ -25,7 +25,9 @@ struct TrackTheLiftsApp: App {
         _modelContainer = State(initialValue: Self.makeModelContainer(
             syncActive: CloudSyncPreference.shared.isSyncActive
         ))
-        _nutritionContainer = State(initialValue: NutritionStore.makeContainer())
+        let nutrition = NutritionStore.makeContainer()
+        _nutritionContainer = State(initialValue: nutrition)
+        NutritionBackupService.shared.configure(container: nutrition)
     }
 
     var body: some Scene {

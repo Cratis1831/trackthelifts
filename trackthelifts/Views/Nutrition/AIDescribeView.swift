@@ -360,6 +360,7 @@ struct AIDescribeView: View {
         }
 
         try? modelContext.save()
+        NutritionBackupService.shared.markDirty()
         dismiss()
     }
 }

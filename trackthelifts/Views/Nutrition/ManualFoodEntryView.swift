@@ -408,6 +408,7 @@ struct ManualFoodEntryView: View {
         }
 
         try? modelContext.save()
+        NutritionBackupService.shared.markDirty()
         dismiss()
     }
 

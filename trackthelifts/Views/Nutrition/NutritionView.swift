@@ -522,6 +522,7 @@ struct NutritionDashboardView: View {
             modelContext.insert(log)
         }
         try? modelContext.save()
+        NutritionBackupService.shared.markDirty()
     }
 
     private func persistSavedMeal(_ meal: MealType) {
@@ -534,6 +535,7 @@ struct NutritionDashboardView: View {
         )
         modelContext.insert(saved)
         try? modelContext.save()
+        NutritionBackupService.shared.markDirty()
         saveMeal = nil
         saveMealName = ""
         savedMealConfirmation = saved.name
@@ -553,6 +555,7 @@ struct NutritionDashboardView: View {
     private func delete(_ log: FoodLog) {
         modelContext.delete(log)
         try? modelContext.save()
+        NutritionBackupService.shared.markDirty()
     }
 
     private func clearMeal(_ meal: MealType) {
@@ -560,6 +563,7 @@ struct NutritionDashboardView: View {
             modelContext.delete(log)
         }
         try? modelContext.save()
+        NutritionBackupService.shared.markDirty()
         mealToClear = nil
     }
 }

@@ -25,7 +25,10 @@ struct SettingsView: View {
     @State private var showRestoreResultAlert = false
     @State private var restoreResultMessage = ""
     @State private var showClearNutritionConfirmation = false
-    @Environment(\.nutritionContainer) private var nutritionContainer
+    @State private var showRestoreNutritionConfirmation = false
+    @State private var nutritionBackupMessage = ""
+    @State private var showNutritionBackupNotice = false
+    @State private var isNutritionBackupBusy = false
     #if DEBUG
     @AppStorage(ForgeLyteAPI.debugOverrideKey) private var debugAPIBaseURL = ""
     #endif
@@ -41,6 +44,7 @@ struct SettingsView: View {
     private var intensityPreference = IntensityPreference.shared
     private var cloudSyncPreference = CloudSyncPreference.shared
     private var healthKitPreference = HealthKitPreference.shared
+    private var nutritionBackup = NutritionBackupService.shared
     @State private var iCloudAccountAvailable = true
 
     // Shared card/typography constants so every section reads as one system.
@@ -154,9 +158,24 @@ struct SettingsView: View {
             onCancel: cancelPendingWeightUnitChange
         )
         .appConfirm(
+            "Replace This iPhone's Diary?",
+            isPresented: $showRestoreNutritionConfirmation,
+            message: "This replaces the food diary on this iPhone with your ForgeLyte backup.",
+            confirmTitle: "Restore",
+            confirmStyle: .primary,
+            onConfirm: restoreNutritionBackup
+        )
+        .appNotice(
+            "Nutrition Backup",
+            isPresented: $showNutritionBackupNotice,
+            message: nutritionBackupMessage
+        )
+        .appConfirm(
             "Clear Nutrition History?",
             isPresented: $showClearNutritionConfirmation,
-            message: "This deletes food logs and custom foods stored on this iPhone. Workout history is not affected.",
+            message: revenueCatService.currentTier == .pro
+                ? "This deletes food logs on this iPhone and any ForgeLyte Pro diary backup. Workout history is not affected."
+                : "This deletes food logs and custom foods stored on this iPhone. Workout history is not affected.",
             confirmTitle: "Clear",
             onConfirm: clearNutritionHistory
         )
@@ -775,29 +794,75 @@ struct SettingsView: View {
                 }
                 .buttonStyle(.plain)
 
-                Text("Food diary entries stay on this device. They are not stored in iCloud.")
+                Text(
+                    revenueCatService.currentTier == .pro
+                        ? "Food diary entries stay on this iPhone. Pro also keeps a ForgeLyte backup so you can restore after a new phone or reinstall. Not stored in iCloud."
+                        : "Food diary entries stay on this device. They are not stored in iCloud."
+                )
                     .font(.system(size: 13))
                     .foregroundColor(secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
+
+                if revenueCatService.currentTier == .pro {
+                    rowDivider
+                    Text(nutritionBackup.lastSuccessCaption)
+                        .font(.system(size: 13))
+                        .foregroundColor(secondaryText)
+                    Button {
+                        Task { await backupNutritionNow() }
+                    } label: {
+                        supportRowLabel(
+                            title: isNutritionBackupBusy ? "Backing Up…" : "Back Up Diary Now",
+                            systemImage: "arrow.up.circle.fill",
+                            color: Color(red: 0.20, green: 0.48, blue: 0.96)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isNutritionBackupBusy)
+                    rowDivider
+                    Button {
+                        showRestoreNutritionConfirmation = true
+                    } label: {
+                        supportRowLabel(
+                            title: "Restore Diary From Backup",
+                            systemImage: "arrow.down.circle.fill",
+                            color: .appAccent
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isNutritionBackupBusy)
+                }
             }
             .settingsCard()
         }
     }
 
     private func clearNutritionHistory() {
-        guard let container = nutritionContainer else { return }
-        let context = ModelContext(container)
-        do {
-            let logs = try context.fetch(FetchDescriptor<FoodLog>())
-            let foods = try context.fetch(FetchDescriptor<CustomFood>())
-            let meals = try context.fetch(FetchDescriptor<SavedMeal>())
-            logs.forEach { context.delete($0) }
-            foods.forEach { context.delete($0) }
-            meals.forEach { context.delete($0) }
-            try context.save()
-            NutritionPreference.shared.reset()
-        } catch {
-            print("Failed to clear nutrition history: \(error)")
+        Task { await NutritionBackupService.shared.deleteRemoteAndLocal() }
+    }
+
+    private func backupNutritionNow() async {
+        isNutritionBackupBusy = true
+        defer { isNutritionBackupBusy = false }
+        NutritionBackupService.shared.markDirty()
+        let ok = await NutritionBackupService.shared.pushNow()
+        nutritionBackupMessage = ok
+            ? "Your food diary was backed up."
+            : "Couldn't back up the diary. Check that Pro is active and the food API is reachable."
+        showNutritionBackupNotice = true
+    }
+
+    private func restoreNutritionBackup() {
+        Task {
+            isNutritionBackupBusy = true
+            defer { isNutritionBackupBusy = false }
+            do {
+                try await NutritionBackupService.shared.restoreOverwritingLocal()
+                nutritionBackupMessage = "Your food diary was restored."
+            } catch {
+                nutritionBackupMessage = error.localizedDescription
+            }
+            showNutritionBackupNotice = true
         }
     }
 

@@ -470,6 +470,7 @@ struct AddFoodView: View {
                     Button("Delete", role: .destructive) {
                         modelContext.delete(meal)
                         try? modelContext.save()
+                        NutritionBackupService.shared.markDirty()
                     }
                 }
             }
@@ -518,6 +519,7 @@ struct AddFoodView: View {
         }
         meal.lastUsedAt = .now
         try? modelContext.save()
+        NutritionBackupService.shared.markDirty()
         dismiss()
     }
 

@@ -86,7 +86,40 @@ enum ForgeLyteAPI {
         return try await send(urlRequest)
     }
 
+    static func fetchNutritionSnapshot() async throws -> NutritionBackupPayload? {
+        var request = URLRequest(url: baseURL.appending(path: "api/nutrition/snapshot"))
+        request.httpMethod = "GET"
+        let (data, http) = try await perform(request)
+        if http.statusCode == 404 { return nil }
+        try throwIfFailed(data: data, http: http)
+        let payload = try NutritionBackupCodec.decoder.decode(NutritionSnapshotResponse.self, from: data)
+        return payload.snapshot
+    }
+
+    static func putNutritionSnapshot(_ snapshot: NutritionBackupPayload) async throws {
+        var request = URLRequest(url: baseURL.appending(path: "api/nutrition/snapshot"))
+        request.httpMethod = "PUT"
+        request.timeoutInterval = 30
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try NutritionBackupCodec.encoder.encode(NutritionSnapshotRequest(snapshot: snapshot))
+        let (data, http) = try await perform(request)
+        try throwIfFailed(data: data, http: http)
+    }
+
+    static func deleteNutritionSnapshot() async throws {
+        var request = URLRequest(url: baseURL.appending(path: "api/nutrition/snapshot"))
+        request.httpMethod = "DELETE"
+        let (data, http) = try await perform(request)
+        try throwIfFailed(data: data, http: http)
+    }
+
     private static func send<T: Decodable>(_ urlRequest: URLRequest) async throws -> T {
+        let (data, http) = try await perform(urlRequest)
+        try throwIfFailed(data: data, http: http)
+        return try JSONDecoder().decode(T.self, from: data)
+    }
+
+    fileprivate static func perform(_ urlRequest: URLRequest) async throws -> (Data, HTTPURLResponse) {
         var request = urlRequest
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.cachePolicy = .reloadIgnoringLocalCacheData
@@ -103,7 +136,10 @@ enum ForgeLyteAPI {
         guard let http = response as? HTTPURLResponse else {
             throw ForgeLyteAPIError.invalidServerResponse
         }
+        return (data, http)
+    }
 
+    private static func throwIfFailed(data: Data, http: HTTPURLResponse) throws {
         if http.statusCode == 401 {
             throw ForgeLyteAPIError.sessionExpired
         }
@@ -122,9 +158,6 @@ enum ForgeLyteAPI {
             }
             throw ForgeLyteAPIError.invalidServerResponse
         }
-
-        let decoder = JSONDecoder()
-        return try decoder.decode(T.self, from: data)
     }
 }
 

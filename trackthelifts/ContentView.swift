@@ -18,6 +18,8 @@ struct ContentView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @Environment(\.modelContext) private var modelContext
     @Environment(\.requestReview) private var requestReview
+    @Environment(\.scenePhase) private var scenePhase
+    @EnvironmentObject var revenueCatService: RevenueCatService
     @State private var selectedTab: AppTab = .profile
     private var cloudSyncPreference = CloudSyncPreference.shared
     private var whatsNewPreference = WhatsNewPreference.shared
@@ -73,6 +75,19 @@ struct ContentView: View {
             WorkoutSessionManager.shared.reconcileOrphanedActiveWorkouts(in: modelContext)
             if CloudSyncPreference.shared.isStoreMirrored {
                 CloudSyncMergeService.mergeDuplicates(in: modelContext)
+            }
+            Task { await NutritionBackupService.shared.syncOnForeground() }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .background {
+                Task { await NutritionBackupService.shared.pushIfNeeded() }
+            } else if phase == .active {
+                Task { await NutritionBackupService.shared.syncOnForeground() }
+            }
+        }
+        .onChange(of: revenueCatService.currentTier) { _, tier in
+            if tier == .pro {
+                Task { await NutritionBackupService.shared.syncOnForeground() }
             }
         }
         .onReceive(

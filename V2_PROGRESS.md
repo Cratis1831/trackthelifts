@@ -53,7 +53,6 @@ Phase A is implemented on this branch. Phase C food-entry methods are implemente
 - Meal-photo recognition.
 - Nutrition diary on iCloud / CloudKit.
 - Optional global custom-food contribution.
-- Pro nutrition-history backend backup/sync (diary stays local).
 - App Store product ID rename to `com.forgelyte.lift.pro.*`.
 
 ---
@@ -85,7 +84,7 @@ Still needed to go live: Vercel production project, env vars from `forgelyte_ser
 - [x] Free trial is shown only after StoreKit/RevenueCat says this Apple ID is eligible (delete/reinstall cannot mint a second trial).
 - [x] Yearly “SAVE X%” uses this storefront’s monthly × 12 vs yearly, not a hardcoded 44.
 - [ ] Optional explicit global contribution (private custom foods by default). Not required to ship 2.0.
-- [ ] Pro nutrition-history backup/sync (not iCloud). Not required to ship 2.0; diary stays local.
+- [x] Pro nutrition-history backup: last-write snapshot on Neon (`GET`/`PUT`/`DELETE /api/nutrition/snapshot`). Local diary stays the live copy. Restore when the local store is empty (new phone / reinstall). Not iCloud.
 
 ---
 
@@ -95,13 +94,13 @@ Product code on this branch is the 2.0 cut. These are the leftover launch items:
 
 - [ ] Deploy `forgelyte_server` to Vercel production and fill env vars (USDA production key, OpenAI, `FORGELYTE_SERVER_SECRET`, RevenueCat secret + webhook).
 - [ ] Point RevenueCat webhooks at the production host; point **release** iOS builds at that host (debug stays on `http://127.0.0.1:3000`).
-- [ ] Update marketing-site Privacy Policy for local diary, catalogue search, Describe with AI, and Nutrition Facts uploads (no meal photos).
+- [ ] Update marketing-site Privacy Policy for local diary, Pro snapshot backup, catalogue search, Describe with AI, and Nutrition Facts uploads (no meal photos).
 - [ ] Terms of Service / contribution clause if we mention user-submitted foods; otherwise keep Terms aligned with “no contribution in 2.0”.
 - [ ] App Store Connect privacy nutrition label for nutrition + off-device AI (label images / describe text).
 - [ ] Refresh in-app What's New (still says search/barcode/AI are “upcoming”) and App Store listing copy, screenshots, and promotional text.
 - [ ] Confirm App Store Connect: Yearly 3-day intro offer, Monthly $5.99 with no trial, Lifetime hidden from new purchases.
 - [ ] Device QA on a real iPhone: barcode, label scan, Describe, free-preview limit, trial eligibility after restore, paywall regional savings %.
-- [ ] Optional: Neon migrate if we want a persistent catalogue cache in production.
+- [ ] Optional: Neon migrate if we want a persistent catalogue cache in production. **Required** for Pro diary restore (`npm run migrate` applies `002_nutrition_snapshots.sql`).
 
 ---
 
@@ -116,6 +115,10 @@ Product code on this branch is the 2.0 cut. These are the leftover launch items:
 ---
 
 ## Session log
+
+### 2026-09-09 — Pro nutrition diary backup
+
+- Pro uploads a diary snapshot (logs, custom foods, saved meals, targets) when the app backgrounds or after 12 hours if dirty. New phone / reinstall with an empty local store restores automatically. Settings can Back Up Now or Restore. Clear History also deletes the remote snapshot.
 
 ### 2026-09-09 — trial eligibility + regional yearly savings
 
