@@ -7,7 +7,8 @@ import SwiftUI
 
 enum ThemeAccessPolicy {
     static func effectiveTheme(selectedTheme: AppTheme, hasProAccess: Bool) -> AppTheme {
-        hasProAccess ? selectedTheme : .indigo
+        _ = hasProAccess
+        return selectedTheme
     }
 }
 

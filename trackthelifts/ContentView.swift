@@ -12,16 +12,16 @@ import Combine
 
 struct ContentView: View {
     private enum AppTab: Hashable {
-        case profile, history, createWorkout, exercises, settings
+        case profile, history, createWorkout, exercises, nutrition
     }
 
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @Environment(\.modelContext) private var modelContext
     @Environment(\.requestReview) private var requestReview
-    @EnvironmentObject private var revenueCatService: RevenueCatService
     @State private var selectedTab: AppTab = .profile
     private var cloudSyncPreference = CloudSyncPreference.shared
     private var whatsNewPreference = WhatsNewPreference.shared
+    private var productChangeAnnouncement = ProductChangeAnnouncementPreference.shared
 
     var body: some View {
         ZStack {
@@ -49,6 +49,15 @@ struct ContentView: View {
         }
         .animation(.easeOut(duration: 0.3), value: hasCompletedOnboarding)
         .animation(.easeOut(duration: 0.25), value: showsCloudSyncAnnouncement)
+        .sheet(isPresented: productAnnouncementBinding) {
+            ProductChangeAnnouncementView(
+                onContinue: dismissProductAnnouncement,
+                onOpenNutrition: {
+                    dismissProductAnnouncement()
+                    selectedTab = .nutrition
+                }
+            )
+        }
         .sheet(isPresented: whatsNewSheetBinding) {
             if let release = ReleaseCatalog.current {
                 WhatsNewUpdateSheet(release: release) {
@@ -113,8 +122,8 @@ struct ContentView: View {
                 ExerciseListView()
             }
 
-            Tab("Settings", systemImage: "gearshape", value: .settings) {
-                SettingsView()
+            Tab("Nutrition", systemImage: "fork.knife", value: .nutrition) {
+                NutritionView()
             }
         }
     }
@@ -145,28 +154,49 @@ struct ContentView: View {
                 }
                 .tag(AppTab.exercises)
 
-            SettingsView()
+            NutritionView()
                 .tabItem {
-                    Label("Settings", systemImage: "gearshape")
+                    Label("Nutrition", systemImage: "fork.knife")
                 }
-                .tag(AppTab.settings)
+                .tag(AppTab.nutrition)
         }
     }
 
     // MARK: - iCloud Sync announcement
 
-    /// One-time card telling existing users iCloud Sync arrived. Held back until onboarding is
-    /// done and the version What's New sheet has been dismissed so the first frame isn't two
-    /// overlays deep.
+    /// One-time card telling existing users iCloud Sync arrived. Held back until onboarding and
+    /// the version announcement sheets have been dismissed so the first frame isn't two overlays deep.
     private var showsCloudSyncAnnouncement: Bool {
         hasCompletedOnboarding
             && !showsWhatsNew
+            && !showsProductAnnouncement
             && !cloudSyncPreference.hasSeenAnnouncement
             && !cloudSyncPreference.isEnabled
     }
 
+    private var showsProductAnnouncement: Bool {
+        productChangeAnnouncement.shouldPresent(hasCompletedOnboarding: hasCompletedOnboarding)
+    }
+
     private var showsWhatsNew: Bool {
-        whatsNewPreference.shouldPresent(hasCompletedOnboarding: hasCompletedOnboarding)
+        !showsProductAnnouncement
+            && whatsNewPreference.shouldPresent(hasCompletedOnboarding: hasCompletedOnboarding)
+    }
+
+    private var productAnnouncementBinding: Binding<Bool> {
+        Binding(
+            get: { showsProductAnnouncement },
+            set: { isPresented in
+                if !isPresented {
+                    dismissProductAnnouncement()
+                }
+            }
+        )
+    }
+
+    private func dismissProductAnnouncement() {
+        productChangeAnnouncement.markSeen()
+        whatsNewPreference.markCurrentVersionSeen()
     }
 
     private var whatsNewSheetBinding: Binding<Bool> {
@@ -205,16 +235,14 @@ struct ContentView: View {
                 .buttonStyle(.plain)
             }
 
-            Text(revenueCatService.canAccess(.icloudSync)
-                ? "Included with your Pro subscription. Turn it on in Settings to back up your workouts and sync them across your devices."
-                : "Back up your workouts and sync them across your devices — now part of ForgeLyte Lift Pro.")
+            Text("Back up your workouts and sync them across your devices. Turn it on in Settings — your food diary stays on this iPhone.")
                 .font(.system(size: 13))
                 .foregroundColor(.appTextSecondary)
                 .fixedSize(horizontal: false, vertical: true)
 
             Button {
                 cloudSyncPreference.hasSeenAnnouncement = true
-                selectedTab = .settings
+                selectedTab = .profile
             } label: {
                 Text("Open Settings")
                     .font(.system(size: 14, weight: .semibold))
@@ -241,6 +269,7 @@ struct ContentView: View {
 #Preview {
     ContentView()
         .environmentObject(RevenueCatService.shared)
+        .environment(\.nutritionContainer, NutritionStore.makeContainer())
         .modelContainer(for: [
             Workout.self, Exercise.self, Bodypart.self,
             ExerciseSet.self, WorkoutTemplate.self, WorkoutTemplateExercise.self,

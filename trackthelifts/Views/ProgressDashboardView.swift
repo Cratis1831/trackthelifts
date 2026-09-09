@@ -8,7 +8,6 @@ import SwiftData
 import Charts
 
 struct ProgressDashboardView: View {
-    @EnvironmentObject private var revenueCatService: RevenueCatService
     @Environment(\.modelContext) private var modelContext
     @Query(
         filter: #Predicate<Workout> { $0.completedAt != nil && !$0.isDeleted }
@@ -29,13 +28,9 @@ struct ProgressDashboardView: View {
     @State private var selectedWeek: ProgressStatsService.WeeklyCount?
     @State private var rawSelectedVolumeDate: Date?
     @State private var selectedVolumePoint: ProgressStatsService.WorkoutVolumePoint?
-    @State private var selectedProFeature: ProFeature?
-
     private func refreshStats() {
         weeklyCounts = ProgressStatsService.weeklyWorkoutCounts(in: modelContext)
-        volume = revenueCatService.canAccess(.advancedProgress)
-            ? ProgressStatsService.volumeOverTime(in: modelContext)
-            : ProgressStatsService.VolumeOverTime(granularity: .day, points: [])
+        volume = ProgressStatsService.volumeOverTime(in: modelContext)
         records = ProgressStatsService.personalRecords(in: modelContext)
         // The arrays above are rebuilt with fresh ids, so a retained selection could describe
         // data that no longer matches what's drawn.
@@ -66,13 +61,7 @@ struct ProgressDashboardView: View {
 
                             consistencySection
                             weeklyCountSection
-                            if revenueCatService.canAccess(.advancedProgress) {
-                                volumeSection
-                            } else {
-                                LockedProFeatureCard(feature: .advancedProgress) {
-                                    selectedProFeature = .advancedProgress
-                                }
-                            }
+                            volumeSection
                             personalRecordsSection
                         }
                     }
@@ -85,6 +74,17 @@ struct ProgressDashboardView: View {
                 .ignoresSafeArea(.keyboard, edges: .bottom)
             }
             .navigationTitle("Profile")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        SettingsView()
+                    } label: {
+                        Image(systemName: "gearshape")
+                    }
+                    .accessibilityLabel("Settings")
+                }
+            }
             .navigationDestination(for: Exercise.self) { exercise in
                 ExerciseProgressView(exercise: exercise)
             }
@@ -92,11 +92,7 @@ struct ProgressDashboardView: View {
             .onChange(of: completedWorkouts) { _, _ in
                 refreshStats()
             }
-            .onChange(of: revenueCatService.currentTier) { _, _ in
-                refreshStats()
-            }
         }
-        .proPaywall(feature: $selectedProFeature)
     }
 
     private var emptyState: some View {
@@ -291,19 +287,10 @@ struct ProgressDashboardView: View {
             } else {
                 VStack(spacing: 10) {
                     ForEach(records) { record in
-                        if revenueCatService.canAccess(.advancedProgress) {
-                            NavigationLink(value: record.exercise) {
-                                recordRow(record, isLocked: false)
-                            }
-                            .buttonStyle(.plain)
-                        } else {
-                            Button {
-                                selectedProFeature = .advancedProgress
-                            } label: {
-                                recordRow(record, isLocked: true)
-                            }
-                            .buttonStyle(.plain)
+                        NavigationLink(value: record.exercise) {
+                            recordRow(record, isLocked: false)
                         }
+                        .buttonStyle(.plain)
                     }
                 }
             }

@@ -41,6 +41,11 @@ enum AnalyticsPackageType: String {
         default: return .other
         }
     }
+
+    /// ActivationPal funnel plan names. Annual is `yearly` to match the dashboard docs.
+    var activationPalPlan: String {
+        self == .annual ? "yearly" : rawValue
+    }
 }
 
 enum AnalyticsFailureReason: String {
@@ -54,21 +59,35 @@ enum AnalyticsFailureReason: String {
 }
 
 enum AnalyticsProFeature: String, CaseIterable {
-    case icloudSync
-    case unlimitedRoutines
-    case advancedProgress
-    case effortTracking
-    case supersets
-    case accentThemes
+    case calorieTracking
+    case foodSearch
+    case barcodeScan
+    case aiDescribe
+    case foodPhoto
+    case labelScan
+    case nutritionBackup
 
     init(_ feature: ProFeature) {
         switch feature {
-        case .icloudSync: self = .icloudSync
-        case .unlimitedRoutines: self = .unlimitedRoutines
-        case .advancedProgress: self = .advancedProgress
-        case .effortTracking: self = .effortTracking
-        case .supersets: self = .supersets
-        case .accentThemes: self = .accentThemes
+        case .calorieTracking: self = .calorieTracking
+        case .foodSearch: self = .foodSearch
+        case .barcodeScan: self = .barcodeScan
+        case .aiDescribe: self = .aiDescribe
+        case .foodPhoto: self = .foodPhoto
+        case .labelScan: self = .labelScan
+        case .nutritionBackup: self = .nutritionBackup
+        }
+    }
+
+    var activationPalPlacement: String {
+        switch self {
+        case .calorieTracking: return "calorie_tracking"
+        case .foodSearch: return "food_search"
+        case .barcodeScan: return "barcode_scan"
+        case .aiDescribe: return "ai_describe"
+        case .foodPhoto: return "food_photo"
+        case .labelScan: return "label_scan"
+        case .nutritionBackup: return "nutrition_backup"
         }
     }
 }
@@ -150,16 +169,53 @@ enum AnalyticsEvent {
 
 enum AnalyticsService {
     static let appID = "F72CF485-7359-4189-B014-C879D154E4AD"
+    static let activationPalApp = "forgelyteliftworkouttracker"
+    static let activationPalKey = "ap_pk_eb3952afce9ed1f4bbac1d80d47fcd041ba023b20db2eb06"
 
     static func initialize() {
         TelemetryDeck.initialize(config: .init(appID: appID))
     }
 
+    static func configureActivationPal(userId: String?) {
+        ActivationPal.configure(app: activationPalApp, key: activationPalKey, userId: userId)
+    }
+
     static func track(_ event: AnalyticsEvent) {
         TelemetryDeck.signal(event.name, parameters: event.parameters)
+        event.sendToActivationPal()
     }
 }
 
 private extension Bool {
     var analyticsString: String { self ? "true" : "false" }
+}
+
+private extension AnalyticsEvent {
+    func sendToActivationPal() {
+        switch self {
+        case .onboardingSkipped:
+            break
+        case .onboardingCompleted:
+            ActivationPal.onboardingCompleted()
+        case .workoutStarted(let source):
+            ActivationPal.track("workout_started", ["source": source.rawValue])
+        case let .workoutCompleted(exerciseCount, completedSetCount, earnedPersonalRecord, containsSuperset):
+            ActivationPal.track("workout_completed", [
+                "exercise_count": exerciseCount,
+                "completed_set_count": completedSetCount,
+                "earned_personal_record": earnedPersonalRecord,
+                "contains_superset": containsSuperset,
+            ])
+        case .workoutCancelled(let hadLoggedSets):
+            ActivationPal.track("workout_cancelled", ["had_logged_sets": hadLoggedSets])
+        case .routineSaved(let source):
+            ActivationPal.track("routine_saved", ["source": source.rawValue])
+        case .paywallShown:
+            break
+        case .purchaseCompleted(let packageType):
+            ActivationPal.paywallPurchased(packageType.activationPalPlan)
+        case .purchaseCancelled, .purchaseFailed, .purchaseRestoreCompleted, .purchaseRestoreFailed:
+            break
+        }
+    }
 }

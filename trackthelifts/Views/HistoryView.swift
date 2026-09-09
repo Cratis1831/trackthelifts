@@ -9,7 +9,6 @@ import SwiftUI
 import SwiftData
 
 struct HistoryView: View {
-    @EnvironmentObject private var revenueCatService: RevenueCatService
     @Query(
         filter: #Predicate<Workout> { workout in
             workout.completedAt != nil && !workout.isDeleted
@@ -17,7 +16,6 @@ struct HistoryView: View {
         sort: \Workout.completedAt,
         order: .reverse
     ) private var completedWorkouts: [Workout]
-    @Query private var templates: [WorkoutTemplate]
 
     @Environment(\.modelContext) private var modelContext
     private let sessionManager = WorkoutSessionManager.shared
@@ -29,7 +27,6 @@ struct HistoryView: View {
     @State private var templateName: String = ""
     @State private var workoutToDelete: Workout?
     @State private var showingDeleteConfirmation = false
-    @State private var selectedProFeature: ProFeature?
 
     var body: some View {
         NavigationStack {
@@ -93,15 +90,11 @@ struct HistoryView: View {
             TextField("Template Name", text: $templateName)
             Button("Save") {
                 if let workout = workoutToNameTemplate {
-                    if let blockedFeature = blockedFeatureForNewRoutine(from: workout) {
-                        selectedProFeature = blockedFeature
-                    } else {
-                        do {
-                            _ = try TemplateService.makeTemplate(from: workout, name: templateName, in: modelContext)
-                            AnalyticsService.track(.routineSaved(source: .pastWorkout))
-                        } catch {
-                            print("Failed to save routine from workout: \(error)")
-                        }
+                    do {
+                        _ = try TemplateService.makeTemplate(from: workout, name: templateName, in: modelContext)
+                        AnalyticsService.track(.routineSaved(source: .pastWorkout))
+                    } catch {
+                        print("Failed to save routine from workout: \(error)")
                     }
                 }
                 workoutToNameTemplate = nil
@@ -133,7 +126,6 @@ struct HistoryView: View {
         } message: {
             Text("Are you sure you want to delete this workout? This cannot be undone.")
         }
-        .proPaywall(feature: $selectedProFeature)
     }
 
     private func repeatWorkout(_ workout: Workout) {
@@ -153,25 +145,8 @@ struct HistoryView: View {
     }
 
     private func beginSavingRoutine(from workout: Workout) {
-        if let blockedFeature = blockedFeatureForNewRoutine(from: workout) {
-            selectedProFeature = blockedFeature
-            return
-        }
         templateName = workout.title
         workoutToNameTemplate = workout
-    }
-
-    private func blockedFeatureForNewRoutine(from workout: Workout) -> ProFeature? {
-        guard SubscriptionAccessPolicy.canCreateRoutine(
-            existingCount: SubscriptionAccessPolicy.userCreatedRoutineCount(from: templates),
-            tier: revenueCatService.currentTier
-        ) else {
-            return .unlimitedRoutines
-        }
-        if workout.containsSupersets && !revenueCatService.canAccess(.supersets) {
-            return .supersets
-        }
-        return nil
     }
 }
 

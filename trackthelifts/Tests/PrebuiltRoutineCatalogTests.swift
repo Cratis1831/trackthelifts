@@ -24,14 +24,14 @@ final class PrebuiltRoutineCatalogTests: XCTestCase {
         }
     }
 
-    func testStarterRoutinesDoNotConsumeFreeSlots() {
+    func testStarterRoutinesDoNotCountAsCustomRoutines() {
         XCTAssertEqual(
             SubscriptionAccessPolicy.userCreatedRoutineCount(from: []),
             0
         )
         XCTAssertTrue(SubscriptionAccessPolicy.canCreateRoutine(existingCount: 0, tier: .free))
-        XCTAssertTrue(SubscriptionAccessPolicy.canCreateRoutine(existingCount: 2, tier: .free))
-        XCTAssertFalse(SubscriptionAccessPolicy.canCreateRoutine(existingCount: 3, tier: .free))
+        XCTAssertTrue(SubscriptionAccessPolicy.canCreateRoutine(existingCount: 3, tier: .free))
+        XCTAssertTrue(SubscriptionAccessPolicy.canCreateRoutine(existingCount: 30, tier: .free))
     }
 }
 

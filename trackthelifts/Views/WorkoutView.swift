@@ -9,7 +9,6 @@ import SwiftUI
 import SwiftData
 
 struct WorkoutView: View {
-    @EnvironmentObject private var revenueCatService: RevenueCatService
     @Query(sort: \Workout.updatedAt, order: .reverse) private var workouts: [Workout]
     @Query private var templates: [WorkoutTemplate]
     @Environment(\.modelContext) private var modelContext
@@ -22,8 +21,6 @@ struct WorkoutView: View {
     @State private var newTemplateName: String = ""
     @State private var sortBy: SortOption = .name
     @State private var resumingWorkout: Workout? = nil
-    @State private var selectedProFeature: ProFeature?
-
     private let sessionManager = WorkoutSessionManager.shared
 
     private var activeWorkout: Workout? {
@@ -36,13 +33,6 @@ struct WorkoutView: View {
 
     private var userCreatedTemplates: [WorkoutTemplate] {
         sorted(templates.filter { !$0.isStarterRoutine })
-    }
-
-    private var canCreateRoutine: Bool {
-        SubscriptionAccessPolicy.canCreateRoutine(
-            existingCount: SubscriptionAccessPolicy.userCreatedRoutineCount(from: templates),
-            tier: revenueCatService.currentTier
-        )
     }
 
     private func sorted(_ templates: [WorkoutTemplate]) -> [WorkoutTemplate] {
@@ -93,20 +83,12 @@ struct WorkoutView: View {
                                 
                                 Menu {
                                     Button {
-                                        if canCreateRoutine {
-                                            isCreateRoutinePresented = true
-                                        } else {
-                                            selectedProFeature = .unlimitedRoutines
-                                        }
+                                        isCreateRoutinePresented = true
                                     } label: {
                                         Label("New Blank Routine", systemImage: "square.and.pencil")
                                     }
                                     Button {
-                                        if canCreateRoutine {
-                                            isChooseWorkoutForRoutinePresented = true
-                                        } else {
-                                            selectedProFeature = .unlimitedRoutines
-                                        }
+                                        isChooseWorkoutForRoutinePresented = true
                                     } label: {
                                         Label("From a Past Workout", systemImage: "clock.arrow.circlepath")
                                     }
@@ -116,9 +98,6 @@ struct WorkoutView: View {
                                             .font(.system(size: 16))
                                         Text("Add Routine")
                                             .font(.system(size: 16))
-                                        if !canCreateRoutine {
-                                            ProBadge()
-                                        }
                                     }
                                 }
                                 .buttonStyle(.bordered)
@@ -250,15 +229,11 @@ struct WorkoutView: View {
             TextField("Routine Name", text: $newTemplateName)
             Button("Save") {
                 if let workout = workoutToNameAsTemplate {
-                    if let blockedFeature = blockedFeatureForNewRoutine(from: workout) {
-                        selectedProFeature = blockedFeature
-                    } else {
-                        do {
-                            _ = try TemplateService.makeTemplate(from: workout, name: newTemplateName, in: modelContext)
-                            AnalyticsService.track(.routineSaved(source: .pastWorkout))
-                        } catch {
-                            print("Failed to save routine from workout: \(error)")
-                        }
+                    do {
+                        _ = try TemplateService.makeTemplate(from: workout, name: newTemplateName, in: modelContext)
+                        AnalyticsService.track(.routineSaved(source: .pastWorkout))
+                    } catch {
+                        print("Failed to save routine from workout: \(error)")
                     }
                 }
                 workoutToNameAsTemplate = nil
@@ -274,15 +249,10 @@ struct WorkoutView: View {
         } message: {
             Text("Finish or discard your current workout before starting another one.")
         }
-        .proPaywall(feature: $selectedProFeature)
     }
 
     private var myRoutinesHeaderTitle: String {
-        let count = userCreatedTemplates.count
-        if revenueCatService.currentTier == .free {
-            return "My Routines (\(count)/\(SubscriptionAccessPolicy.freeRoutineLimit))"
-        }
-        return "My Routines (\(count))"
+        "My Routines (\(userCreatedTemplates.count))"
     }
 
     private func startWorkout(from template: WorkoutTemplate) {
@@ -302,31 +272,11 @@ struct WorkoutView: View {
     }
 
     private func beginSavingRoutine(from workout: Workout) {
-        if let blockedFeature = blockedFeatureForNewRoutine(from: workout) {
-            selectedProFeature = blockedFeature
-            return
-        }
         newTemplateName = workout.title
         workoutToNameAsTemplate = workout
     }
 
-    private func blockedFeatureForNewRoutine(from workout: Workout) -> ProFeature? {
-        guard canCreateRoutine else { return .unlimitedRoutines }
-        if workout.containsSupersets && !revenueCatService.canAccess(.supersets) {
-            return .supersets
-        }
-        return nil
-    }
-
     private func duplicateRoutine(_ template: WorkoutTemplate) {
-        guard canCreateRoutine else {
-            selectedProFeature = .unlimitedRoutines
-            return
-        }
-        guard !template.containsSupersets || revenueCatService.canAccess(.supersets) else {
-            selectedProFeature = .supersets
-            return
-        }
         do {
             _ = try template.duplicateTemplate(in: modelContext)
             AnalyticsService.track(.routineSaved(source: .duplicate))

@@ -12,6 +12,7 @@ import SwiftData
 struct TrackTheLiftsApp: App {
     @StateObject private var revenueCatService = RevenueCatService.shared
     @State private var modelContainer: ModelContainer
+    @State private var nutritionContainer: ModelContainer
 
     init() {
         AnalyticsService.initialize()
@@ -24,12 +25,14 @@ struct TrackTheLiftsApp: App {
         _modelContainer = State(initialValue: Self.makeModelContainer(
             syncActive: CloudSyncPreference.shared.isSyncActive
         ))
+        _nutritionContainer = State(initialValue: NutritionStore.makeContainer())
     }
 
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(revenueCatService)
+                .environment(\.nutritionContainer, nutritionContainer)
                 .preferredColorScheme(.dark)
                 .onReceive(
                     NotificationCenter.default.publisher(for: CloudSyncPreference.didChangeNotification)

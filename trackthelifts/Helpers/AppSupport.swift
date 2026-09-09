@@ -11,6 +11,9 @@ enum AppLinks {
     static let feedback = URL(string: "https://forgelyte-lift.vercel.app/feedback/")!
     static let termsOfService = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
     static let privacyPolicy = URL(string: "https://forgelyte-lift.vercel.app/privacy-policy/")!
+    static let usdaFoodDataCentral = URL(string: "https://fdc.nal.usda.gov/")!
+    static let openFoodFacts = URL(string: "https://world.openfoodfacts.org/")!
+    static let odblLicense = URL(string: "https://opendatacommons.org/licenses/odbl/1-0/")!
 
     /// Opens the review composer directly once the App Store listing is available publicly.
     static let appStoreReview = URL(string: "https://apps.apple.com/app/id6751346666?action=write-review")
@@ -45,6 +48,14 @@ enum ReleaseCatalog {
     }
 
     static let releases = [
+        AppRelease(
+            version: "2.0.0",
+            notes: [
+                "Training is free: logging, history, unlimited routines, supersets, RPE and RIR, charts, themes, and iCloud workout sync.",
+                "ForgeLyte Pro is now nutrition — calories, macros, and upcoming food search, barcode, and AI logging.",
+                "New Nutrition tab. Settings moved to the gear on Profile.",
+            ]
+        ),
         AppRelease(
             version: "1.0.8",
             notes: [

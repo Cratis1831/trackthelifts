@@ -19,12 +19,12 @@ enum SubscriptionTier: String, CaseIterable, Identifiable {
             return [
                 "Unlimited workout logging",
                 "Complete workout history",
-                "Built-in exercise library",
-                "Previous-session values",
-                "Automatic rest timer",
-                "Basic PR detection and celebrations",
-                "Basic progress dashboard",
-                "Pounds/kilograms, reminders, and CSV export",
+                "Unlimited routines and supersets",
+                "RPE and RIR tracking",
+                "Progress charts and personal records",
+                "Every accent theme",
+                "iCloud workout sync and backup",
+                "Preview calorie tracking with a few manual logs",
             ]
         case .pro:
             return ["Everything in Free"] + ProFeature.allCases.map(\.title)
@@ -33,76 +33,73 @@ enum SubscriptionTier: String, CaseIterable, Identifiable {
 }
 
 enum ProFeature: String, CaseIterable, Identifiable {
-    case icloudSync
-    case unlimitedRoutines
-    case advancedProgress
-    case effortTracking
-    case supersets
-    case accentThemes
+    case calorieTracking
+    case foodSearch
+    case barcodeScan
+    case aiDescribe
+    case foodPhoto
+    case labelScan
+    case nutritionBackup
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
-        case .icloudSync: return "iCloud Sync & Backup"
-        case .unlimitedRoutines: return "Unlimited Routines"
-        case .advancedProgress: return "Advanced Progress Analytics"
-        case .effortTracking: return "RPE and RIR Tracking"
-        case .supersets: return "Supersets"
-        case .accentThemes: return "Every Accent Theme"
+        case .calorieTracking: return "Calorie & Macro Tracking"
+        case .foodSearch: return "Food Database Search"
+        case .barcodeScan: return "Barcode Food Scanning"
+        case .aiDescribe: return "AI Meal Descriptions"
+        case .foodPhoto: return "Food Photo Recognition"
+        case .labelScan: return "Nutrition Facts Label Scanning"
+        case .nutritionBackup: return "Secure Nutrition Backup"
         }
     }
 
     var description: String {
         switch self {
-        case .icloudSync:
-            return "Keep every workout backed up to your iCloud and in sync across all your devices."
-        case .unlimitedRoutines:
-            return "Create as many reusable workout routines as you need. Free includes three of your own, plus starter routines."
-        case .advancedProgress:
-            return "See detailed volume and estimated one-rep-max trends over time."
-        case .effortTracking:
-            return "Track how hard each set feels with optional RPE or reps-in-reserve ratings."
-        case .supersets:
-            return "Pair exercises into supersets while building routines or logging workouts."
-        case .accentThemes:
-            return "Personalize ForgeLyte Lift with every available accent color."
+        case .calorieTracking:
+            return "Log meals, hit calorie and macro targets, and see your day at a glance."
+        case .foodSearch:
+            return "Search a growing food catalogue instead of typing every meal from scratch."
+        case .barcodeScan:
+            return "Scan a packaged product and log it without hunting for the Nutrition Facts panel."
+        case .aiDescribe:
+            return "Describe what you ate in plain language and confirm the foods before logging."
+        case .foodPhoto:
+            return "Photograph a meal, confirm the foods and portions, then add it to your diary."
+        case .labelScan:
+            return "Snap a Nutrition Facts label when a product is missing from the database."
+        case .nutritionBackup:
+            return "Back up your food history through ForgeLyte so it can be restored on a new iPhone. Not stored in iCloud."
         }
     }
 
     var systemImage: String {
         switch self {
-        case .icloudSync: return "icloud.fill"
-        case .unlimitedRoutines: return "list.bullet.rectangle.portrait"
-        case .advancedProgress: return "chart.xyaxis.line"
-        case .effortTracking: return "gauge.with.dots.needle.50percent"
-        case .supersets: return "link"
-        case .accentThemes: return "paintpalette.fill"
+        case .calorieTracking: return "fork.knife"
+        case .foodSearch: return "magnifyingglass"
+        case .barcodeScan: return "barcode.viewfinder"
+        case .aiDescribe: return "text.bubble.fill"
+        case .foodPhoto: return "camera.fill"
+        case .labelScan: return "doc.text.viewfinder"
+        case .nutritionBackup: return "externaldrive.fill.badge.checkmark"
         }
-    }
-
-    /// iCloud uses a separate CloudKit store. If a trial user opted in and then cancelled,
-    /// the next launch would open the empty local store and look like their log disappeared.
-    var isIncludedInFreeTrial: Bool {
-        self != .icloudSync
     }
 
     var onboardingCaption: String {
         switch self {
-        case .icloudSync:
-            return "After you subscribe"
-        case .unlimitedRoutines:
-            return "More than three of your own"
-        case .advancedProgress:
-            return "Volume and estimated 1RM"
-        case .effortTracking:
-            return "Rate sets with RPE or RIR"
-        case .supersets:
-            return "Pair lifts in one session"
-        case .accentThemes:
-            return "Every accent color"
+        case .calorieTracking: return "Calories and macros"
+        case .foodSearch: return "Search foods quickly"
+        case .barcodeScan: return "Scan packaged foods"
+        case .aiDescribe: return "Describe a meal"
+        case .foodPhoto: return "Photograph meals"
+        case .labelScan: return "Read Nutrition Facts"
+        case .nutritionBackup: return "Restore on a new iPhone"
         }
     }
+
+    /// Every nutrition Pro feature is included in an active StoreKit trial.
+    var isIncludedInFreeTrial: Bool { true }
 
     static var trialIncluded: [ProFeature] {
         allCases.filter(\.isIncludedInFreeTrial)
@@ -110,18 +107,13 @@ enum ProFeature: String, CaseIterable, Identifiable {
 }
 
 enum SubscriptionAccessPolicy {
-    static let freeRoutineLimit = 3
-
     static func canAccess(
         _ feature: ProFeature,
         tier: SubscriptionTier,
         isInFreeTrial: Bool = false
     ) -> Bool {
-        guard tier == .pro else { return false }
-        if isInFreeTrial && !feature.isIncludedInFreeTrial {
-            return false
-        }
-        return true
+        _ = isInFreeTrial
+        return tier == .pro
     }
 
     static func effectiveTier(
@@ -136,7 +128,9 @@ enum SubscriptionAccessPolicy {
     }
 
     static func canCreateRoutine(existingCount: Int, tier: SubscriptionTier) -> Bool {
-        tier == .pro || existingCount < freeRoutineLimit
+        _ = existingCount
+        _ = tier
+        return true
     }
 
     static func canCopyRoutineSource(
@@ -144,8 +138,32 @@ enum SubscriptionAccessPolicy {
         sourceContainsSupersets: Bool,
         tier: SubscriptionTier
     ) -> Bool {
-        canCreateRoutine(existingCount: existingCount, tier: tier)
-            && (tier == .pro || !sourceContainsSupersets)
+        _ = existingCount
+        _ = sourceContainsSupersets
+        _ = tier
+        return true
+    }
+}
+
+enum NutritionAccessPolicy {
+    static let freeManualLogLimit = 3
+
+    static func canLogManually(existingLogCount: Int, tier: SubscriptionTier) -> Bool {
+        tier == .pro || existingLogCount < freeManualLogLimit
+    }
+
+    static func remainingFreeLogs(existingLogCount: Int, tier: SubscriptionTier) -> Int? {
+        guard tier != .pro else { return nil }
+        return max(0, freeManualLogLimit - existingLogCount)
+    }
+
+    static func canUseAdvancedEntry(_ feature: ProFeature, tier: SubscriptionTier) -> Bool {
+        switch feature {
+        case .calorieTracking:
+            return true
+        case .foodSearch, .barcodeScan, .aiDescribe, .foodPhoto, .labelScan, .nutritionBackup:
+            return tier == .pro
+        }
     }
 }
 

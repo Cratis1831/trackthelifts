@@ -9,50 +9,25 @@ final class SubscriptionAccessPolicyTests: XCTestCase {
         }
     }
 
-    func testFreeTrialOmitsICloudAndKeepsLocalProFeatures() {
-        XCTAssertFalse(
-            SubscriptionAccessPolicy.canAccess(.icloudSync, tier: .pro, isInFreeTrial: true)
-        )
-        for feature in ProFeature.trialIncluded {
+    func testTrialIncludesEveryNutritionFeature() {
+        XCTAssertEqual(ProFeature.trialIncluded.count, ProFeature.allCases.count)
+        for feature in ProFeature.allCases {
+            XCTAssertTrue(feature.isIncludedInFreeTrial)
             XCTAssertTrue(
                 SubscriptionAccessPolicy.canAccess(feature, tier: .pro, isInFreeTrial: true),
                 "\(feature.title) should be available during the trial"
             )
         }
-        XCTAssertTrue(
-            SubscriptionAccessPolicy.canAccess(.icloudSync, tier: .pro, isInFreeTrial: false)
-        )
-        XCTAssertFalse(ProFeature.trialIncluded.contains(.icloudSync))
-        XCTAssertTrue(ProFeature.trialIncluded.contains(.effortTracking))
-        XCTAssertTrue(ProFeature.trialIncluded.contains(.accentThemes))
-        XCTAssertEqual(ProFeature.trialIncluded.count, ProFeature.allCases.count - 1)
     }
 
-    func testFreeRoutineLimitCountsOnlyCustomRoutines() {
-        XCTAssertEqual(SubscriptionAccessPolicy.userCreatedRoutineCount(from: []), 0)
+    func testRoutinesAreUnlimitedForFreeAndPro() {
         XCTAssertTrue(SubscriptionAccessPolicy.canCreateRoutine(existingCount: 0, tier: .free))
-        XCTAssertTrue(SubscriptionAccessPolicy.canCreateRoutine(existingCount: 1, tier: .free))
-        XCTAssertTrue(SubscriptionAccessPolicy.canCreateRoutine(existingCount: 2, tier: .free))
-        XCTAssertFalse(SubscriptionAccessPolicy.canCreateRoutine(existingCount: 3, tier: .free))
-        XCTAssertFalse(SubscriptionAccessPolicy.canCreateRoutine(existingCount: 10, tier: .free))
+        XCTAssertTrue(SubscriptionAccessPolicy.canCreateRoutine(existingCount: 10, tier: .free))
         XCTAssertTrue(SubscriptionAccessPolicy.canCreateRoutine(existingCount: 10, tier: .pro))
-    }
-
-    func testFreeCannotCopySupersetSource() {
-        XCTAssertTrue(SubscriptionAccessPolicy.canCopyRoutineSource(
-            existingCount: 0,
-            sourceContainsSupersets: false,
-            tier: .free
-        ))
-        XCTAssertFalse(SubscriptionAccessPolicy.canCopyRoutineSource(
-            existingCount: 0,
-            sourceContainsSupersets: true,
-            tier: .free
-        ))
         XCTAssertTrue(SubscriptionAccessPolicy.canCopyRoutineSource(
             existingCount: 20,
             sourceContainsSupersets: true,
-            tier: .pro
+            tier: .free
         ))
     }
 
@@ -71,29 +46,29 @@ final class SubscriptionAccessPolicyTests: XCTestCase {
         )
     }
 
-    func testPaidThemeFallsBackAndRestoresWithoutChangingSelection() {
+    func testPaidThemeIsAvailableWithoutPro() {
         let selectedTheme = AppTheme.purple
 
         XCTAssertEqual(
             ThemeAccessPolicy.effectiveTheme(selectedTheme: selectedTheme, hasProAccess: false),
-            .indigo
+            .purple
         )
         XCTAssertEqual(
             ThemeAccessPolicy.effectiveTheme(selectedTheme: selectedTheme, hasProAccess: true),
-            selectedTheme
+            .purple
         )
     }
 
-    func testEffortPreferenceFallsBackToNoneAndRestoresForPro() {
+    func testEffortTrackingIsAvailableWithoutPro() {
         let selectedMode = IntensityPreferenceMode.rpe
 
         XCTAssertEqual(
             IntensityAccessPolicy.effectiveMode(selectedMode: selectedMode, hasProAccess: false),
-            .none
+            .rpe
         )
         XCTAssertEqual(
             IntensityAccessPolicy.effectiveMode(selectedMode: selectedMode, hasProAccess: true),
-            selectedMode
+            .rpe
         )
     }
 
@@ -222,11 +197,63 @@ final class SubscriptionAccessPolicyTests: XCTestCase {
         )
         XCTAssertEqual(
             SubscriptionOfferPresentation.settingsUpgradeTitle(isMonthlyTrialEligible: true),
-            "Try Pro Free for 1 Week"
+            "Try Pro Free"
         )
         XCTAssertEqual(
             SubscriptionOfferPresentation.settingsUpgradeTitle(isMonthlyTrialEligible: false),
             "Upgrade to Pro"
         )
+        XCTAssertEqual(
+            SubscriptionOfferPresentation.settingsUpgradeTitle(
+                isMonthlyTrialEligible: false,
+                isAnnualTrialEligible: true
+            ),
+            "Try Pro Free"
+        )
+    }
+}
+
+final class NutritionAccessPolicyTests: XCTestCase {
+    func testFreeManualLogLimit() {
+        XCTAssertTrue(NutritionAccessPolicy.canLogManually(existingLogCount: 0, tier: .free))
+        XCTAssertTrue(NutritionAccessPolicy.canLogManually(existingLogCount: 2, tier: .free))
+        XCTAssertFalse(NutritionAccessPolicy.canLogManually(existingLogCount: 3, tier: .free))
+        XCTAssertTrue(NutritionAccessPolicy.canLogManually(existingLogCount: 30, tier: .pro))
+        XCTAssertEqual(
+            NutritionAccessPolicy.remainingFreeLogs(existingLogCount: 1, tier: .free),
+            2
+        )
+        XCTAssertNil(NutritionAccessPolicy.remainingFreeLogs(existingLogCount: 1, tier: .pro))
+    }
+
+    func testDashboardPreviewIsFreeAndAdvancedEntryIsPro() {
+        XCTAssertTrue(NutritionAccessPolicy.canUseAdvancedEntry(.calorieTracking, tier: .free))
+        XCTAssertFalse(NutritionAccessPolicy.canUseAdvancedEntry(.barcodeScan, tier: .free))
+        XCTAssertFalse(NutritionAccessPolicy.canUseAdvancedEntry(.aiDescribe, tier: .free))
+        XCTAssertTrue(NutritionAccessPolicy.canUseAdvancedEntry(.foodPhoto, tier: .pro))
+    }
+
+    func testNutritionTotalsSnapshot() {
+        let chicken = FoodLog(
+            mealType: .lunch,
+            displayName: "Chicken",
+            calories: 190,
+            proteinGrams: 35,
+            carbsGrams: 0,
+            fatGrams: 4
+        )
+        let rice = FoodLog(
+            mealType: .lunch,
+            displayName: "Rice",
+            calories: 200,
+            proteinGrams: 4,
+            carbsGrams: 45,
+            fatGrams: 1
+        )
+        let totals = NutritionMath.totals(from: [chicken, rice])
+        XCTAssertEqual(totals.calories, 390)
+        XCTAssertEqual(totals.proteinGrams, 39)
+        XCTAssertEqual(totals.carbsGrams, 45)
+        XCTAssertEqual(totals.fatGrams, 5)
     }
 }

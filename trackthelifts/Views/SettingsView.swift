@@ -17,7 +17,6 @@ struct SettingsView: View {
     @Environment(\.requestReview) private var requestReview
     @State private var isPaywallPresented = false
     @State private var isProBenefitsPresented = false
-    @State private var selectedProFeature: ProFeature?
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = true
     private let notificationService = NotificationService.shared
     @State private var showNotificationDeniedAlert = false
@@ -25,6 +24,8 @@ struct SettingsView: View {
     @State private var showRestoreErrorAlert = false
     @State private var showRestoreResultAlert = false
     @State private var restoreResultMessage = ""
+    @State private var showClearNutritionConfirmation = false
+    @Environment(\.nutritionContainer) private var nutritionContainer
 
     private let weightUnitPreference = WeightUnitPreference.shared
     @State private var selectedUnit: WeightUnit = WeightUnitPreference.shared.unit
@@ -93,34 +94,33 @@ struct SettingsView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                Color.appCanvas
-                    .ignoresSafeArea()
+        ZStack {
+            Color.appCanvas
+                .ignoresSafeArea()
 
-                ScrollView(.vertical) {
-                    VStack(alignment: .leading, spacing: 20) {
-                        subscriptionSection
-                        appSettingsSection
-                        supportSection
-                        legalLinksFooter
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 30)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .containerRelativeFrame(.horizontal, alignment: .top)
+            ScrollView(.vertical) {
+                VStack(alignment: .leading, spacing: 20) {
+                    subscriptionSection
+                    appSettingsSection
+                    nutritionSettingsSection
+                    supportSection
+                    legalLinksFooter
                 }
-                .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 30)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .containerRelativeFrame(.horizontal, alignment: .top)
             }
-            .navigationTitle("Settings")
+            .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
         }
+        .navigationTitle("Settings")
+        .navigationBarTitleDisplayMode(.inline)
         .fullScreenCover(isPresented: $isPaywallPresented) {
-            PaywallView()
+            PaywallView(placement: "settings")
         }
         .fullScreenCover(isPresented: $isProBenefitsPresented) {
             ProBenefitsView()
         }
-        .proPaywall(feature: $selectedProFeature)
         .alert("Notifications Disabled", isPresented: $showNotificationDeniedAlert) {
             Button("OK") { }
         } message: {
@@ -150,6 +150,14 @@ struct SettingsView: View {
             }
         } message: {
             Text("Switching to \(pendingUnit?.label ?? "") will convert all your logged weights. Continue?")
+        }
+        .alert("Clear Nutrition History?", isPresented: $showClearNutritionConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Clear", role: .destructive) {
+                clearNutritionHistory()
+            }
+        } message: {
+            Text("This deletes food logs and custom foods stored on this iPhone. Workout history is not affected.")
         }
     }
 
@@ -233,7 +241,8 @@ struct SettingsView: View {
             } label: {
                 HStack {
                     Text(SubscriptionOfferPresentation.settingsUpgradeTitle(
-                        isMonthlyTrialEligible: revenueCatService.hasEligibleMonthlyTrial
+                        isMonthlyTrialEligible: revenueCatService.hasEligibleMonthlyTrial,
+                        isAnnualTrialEligible: revenueCatService.hasEligibleAnnualTrial
                     ))
                         .font(.system(size: 16, weight: .semibold))
 
@@ -406,36 +415,17 @@ struct SettingsView: View {
 
             Spacer()
 
-            if revenueCatService.canAccess(.effortTracking) {
-                Picker("Set Effort", selection: Binding(
-                    get: { intensityPreference.mode },
-                    set: { intensityPreference.mode = $0 }
-                )) {
-                    ForEach(IntensityPreferenceMode.allCases) { mode in
-                        Text(mode.label).tag(mode)
-                    }
+            Picker("Set Effort", selection: Binding(
+                get: { intensityPreference.mode },
+                set: { intensityPreference.mode = $0 }
+            )) {
+                ForEach(IntensityPreferenceMode.allCases) { mode in
+                    Text(mode.label).tag(mode)
                 }
-                .labelsHidden()
-                .pickerStyle(.menu)
-                .tint(.appAccent)
-            } else {
-                Button {
-                    selectedProFeature = .effortTracking
-                } label: {
-                    HStack(spacing: 7) {
-                        Text(IntensityAccessPolicy.effectiveMode(
-                            selectedMode: intensityPreference.mode,
-                            hasProAccess: false
-                        ).label)
-                            .foregroundColor(secondaryText)
-                        ProBadge()
-                        Image(systemName: "lock.fill")
-                            .font(.system(size: 10))
-                            .foregroundColor(secondaryText)
-                    }
-                }
-                .buttonStyle(.plain)
             }
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .tint(.appAccent)
         }
     }
 
@@ -451,21 +441,14 @@ struct SettingsView: View {
                     .font(.system(size: 16))
                     .foregroundColor(.appTextPrimary)
                 Spacer()
-                if !revenueCatService.canAccess(.accentThemes) {
-                    ProBadge()
-                }
             }
 
             HStack(spacing: 0) {
                 ForEach(AppTheme.allCases) { theme in
                     Button {
-                        if theme == .indigo || revenueCatService.canAccess(.accentThemes) {
-                            Haptics.selection()
-                            withAnimation(.easeInOut(duration: 0.15)) {
-                                themePreference.select(theme)
-                            }
-                        } else {
-                            selectedProFeature = .accentThemes
+                        Haptics.selection()
+                        withAnimation(.easeInOut(duration: 0.15)) {
+                            themePreference.select(theme)
                         }
                     } label: {
                         accentSwatch(for: theme)
@@ -488,11 +471,6 @@ struct SettingsView: View {
                 Circle()
                     .stroke(Color.white, lineWidth: 2)
                     .frame(width: 38, height: 38)
-            }
-            if theme != .indigo && !revenueCatService.canAccess(.accentThemes) {
-                Image(systemName: "lock.fill")
-                    .font(.system(size: 8, weight: .bold))
-                    .foregroundColor(theme.contrastingForeground)
             }
         }
         .frame(maxWidth: .infinity)
@@ -553,48 +531,17 @@ struct SettingsView: View {
 
     private var icloudSyncRow: some View {
         VStack(alignment: .leading, spacing: 10) {
-            if revenueCatService.canAccess(.icloudSync) {
-                Toggle(isOn: icloudSyncBinding) {
-                    icloudSyncLabel
-                }
-                .tint(.appToggleTint)
+            Toggle(isOn: icloudSyncBinding) {
+                icloudSyncLabel
+            }
+            .tint(.appToggleTint)
 
-                if cloudSyncPreference.isEnabled {
-                    Text(icloudStatusText)
-                        .font(.system(size: 13))
-                        .foregroundColor(secondaryText)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            } else if revenueCatService.isInFreeTrial {
-                HStack(spacing: 12) {
-                    icloudSyncLabel
-                    Spacer()
-                    ProBadge()
-                    Image(systemName: "lock.fill")
-                        .font(.system(size: 10))
-                        .foregroundColor(secondaryText)
-                }
-
-                Text("Available after your trial so your workouts stay on this device if you cancel.")
+            if cloudSyncPreference.isEnabled {
+                Text(icloudStatusText)
                     .font(.system(size: 13))
                     .foregroundColor(secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
-            } else {
-                Button {
-                    selectedProFeature = .icloudSync
-                } label: {
-                    HStack(spacing: 12) {
-                        icloudSyncLabel
-                        Spacer()
-                        ProBadge()
-                        Image(systemName: "lock.fill")
-                            .font(.system(size: 10))
-                            .foregroundColor(secondaryText)
-                    }
-                }
-                .buttonStyle(.plain)
             }
         }
         .task {
@@ -613,7 +560,7 @@ struct SettingsView: View {
                 return message
             }
             return iCloudAccountAvailable
-                ? "Your workouts, routines, and exercises back up to your iCloud and stay in sync across your devices."
+                ? "Your workouts, routines, and exercises back up to your iCloud and stay in sync across your devices. Food diary entries stay on this iPhone."
                 : "Sign in to iCloud in iOS Settings to start syncing. Your data stays safe on this device until then."
         }
         if let message = cloudSyncPreference.lastStoreOpenMessage, !message.isEmpty {
@@ -735,6 +682,62 @@ struct SettingsView: View {
         }
     }
     #endif
+
+    // MARK: - Nutrition
+
+    private var nutritionSettingsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            sectionHeader("Nutrition")
+
+            VStack(alignment: .leading, spacing: 16) {
+                NavigationLink {
+                    FoodDataSourcesView()
+                } label: {
+                    supportRowLabel(
+                        title: "Food Data Sources",
+                        systemImage: "leaf.fill",
+                        color: Color(red: 0.30, green: 0.72, blue: 0.40),
+                        trailingImage: "chevron.right"
+                    )
+                }
+                .buttonStyle(.plain)
+
+                rowDivider
+
+                Button {
+                    showClearNutritionConfirmation = true
+                } label: {
+                    supportRowLabel(
+                        title: "Clear Nutrition History",
+                        systemImage: "trash.fill",
+                        color: Color(red: 0.90, green: 0.30, blue: 0.24)
+                    )
+                }
+                .buttonStyle(.plain)
+
+                Text("Food diary entries stay on this device. They are not stored in iCloud.")
+                    .font(.system(size: 13))
+                    .foregroundColor(secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .settingsCard()
+        }
+    }
+
+    private func clearNutritionHistory() {
+        guard let container = nutritionContainer else { return }
+        let context = ModelContext(container)
+        do {
+            let logs = try context.fetch(FetchDescriptor<FoodLog>())
+            let foods = try context.fetch(FetchDescriptor<CustomFood>())
+            logs.forEach { context.delete($0) }
+            foods.forEach { context.delete($0) }
+            try context.save()
+            NutritionPreference.shared.reset()
+        } catch {
+            print("Failed to clear nutrition history: \(error)")
+        }
+    }
 
     // MARK: - Support
 
@@ -974,7 +977,10 @@ private extension View {
 }
 
 #Preview {
-    SettingsView()
-        .environmentObject(RevenueCatService.shared)
-        .modelContainer(for: [Workout.self, Exercise.self, ExerciseSet.self, WorkoutTemplateExercise.self])
+    NavigationStack {
+        SettingsView()
+    }
+    .environmentObject(RevenueCatService.shared)
+    .environment(\.nutritionContainer, NutritionStore.makeContainer())
+    .modelContainer(for: [Workout.self, Exercise.self, ExerciseSet.self, WorkoutTemplateExercise.self])
 }

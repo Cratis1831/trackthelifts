@@ -357,7 +357,7 @@ struct RoutinesOnboardingPage: View {
         OnboardingPageLayout(
             eyebrow: "Routines",
             title: "Build once. Train again.",
-            detail: "Save workouts as routines and start them in one tap. Free includes three of your own, plus starter Push, Pull, Legs, and Full Body routines.",
+            detail: "Save workouts as routines and start them in one tap. Starter Push, Pull, Legs, and Full Body routines are included, and you can create as many of your own as you need.",
             phase: phase
         ) {
             RoutineSpecimen(phase: phase)
@@ -379,10 +379,10 @@ private struct RoutineSpecimen: View {
         ("Legs", "7 exercises", "figure.strengthtraining.traditional"),
     ]
 
-    private let proFeatures: [ProFeature] = [
-        .unlimitedRoutines,
-        .supersets,
-        .effortTracking,
+    private let includedExtras = [
+        ("link", "Supersets"),
+        ("gauge.with.dots.needle.50percent", "RPE and RIR"),
+        ("icloud.fill", "iCloud workout sync"),
     ]
 
     var body: some View {
@@ -391,7 +391,7 @@ private struct RoutineSpecimen: View {
                 HStack {
                     SpecimenLabel(text: "My routines")
                     Spacer()
-                    Text("3 / 3 FREE")
+                    Text("UNLIMITED")
                         .font(.system(size: 10, weight: .semibold, design: .monospaced))
                         .foregroundColor(.appAccent)
                 }
@@ -425,17 +425,19 @@ private struct RoutineSpecimen: View {
                 Divider().overlay(Color.appBorder)
 
                 VStack(spacing: 7) {
-                    ForEach(proFeatures) { feature in
+                    ForEach(includedExtras, id: \.1) { extra in
                         HStack(spacing: 8) {
-                            Image(systemName: feature.systemImage)
+                            Image(systemName: extra.0)
                                 .font(.system(size: 11, weight: .semibold))
                                 .foregroundColor(.appTextSecondary)
                                 .frame(width: 16)
-                            Text(feature.title)
+                            Text(extra.1)
                                 .font(.system(size: 11, weight: .medium))
                                 .foregroundColor(.appTextSecondary)
                             Spacer()
-                            ProBadge()
+                            Text("FREE")
+                                .font(.system(size: 9, weight: .bold, design: .rounded))
+                                .foregroundColor(.appAccent)
                         }
                     }
                 }
@@ -457,7 +459,7 @@ struct ProgressOnboardingPage: View {
         OnboardingPageLayout(
             eyebrow: "Progress",
             title: "See the work add up.",
-            detail: "Consistency, weekly workouts, and personal-record celebrations are included. Pro adds detailed volume and estimated 1RM trends.",
+            detail: "Consistency, weekly workouts, volume trends, estimated 1RM, and personal-record celebrations are all included.",
             phase: phase
         ) {
             ProgressSpecimen(phase: phase)
@@ -527,14 +529,13 @@ private struct ProgressSpecimen: View {
                 .scaleEffect(phase >= 3 ? 1 : 0.96)
 
                 HStack(spacing: 8) {
-                    Image(systemName: ProFeature.advancedProgress.systemImage)
+                    Image(systemName: "chart.xyaxis.line")
                         .font(.system(size: 12))
                         .foregroundColor(.appTextSecondary)
                     Text("Volume and estimated 1RM trends")
                         .font(.system(size: 11, weight: .medium))
                         .foregroundColor(.appTextSecondary)
                     Spacer()
-                    ProBadge()
                 }
             }
         }
@@ -597,7 +598,6 @@ private struct PersonalizationSpecimen: View {
                     HStack {
                         SpecimenLabel(text: "Accent themes")
                         Spacer()
-                        ProBadge()
                     }
 
                     HStack(spacing: 11) {
@@ -608,10 +608,6 @@ private struct PersonalizationSpecimen: View {
                                     Image(systemName: "checkmark")
                                         .font(.system(size: 9, weight: .bold))
                                         .foregroundColor(.white)
-                                } else {
-                                    Image(systemName: "lock.fill")
-                                        .font(.system(size: 8, weight: .bold))
-                                        .foregroundColor(.white.opacity(0.9))
                                 }
                             }
                             .frame(width: 27, height: 27)
@@ -837,6 +833,7 @@ struct TrialOnboardingPage: View {
     let trialDurationText: String
     let monthlyPriceText: String?
     let introOffer: IntroOfferSummary?
+    let plan: SubscriptionPlanKind
     let onSeeAllPlans: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -844,14 +841,14 @@ struct TrialOnboardingPage: View {
 
     private var title: String {
         isTrialEligible
-            ? "Try Pro free for \(trialDurationText)."
-            : "Unlock more when you're ready."
+            ? "Try Pro nutrition free for \(trialDurationText)."
+            : "Add nutrition when you're ready."
     }
 
     private var detail: String {
         isTrialEligible
-            ? "Unlimited routines, RPE, charts, supersets, and every accent theme. iCloud sync waits until you subscribe so your log stays on this device if you cancel."
-            : "Unlimited routines, RPE, charts, supersets, and themes. iCloud sync is included when you subscribe."
+            ? "Training stays free. Pro adds calorie tracking, food search, barcode scanning, and AI meal logging."
+            : "Training stays free. Upgrade to Pro for calorie tracking, food search, barcode scanning, and AI meal logging."
     }
 
     var body: some View {
@@ -904,9 +901,9 @@ struct TrialOnboardingPage: View {
 
     private var legalText: String {
         SubscriptionOfferPresentation.legalFooter(
-            plan: .monthly,
-            price: monthlyPriceText ?? "the monthly price",
-            intro: introOffer ?? IntroOfferSummary(paymentMode: .freeTrial, periodCount: 1, periodUnit: .week),
+            plan: plan,
+            price: monthlyPriceText ?? "the plan price",
+            intro: introOffer ?? IntroOfferSummary(paymentMode: .freeTrial, periodCount: 3, periodUnit: .day),
             isIntroEligible: true
         )
     }

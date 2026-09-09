@@ -5,10 +5,9 @@
 
 import Foundation
 
-/// The user's iCloud sync opt-in (a Pro feature, default off) plus a synchronously readable
-/// snapshot of the Pro entitlement. The snapshot exists because the SwiftData `ModelContainer`
-/// is built at app launch, before RevenueCat's async customer-info load finishes — the last
-/// known entitlement decides whether the CloudKit-backed store is used for this launch.
+/// The user's iCloud workout-sync opt-in (default off). Workout iCloud sync is free; nutrition
+/// history is never stored here. `cachedHasPro` remains for launch-time store choice compatibility
+/// with older installs, but it no longer gates sync.
 @Observable
 class CloudSyncPreference {
     static let shared = CloudSyncPreference()
@@ -44,9 +43,8 @@ class CloudSyncPreference {
         }
     }
 
-    /// Last known Pro entitlement, written by `RevenueCatService` whenever customer info (or
-    /// the debug tier override) updates. A change posts `didChangeNotification` so turning on
-    /// Pro after launch can snapshot local data the same way the Settings toggle does.
+    /// Legacy Pro snapshot. Workout iCloud no longer requires Pro; kept so existing defaults
+    /// still round-trip and so a value change can still post `didChangeNotification`.
     var cachedHasPro: Bool {
         didSet {
             userDefaults.set(cachedHasPro, forKey: cachedProKey)
@@ -67,11 +65,10 @@ class CloudSyncPreference {
     /// Last store-open failure, snapshot failure, or relaunch instruction. In-memory only.
     var lastStoreOpenMessage: String?
 
-    /// Sync is active only when the user opted in AND the last known entitlement was Pro. If
-    /// Pro lapses, the next cold launch opens the local-only store — the opt-in is remembered
-    /// in case Pro returns.
+    /// Sync is active when the user opted in. Nutrition data uses a separate local store and
+    /// never opens with this CloudKit configuration.
     var isSyncActive: Bool {
-        isEnabled && cachedHasPro
+        isEnabled
     }
 
     /// SwiftData's CloudKit load failure often surfaces as a useless "error 1".

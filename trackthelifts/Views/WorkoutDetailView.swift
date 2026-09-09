@@ -10,12 +10,10 @@ import SwiftData
 /// Lets the user rename the workout, edit set weight/reps/completion, add sets, and swipe to
 /// remove an exercise (and all of its sets) entirely.
 struct WorkoutDetailView: View {
-    @EnvironmentObject private var revenueCatService: RevenueCatService
     @Bindable var workout: Workout
 
     @Environment(\.modelContext) private var modelContext
     @State private var isReorderingExercises = false
-    @State private var selectedProFeature: ProFeature?
 
     /// The workout's sets grouped per exercise (sets sorted by set order), in the persisted
     /// `exerciseOrder` (drag-reorderable by the user), falling back to earliest-created-set order
@@ -116,13 +114,6 @@ struct WorkoutDetailView: View {
                         .font(.system(size: 14))
                         .foregroundColor(workout.supersetID(for: name) == nil ? .appTextSecondary : .appAccent)
                         .frame(width: 32, height: 32)
-                        .overlay(alignment: .topTrailing) {
-                            if workout.supersetID(for: name) == nil && !revenueCatService.canAccess(.supersets) {
-                                Image(systemName: "lock.fill")
-                                    .font(.system(size: 7, weight: .bold))
-                                    .foregroundColor(.appTextSecondary)
-                            }
-                        }
                 }
                 .buttonStyle(.plain)
             }
@@ -355,7 +346,6 @@ struct WorkoutDetailView: View {
                 }
             }
         }
-        .proPaywall(feature: $selectedProFeature)
     }
 
     private func formattedDuration(from startDate: Date, to endDate: Date) -> String {
@@ -397,10 +387,6 @@ struct WorkoutDetailView: View {
     }
 
     private func createSuperset(_ firstExercise: String, _ secondExercise: String) {
-        guard revenueCatService.canAccess(.supersets) else {
-            selectedProFeature = .supersets
-            return
-        }
         workout.setSuperset(firstExercise, secondExercise)
         persistWorkoutEdit()
         Haptics.selection()

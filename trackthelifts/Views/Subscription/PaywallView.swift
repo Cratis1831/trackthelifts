@@ -3,6 +3,7 @@ import RevenueCat
 
 struct PaywallView: View {
     var focusedFeature: ProFeature? = nil
+    var placement: String
 
     @EnvironmentObject var revenueCatService: RevenueCatService
     @Environment(\.dismiss) private var dismiss
@@ -14,6 +15,19 @@ struct PaywallView: View {
     @State private var restoreResultMessage = ""
 
     @State private var hasUserChosenPackage = false
+    @State private var didPurchase = false
+    @State private var didSelectPlan = false
+
+    init(focusedFeature: ProFeature? = nil, placement: String? = nil) {
+        self.focusedFeature = focusedFeature
+        if let placement {
+            self.placement = placement
+        } else if let focusedFeature {
+            self.placement = AnalyticsProFeature(focusedFeature).activationPalPlacement
+        } else {
+            self.placement = "settings"
+        }
+    }
 
     var purchaseButtonText: String {
         guard let package = selectedPackage else {
@@ -79,6 +93,17 @@ struct PaywallView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Train for free. Upgrade when you want nutrition.")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundColor(.appTextPrimary)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Text("Smart nutrition tracking built into your workout app.")
+                                .font(.system(size: 13))
+                                .foregroundColor(.appTextSecondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(.bottom, 4)
 
                         // Features Section
                         VStack(alignment: .leading, spacing: 7) {
@@ -94,8 +119,8 @@ struct PaywallView: View {
                             FeatureRow(
                                 icon: "sparkles",
                                 iconColor: Color(red: 0.95, green: 0.72, blue: 0.20),
-                                title: "All Future Pro Features",
-                                description: "Every new Pro feature we add, included automatically"
+                                title: "Ongoing Nutrition Features",
+                                description: "Food database, AI logging, and backup as they ship"
                             )
                         }
 
@@ -128,7 +153,13 @@ struct PaywallView: View {
             }
         }
         .onAppear {
+            ActivationPal.paywallShown(placement)
             selectDefaultPackageIfNeeded()
+        }
+        .onDisappear {
+            if !didPurchase {
+                ActivationPal.paywallDismissed()
+            }
         }
         .onChange(of: revenueCatService.availablePackages.map(\.identifier)) {
             selectDefaultPackageIfNeeded()
@@ -206,6 +237,8 @@ struct PaywallView: View {
                         ) {
                             hasUserChosenPackage = true
                             selectedPackage = package
+                            didSelectPlan = true
+                            ActivationPal.paywallPlanSelected(package.activationPalPlan)
                         }
                     }
                 }
@@ -220,10 +253,15 @@ struct PaywallView: View {
         VStack(spacing: 10) {
             Button(action: {
                 guard let package = selectedPackage else { return }
+                if !didSelectPlan {
+                    didSelectPlan = true
+                    ActivationPal.paywallPlanSelected(package.activationPalPlan)
+                }
 
                 Task {
                     let success = await revenueCatService.purchasePackage(package)
                     if success {
+                        didPurchase = true
                         dismiss()
                     } else if let error = revenueCatService.lastError {
                         errorMessage = error.localizedDescription
@@ -393,12 +431,13 @@ struct PackageCard: View {
 extension ProFeature {
     var iconColor: Color {
         switch self {
-        case .icloudSync: return Color(red: 0.20, green: 0.48, blue: 0.96)
-        case .unlimitedRoutines: return Color(red: 0.95, green: 0.55, blue: 0.19)
-        case .advancedProgress: return Color(red: 0.20, green: 0.48, blue: 0.96)
-        case .effortTracking: return Color(red: 0.88, green: 0.38, blue: 0.50)
-        case .supersets: return Color(red: 0.30, green: 0.72, blue: 0.40)
-        case .accentThemes: return Color(red: 0.58, green: 0.36, blue: 0.90)
+        case .calorieTracking: return Color(red: 0.95, green: 0.55, blue: 0.19)
+        case .foodSearch: return Color(red: 0.20, green: 0.48, blue: 0.96)
+        case .barcodeScan: return Color(red: 0.30, green: 0.72, blue: 0.40)
+        case .aiDescribe: return Color(red: 0.58, green: 0.36, blue: 0.90)
+        case .foodPhoto: return Color(red: 0.88, green: 0.38, blue: 0.50)
+        case .labelScan: return Color(red: 0.20, green: 0.68, blue: 0.70)
+        case .nutritionBackup: return Color(red: 0.20, green: 0.48, blue: 0.96)
         }
     }
 }

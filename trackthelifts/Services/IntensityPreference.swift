@@ -29,7 +29,8 @@ enum IntensityAccessPolicy {
         selectedMode: IntensityPreferenceMode,
         hasProAccess: Bool
     ) -> IntensityPreferenceMode {
-        hasProAccess ? selectedMode : .none
+        _ = hasProAccess
+        return selectedMode
     }
 }
 

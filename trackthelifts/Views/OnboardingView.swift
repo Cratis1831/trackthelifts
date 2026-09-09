@@ -66,7 +66,9 @@ struct OnboardingView: View {
     private var primaryButtonTitle: String {
         switch currentPage {
         case .trial:
-            return revenueCatService.hasEligibleMonthlyTrial ? "Start Free Trial" : "See All Plans"
+            return (revenueCatService.hasEligibleAnnualTrial || revenueCatService.hasEligibleMonthlyTrial)
+                ? "Start Free Trial"
+                : "See All Plans"
         default:
             return "Continue"
         }
@@ -101,10 +103,16 @@ struct OnboardingView: View {
                     .tag(OnboardingPage.profile)
                     TrialOnboardingPage(
                         isActive: currentPage == .trial,
-                        isTrialEligible: revenueCatService.hasEligibleMonthlyTrial,
+                        isTrialEligible: revenueCatService.hasEligibleAnnualTrial
+                            || revenueCatService.hasEligibleMonthlyTrial,
                         trialDurationText: trialDurationText,
-                        monthlyPriceText: revenueCatService.monthlyPackage?.storeProduct.localizedPriceString,
-                        introOffer: revenueCatService.monthlyPackage?.introOfferSummary,
+                        monthlyPriceText: revenueCatService.annualPackage?.storeProduct.localizedPriceString
+                            ?? revenueCatService.monthlyPackage?.storeProduct.localizedPriceString,
+                        introOffer: revenueCatService.annualPackage?.introOfferSummary
+                            ?? revenueCatService.monthlyPackage?.introOfferSummary,
+                        plan: revenueCatService.hasEligibleAnnualTrial || revenueCatService.annualPackage != nil
+                            ? .annual
+                            : .monthly,
                         onSeeAllPlans: showAllPlans
                     )
                     .tag(OnboardingPage.trial)
@@ -132,10 +140,14 @@ struct OnboardingView: View {
             }
         }
         .fullScreenCover(isPresented: $isPaywallPresented) {
-            PaywallView()
+            PaywallView(placement: "onboarding")
                 .environmentObject(revenueCatService)
         }
+        .onAppear {
+            trackOnboardingStep()
+        }
         .onChange(of: currentPage) {
+            trackOnboardingStep()
             if currentPage == .trial, !ProfileNamePolicy.isValid(nameDraft) {
                 currentPage = .profile
             }
@@ -153,10 +165,12 @@ struct OnboardingView: View {
     }
 
     private var trialDurationText: String {
-        if let summary = revenueCatService.monthlyPackage?.introOfferSummary {
+        let summary = revenueCatService.annualPackage?.introOfferSummary
+            ?? revenueCatService.monthlyPackage?.introOfferSummary
+        if let summary {
             return SubscriptionOfferPresentation.durationPhrase(for: summary)
         }
-        return "1 week"
+        return "3 days"
     }
 
     private var topBar: some View {
@@ -205,8 +219,31 @@ struct OnboardingView: View {
         return .appBorder
     }
 
+    private func trackOnboardingStep() {
+        let answer: String?
+        switch currentPage {
+        case .profile:
+            answer = ProfileNamePolicy.isValid(nameDraft) ? "named" : nil
+        case .trial:
+            answer = (revenueCatService.hasEligibleAnnualTrial || revenueCatService.hasEligibleMonthlyTrial)
+                ? "trial_eligible"
+                : "see_plans"
+        default:
+            answer = nil
+        }
+        ActivationPal.onboardingStep(
+            currentPage.rawValue,
+            id: currentPage.analyticsPage.rawValue,
+            answer: answer
+        )
+        if currentPage == .trial {
+            ActivationPal.paywallShown("onboarding")
+        }
+    }
+
     private func handleSkip() {
         if currentPage == .trial {
+            ActivationPal.paywallDismissed()
             finishOnboarding()
             return
         }
@@ -241,7 +278,23 @@ struct OnboardingView: View {
     }
 
     private func startTrialOrShowPlans() {
+        if revenueCatService.hasEligibleAnnualTrial, let annualPackage = revenueCatService.annualPackage {
+            ActivationPal.paywallPlanSelected("yearly")
+            Task {
+                let success = await revenueCatService.purchasePackage(annualPackage)
+                if success {
+                    finishOnboarding()
+                } else if let error = revenueCatService.lastError {
+                    if case .userCancelled = error { return }
+                    purchaseErrorMessage = error.localizedDescription
+                    showingPurchaseError = true
+                }
+            }
+            return
+        }
+
         if revenueCatService.hasEligibleMonthlyTrial, let monthlyPackage = revenueCatService.monthlyPackage {
+            ActivationPal.paywallPlanSelected("monthly")
             Task {
                 let success = await revenueCatService.purchasePackage(monthlyPackage)
                 if success {

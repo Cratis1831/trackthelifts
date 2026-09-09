@@ -9,7 +9,6 @@ import SwiftData
 import SwiftUI
 
 struct CreateWorkoutView: View {
-    @EnvironmentObject private var revenueCatService: RevenueCatService
     @State private var workoutName: String = ""
     @State private var workoutNotes: String = ""
     @State private var showExerciseList: Bool = false
@@ -24,7 +23,6 @@ struct CreateWorkoutView: View {
     @State private var sessionStartDate = Date()
     @State private var isReorderingExercises = false
     @State private var completionSummary: WorkoutCompletionSummary?
-    @State private var selectedProFeature: ProFeature?
     private let sessionManager = WorkoutSessionManager.shared
     @FocusState private var focusWorkoutName: Bool
     
@@ -151,14 +149,6 @@ struct CreateWorkoutView: View {
                         .font(.system(size: 14))
                         .foregroundColor(savedWorkout?.supersetID(for: exerciseName) == nil ? .appTextSecondary : .appAccent)
                         .frame(width: 32, height: 32)
-                        .overlay(alignment: .topTrailing) {
-                            if savedWorkout?.supersetID(for: exerciseName) == nil
-                                && !revenueCatService.canAccess(.supersets) {
-                                Image(systemName: "lock.fill")
-                                    .font(.system(size: 7, weight: .bold))
-                                    .foregroundColor(.appTextSecondary)
-                            }
-                        }
                 }
                 .buttonStyle(.plain)
             }
@@ -268,10 +258,6 @@ struct CreateWorkoutView: View {
     }
 
     private func createSuperset(_ workout: Workout, _ firstExercise: String, _ secondExercise: String) {
-        guard revenueCatService.canAccess(.supersets) else {
-            selectedProFeature = .supersets
-            return
-        }
         workout.setSuperset(firstExercise, secondExercise)
         persistSupersetChange()
     }
@@ -560,7 +546,6 @@ struct CreateWorkoutView: View {
             } message: {
                 Text(saveErrorMessage ?? "Something went wrong. Please try again.")
             }
-            .proPaywall(feature: $selectedProFeature)
         }
         .overlay(alignment: .top) {
             if let prAnnouncement {

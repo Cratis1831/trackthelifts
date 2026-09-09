@@ -23,7 +23,7 @@ final class AnalyticsEventTests: XCTestCase {
         )
         assertEvent(.workoutCancelled(hadLoggedSets: false), name: "Workout.cancelled", parameters: ["hadLoggedSets": "false"])
         assertEvent(.routineSaved(source: .pastWorkout), name: "Routine.saved", parameters: ["source": "pastWorkout"])
-        assertEvent(.paywallShown(feature: .supersets), name: "Paywall.shown", parameters: ["feature": "supersets"])
+        assertEvent(.paywallShown(feature: .calorieTracking), name: "Paywall.shown", parameters: ["feature": "calorieTracking"])
         assertEvent(.purchaseCompleted(packageType: .weekly), name: "Purchase.completed", parameters: ["packageType": "weekly"])
         assertEvent(.purchaseCompleted(packageType: .annual), name: "Purchase.completed", parameters: ["packageType": "annual"])
         assertEvent(.purchaseCancelled(packageType: .monthly), name: "Purchase.cancelled", parameters: ["packageType": "monthly"])
@@ -53,7 +53,7 @@ final class AnalyticsEventTests: XCTestCase {
         XCTAssertEqual(RoutineAnalyticsSource.pastWorkout.rawValue, "pastWorkout")
         XCTAssertEqual(RoutineAnalyticsSource.duplicate.rawValue, "duplicate")
         XCTAssertEqual(RoutineAnalyticsSource.edit.rawValue, "edit")
-        XCTAssertEqual(AnalyticsProFeature.allRawValues, ["icloudSync", "unlimitedRoutines", "advancedProgress", "effortTracking", "supersets", "accentThemes"])
+        XCTAssertEqual(AnalyticsProFeature.allRawValues, ["calorieTracking", "foodSearch", "barcodeScan", "aiDescribe", "foodPhoto", "labelScan", "nutritionBackup"])
     }
 
     func testRevenueCatPackageTypeFallback() {
@@ -65,7 +65,10 @@ final class AnalyticsEventTests: XCTestCase {
         XCTAssertEqual(AnalyticsPackageType.fromRevenueCatDescription("custom"), .other)
         XCTAssertEqual(AnalyticsFailureReason.fromSDKDescription("notConfigured"), .notConfigured)
         XCTAssertEqual(AnalyticsFailureReason.fromSDKDescription("sdkError"), .sdkError)
-        XCTAssertEqual(AnalyticsFailureReason.fromSDKDescription("futureFailure"), .unknown)
+        XCTAssertEqual(AnalyticsPackageType.annual.activationPalPlan, "yearly")
+        XCTAssertEqual(AnalyticsPackageType.monthly.activationPalPlan, "monthly")
+        XCTAssertEqual(AnalyticsProFeature.calorieTracking.activationPalPlacement, "calorie_tracking")
+        XCTAssertEqual(AnalyticsProFeature.barcodeScan.activationPalPlacement, "barcode_scan")
     }
 
     func testEveryEventUsesOnlyApprovedParameterKeys() {
@@ -76,7 +79,7 @@ final class AnalyticsEventTests: XCTestCase {
             .workoutCompleted(exerciseCount: 1, completedSetCount: 1, earnedPersonalRecord: false, containsSuperset: false),
             .workoutCancelled(hadLoggedSets: true),
             .routineSaved(source: .duplicate),
-            .paywallShown(feature: .advancedProgress),
+            .paywallShown(feature: .calorieTracking),
             .purchaseCompleted(packageType: .lifetime),
             .purchaseCancelled(packageType: .other),
             .purchaseFailed(packageType: .monthly, reason: .notConfigured),

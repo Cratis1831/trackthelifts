@@ -116,8 +116,14 @@ enum SubscriptionOfferPresentation {
         return "Subscription automatically renews unless canceled at least 24 hours before the end of the current period."
     }
 
-    static func settingsUpgradeTitle(isMonthlyTrialEligible: Bool) -> String {
-        isMonthlyTrialEligible ? "Try Pro Free for 1 Week" : "Upgrade to Pro"
+    static func settingsUpgradeTitle(
+        isMonthlyTrialEligible: Bool,
+        isAnnualTrialEligible: Bool = false
+    ) -> String {
+        if isAnnualTrialEligible || isMonthlyTrialEligible {
+            return "Try Pro Free"
+        }
+        return "Upgrade to Pro"
     }
 
     private static func unitName(_ unit: IntroOfferSummary.PeriodUnit, count: Int) -> String {
@@ -139,6 +145,16 @@ extension Package {
         case .lifetime: return .lifetime
         default:
             return SubscriptionPlanKind.from(productIdentifier: storeProduct.productIdentifier)
+        }
+    }
+
+    var activationPalPlan: String {
+        switch planKind {
+        case .weekly: return "weekly"
+        case .monthly: return "monthly"
+        case .annual: return "yearly"
+        case .lifetime: return "lifetime"
+        case .other: return "other"
         }
     }
 

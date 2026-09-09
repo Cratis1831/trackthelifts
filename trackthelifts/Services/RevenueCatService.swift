@@ -28,7 +28,6 @@ class RevenueCatService: ObservableObject {
         didSet {
             persistDebugTierOverride()
             synchronizeThemeAccess()
-            CloudSyncPreference.shared.cachedHasPro = canAccess(.icloudSync)
         }
     }
     #endif
@@ -59,7 +58,6 @@ class RevenueCatService: ObservableObject {
         if let raw = UserDefaults.standard.string(forKey: Self.debugTierOverrideKey) {
             debugTierOverride = SubscriptionTier(rawValue: raw)
         }
-        CloudSyncPreference.shared.cachedHasPro = canAccess(.icloudSync)
         #endif
         synchronizeThemeAccess()
     }
@@ -70,6 +68,7 @@ class RevenueCatService: ObservableObject {
         
         // Configure RevenueCat
         Purchases.configure(withAPIKey: apiKey)
+        AnalyticsService.configureActivationPal(userId: Purchases.shared.appUserID)
         
         // Verbose SDK logs are visible in Console.app/sysdiagnose, so keep them out of release builds.
         #if DEBUG
@@ -244,7 +243,11 @@ class RevenueCatService: ObservableObject {
             }
             
             if let offering = offerings.all[Self.proOfferingIdentifier] ?? offerings.current {
-                availablePackages = Self.sortedPackages(offering.availablePackages)
+                availablePackages = Self.sortedPackages(
+                    offering.availablePackages.filter { package in
+                        package.planKind != .lifetime && package.planKind != .weekly
+                    }
+                )
                 print("✅ Loaded \(availablePackages.count) packages from offering: \(offering.identifier)")
                 print("Packages: \(availablePackages.map { $0.storeProduct.productIdentifier })")
                 await refreshIntroEligibility()
@@ -269,6 +272,11 @@ class RevenueCatService: ObservableObject {
         availablePackages.first { $0.planKind == .annual }
     }
 
+    var hasEligibleAnnualTrial: Bool {
+        guard let annualPackage else { return false }
+        return isEligibleForFreeTrial(annualPackage)
+    }
+
     var hasEligibleMonthlyTrial: Bool {
         guard let monthlyPackage else { return false }
         return isEligibleForFreeTrial(monthlyPackage)
@@ -283,10 +291,11 @@ class RevenueCatService: ObservableObject {
     }
 
     func preferredPaywallPackage() -> Package? {
+        if let annualPackage { return annualPackage }
         if let monthlyPackage, isEligibleForFreeTrial(monthlyPackage) {
             return monthlyPackage
         }
-        return annualPackage ?? availablePackages.first
+        return monthlyPackage ?? availablePackages.first
     }
 
     private func refreshIntroEligibility() async {
@@ -304,8 +313,7 @@ class RevenueCatService: ObservableObject {
         introEligibilityLoaded = true
     }
 
-    /// Stable merchandising order for the 2×2 paywall:
-    /// Annual, Lifetime, Monthly, Weekly.
+    /// Stable merchandising order: Yearly first (recommended), then Monthly.
     private static func sortedPackages(_ packages: [Package]) -> [Package] {
         packages.sorted { packageRank($0) < packageRank($1) }
     }
@@ -314,18 +322,12 @@ class RevenueCatService: ObservableObject {
         switch package.packageType {
         case .annual:
             return 0
-        case .lifetime:
-            return 1
         case .monthly:
-            return 2
-        case .weekly:
-            return 3
+            return 1
         default:
             let identifier = package.storeProduct.productIdentifier.lowercased()
             if identifier.contains("annual") || identifier.contains("year") { return 0 }
-            if identifier.contains("lifetime") || identifier.contains("life") { return 1 }
-            if identifier.contains("month") { return 2 }
-            if identifier.contains("week") { return 3 }
+            if identifier.contains("month") { return 1 }
             return 4
         }
     }
@@ -357,10 +359,7 @@ class RevenueCatService: ObservableObject {
         }
 
         synchronizeThemeAccess()
-
-        // Snapshot paid-Pro access (not trial) so the next launch does not open CloudKit
-        // for a trial that might be cancelled. See `ProFeature.isIncludedInFreeTrial`.
-        CloudSyncPreference.shared.cachedHasPro = canAccess(.icloudSync)
+        // Workout iCloud is free; do not gate the CloudKit store on the Pro entitlement.
 
         // The user's tier and entitlements are account state; only log them in debug builds.
         #if DEBUG
@@ -370,7 +369,7 @@ class RevenueCatService: ObservableObject {
     }
 
     private func synchronizeThemeAccess() {
-        ThemePreference.shared.updateProAccess(currentTier == .pro)
+        ThemePreference.shared.updateProAccess(true)
     }
 
     #if DEBUG

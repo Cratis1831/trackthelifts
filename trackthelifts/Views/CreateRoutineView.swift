@@ -9,17 +9,14 @@ import SwiftData
 /// Lets the user build a new routine (template) from scratch: name it, add exercises, and pick
 /// a target number of sets for each.
 struct CreateRoutineView: View {
-    @EnvironmentObject private var revenueCatService: RevenueCatService
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @Query private var templates: [WorkoutTemplate]
 
     var existingTemplate: WorkoutTemplate? = nil
 
     @State private var name: String = ""
     @State private var entries: [DraftExercise] = []
     @State private var showExercisePicker = false
-    @State private var selectedProFeature: ProFeature?
 
     struct DraftExercise: Identifiable {
         let id = UUID()
@@ -116,13 +113,6 @@ struct CreateRoutineView: View {
                                         Image(systemName: blockEntry.supersetGroupID == nil ? "link" : "link.circle.fill")
                                             .foregroundColor(blockEntry.supersetGroupID == nil ? .appTextSecondary : .appAccent)
                                             .frame(width: 30, height: 30)
-                                            .overlay(alignment: .topTrailing) {
-                                                if blockEntry.supersetGroupID == nil && !revenueCatService.canAccess(.supersets) {
-                                                    Image(systemName: "lock.fill")
-                                                        .font(.system(size: 7, weight: .bold))
-                                                        .foregroundColor(.appTextSecondary)
-                                                }
-                                            }
                                     }
                                 }
                                 .padding(.vertical, 6)
@@ -212,26 +202,10 @@ struct CreateRoutineView: View {
                         }
                 }
             }
-            .proPaywall(feature: $selectedProFeature)
         }
     }
 
     private func saveRoutine() {
-        if existingTemplate == nil && !SubscriptionAccessPolicy.canCreateRoutine(
-            existingCount: SubscriptionAccessPolicy.userCreatedRoutineCount(from: templates),
-            tier: revenueCatService.currentTier
-        ) {
-            selectedProFeature = .unlimitedRoutines
-            return
-        }
-
-        if entries.contains(where: { $0.supersetGroupID != nil })
-            && !revenueCatService.canAccess(.supersets)
-            && existingTemplate?.containsSupersets != true {
-            selectedProFeature = .supersets
-            return
-        }
-
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let template: WorkoutTemplate
 
@@ -316,10 +290,6 @@ struct CreateRoutineView: View {
     }
 
     private func pairEntries(at first: Int, and second: Int) {
-        guard revenueCatService.canAccess(.supersets) else {
-            selectedProFeature = .supersets
-            return
-        }
         guard entries.indices.contains(first), entries.indices.contains(second), abs(first - second) == 1,
               entries[first].supersetGroupID == nil, entries[second].supersetGroupID == nil else { return }
         let groupID = UUID()

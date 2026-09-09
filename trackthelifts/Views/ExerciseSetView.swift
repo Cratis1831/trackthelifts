@@ -9,7 +9,6 @@ import SwiftUI
 import SwiftData
 
 struct ExerciseSetView: View {
-    @EnvironmentObject private var revenueCatService: RevenueCatService
     let exerciseSet: ExerciseSet
     var onPersonalRecord: ((ExerciseSet, PRKind) -> Void)? = nil
     /// When set, this view claims focus for its weight field if its id matches the pending value,
@@ -24,7 +23,6 @@ struct ExerciseSetView: View {
     @State private var intensityPreference = IntensityPreference.shared
     @State private var isShakingCompletion = false
     @State private var completionShakeOffset: CGFloat = 0
-    @State private var selectedProFeature: ProFeature?
     @FocusState private var isWeightFocused: Bool
     @FocusState private var isRepsFocused: Bool
 
@@ -184,7 +182,6 @@ struct ExerciseSetView: View {
         .onChange(of: WeightUnitPreference.shared.unit) { _, _ in
             loadExerciseSetData()
         }
-        .proPaywall(feature: $selectedProFeature)
     }
 
     private var displayedIntensityMetric: IntensityMetric? {
@@ -194,29 +191,21 @@ struct ExerciseSetView: View {
 
         return IntensityAccessPolicy.effectiveMode(
             selectedMode: intensityPreference.mode,
-            hasProAccess: revenueCatService.canAccess(.effortTracking)
+            hasProAccess: true
         ).metric
     }
 
     private func intensityMenu(for metric: IntensityMetric) -> some View {
         Menu {
-            if revenueCatService.canAccess(.effortTracking) {
-                ForEach(metric.values, id: \.self) { value in
-                    Button {
-                        setIntensity(metric: metric, value: value)
-                    } label: {
-                        if exerciseSet.intensityMetric == metric && exerciseSet.intensityValue == value {
-                            Label(metric.formatted(value), systemImage: "checkmark")
-                        } else {
-                            Text(metric.formatted(value))
-                        }
-                    }
-                }
-            } else {
+            ForEach(metric.values, id: \.self) { value in
                 Button {
-                    selectedProFeature = .effortTracking
+                    setIntensity(metric: metric, value: value)
                 } label: {
-                    Label("Unlock RPE and RIR", systemImage: "lock.fill")
+                    if exerciseSet.intensityMetric == metric && exerciseSet.intensityValue == value {
+                        Label(metric.formatted(value), systemImage: "checkmark")
+                    } else {
+                        Text(metric.formatted(value))
+                    }
                 }
             }
 
@@ -233,10 +222,6 @@ struct ExerciseSetView: View {
                     .foregroundColor(exerciseSet.intensityValue == nil ? .appTextSecondary : .appTextPrimary)
                 Image(systemName: "chevron.down")
                     .font(.system(size: 8, weight: .bold))
-                if !revenueCatService.canAccess(.effortTracking) {
-                    Image(systemName: "lock.fill")
-                        .font(.system(size: 8, weight: .bold))
-                }
             }
             .font(.system(size: 11, weight: .semibold, design: .rounded))
             .foregroundColor(.appAccent)
@@ -353,10 +338,6 @@ struct ExerciseSetView: View {
     }
 
     private func setIntensity(metric: IntensityMetric, value: Double) {
-        guard revenueCatService.canAccess(.effortTracking) else {
-            selectedProFeature = .effortTracking
-            return
-        }
         exerciseSet.intensityMetric = metric
         exerciseSet.intensityValue = value
         exerciseSet.updatedAt = .now

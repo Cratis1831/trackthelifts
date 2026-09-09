@@ -27,11 +27,13 @@ final class CloudSyncPreferenceTests: XCTestCase {
         XCTAssertNil(preference.lastStoreOpenMessage)
     }
 
-    func testSyncActiveRequiresBothOptInAndPro() {
+    func testSyncActiveRequiresOptIn() {
         let preference = CloudSyncPreference(userDefaults: defaults)
 
+        XCTAssertFalse(preference.isSyncActive)
+
         preference.isEnabled = true
-        XCTAssertFalse(preference.isSyncActive, "Opt-in without Pro must not activate sync")
+        XCTAssertTrue(preference.isSyncActive, "Workout iCloud sync is free once the user opts in")
 
         preference.isEnabled = false
         preference.cachedHasPro = true
@@ -41,15 +43,14 @@ final class CloudSyncPreferenceTests: XCTestCase {
         XCTAssertTrue(preference.isSyncActive)
     }
 
-    func testProLapseDeactivatesSyncButKeepsOptIn() {
+    func testDisablingOptInDeactivatesSync() {
         let preference = CloudSyncPreference(userDefaults: defaults)
         preference.isEnabled = true
-        preference.cachedHasPro = true
+        preference.cachedHasPro = false
         XCTAssertTrue(preference.isSyncActive)
 
-        preference.cachedHasPro = false
+        preference.isEnabled = false
         XCTAssertFalse(preference.isSyncActive)
-        XCTAssertTrue(preference.isEnabled, "The opt-in survives a lapse so sync resumes with Pro")
     }
 
     func testPreferencePersistsAcrossInstances() {
