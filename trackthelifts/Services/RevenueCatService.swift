@@ -2,10 +2,21 @@ import Foundation
 import Combine
 import RevenueCat
 
-struct PurchaseResultData {
-    let transaction: StoreTransaction?
-    let customerInfo: CustomerInfo
-    let userCancelled: Bool
+enum PurchaseErrorDisposition: Equatable {
+    case cancelled
+    case pending
+    case failed
+
+    init(revenueCatError: Error) {
+        switch (revenueCatError as NSError).code {
+        case ErrorCode.purchaseCancelledError.rawValue:
+            self = .cancelled
+        case ErrorCode.paymentPendingError.rawValue:
+            self = .pending
+        default:
+            self = .failed
+        }
+    }
 }
 
 @MainActor
@@ -137,9 +148,14 @@ class RevenueCatService: ObservableObject {
     
     func purchasePackage(_ package: Package) async -> Bool {
         let packageType = analyticsPackageType(for: package)
+        let isTrial = isEligibleForFreeTrial(package)
+        AnalyticsService.track(.purchaseStarted(packageType: packageType, isTrial: isTrial))
+
         guard isConfigured else {
             lastError = .notConfigured
-            AnalyticsService.track(.purchaseFailed(packageType: packageType, reason: .notConfigured))
+            AnalyticsService.track(
+                .purchaseFailed(packageType: packageType, isTrial: isTrial, reason: .notConfigured)
+            )
             return false
         }
 
@@ -148,39 +164,30 @@ class RevenueCatService: ObservableObject {
         defer { isLoading = false }
         
         do {
-            let result: PurchaseResultData = try await withCheckedThrowingContinuation { continuation in
-                Purchases.shared.purchase(package: package) { transaction, customerInfo, error, userCancelled in
-                    if let error = error {
-                        continuation.resume(throwing: error)
-                    } else if let customerInfo = customerInfo {
-                        let resultData = PurchaseResultData(
-                            transaction: transaction,
-                            customerInfo: customerInfo,
-                            userCancelled: userCancelled
-                        )
-                        continuation.resume(returning: resultData)
-                    } else {
-                        continuation.resume(throwing: RevenueCatError.notConfigured)
-                    }
-                }
-            }
-            
-            updateSubscriptionStatus(from: result.customerInfo)
-            
-            if !result.userCancelled {
-                print("Purchase successful: \(package.storeProduct.productIdentifier)")
-                AnalyticsService.track(.purchaseCompleted(packageType: packageType))
-                return true
-            } else {
-                lastError = .userCancelled
-                AnalyticsService.track(.purchaseCancelled(packageType: packageType))
+            let result = try await Purchases.shared.purchase(package: package)
+
+            guard !result.userCancelled else {
+                AnalyticsService.track(.purchaseCancelled(packageType: packageType, isTrial: isTrial))
                 return false
             }
-            
+
+            updateSubscriptionStatus(from: result.customerInfo)
+            print("Purchase successful: \(package.storeProduct.productIdentifier)")
+            AnalyticsService.track(.purchaseCompleted(packageType: packageType, isTrial: isTrial))
+            return true
         } catch {
-            lastError = .purchaseFailed(error)
-            AnalyticsService.track(.purchaseFailed(packageType: packageType, reason: .sdkError))
-            print("Failed to purchase: \(error)")
+            switch PurchaseErrorDisposition(revenueCatError: error) {
+            case .cancelled:
+                AnalyticsService.track(.purchaseCancelled(packageType: packageType, isTrial: isTrial))
+            case .pending:
+                AnalyticsService.track(.purchasePending(packageType: packageType, isTrial: isTrial))
+            case .failed:
+                lastError = .purchaseFailed(error)
+                AnalyticsService.track(
+                    .purchaseFailed(packageType: packageType, isTrial: isTrial, reason: .sdkError)
+                )
+                print("Failed to purchase: \(error)")
+            }
             return false
         }
     }

@@ -1,4 +1,5 @@
 import XCTest
+import RevenueCat
 @testable import trackthelifts
 
 final class AnalyticsEventTests: XCTestCase {
@@ -24,13 +25,35 @@ final class AnalyticsEventTests: XCTestCase {
         assertEvent(.workoutCancelled(hadLoggedSets: false), name: "Workout.cancelled", parameters: ["hadLoggedSets": "false"])
         assertEvent(.routineSaved(source: .pastWorkout), name: "Routine.saved", parameters: ["source": "pastWorkout"])
         assertEvent(.paywallShown(feature: .supersets), name: "Paywall.shown", parameters: ["feature": "supersets"])
-        assertEvent(.purchaseCompleted(packageType: .weekly), name: "Purchase.completed", parameters: ["packageType": "weekly"])
-        assertEvent(.purchaseCompleted(packageType: .annual), name: "Purchase.completed", parameters: ["packageType": "annual"])
-        assertEvent(.purchaseCancelled(packageType: .monthly), name: "Purchase.cancelled", parameters: ["packageType": "monthly"])
         assertEvent(
-            .purchaseFailed(packageType: .other, reason: .sdkError),
+            .purchaseStarted(packageType: .monthly, isTrial: true),
+            name: "Purchase.started",
+            parameters: ["packageType": "monthly", "isTrial": "true"]
+        )
+        assertEvent(
+            .purchaseCompleted(packageType: .weekly, isTrial: false),
+            name: "Purchase.completed",
+            parameters: ["packageType": "weekly", "isTrial": "false"]
+        )
+        assertEvent(
+            .purchaseCompleted(packageType: .annual, isTrial: false),
+            name: "Purchase.completed",
+            parameters: ["packageType": "annual", "isTrial": "false"]
+        )
+        assertEvent(
+            .purchaseCancelled(packageType: .monthly, isTrial: true),
+            name: "Purchase.cancelled",
+            parameters: ["packageType": "monthly", "isTrial": "true"]
+        )
+        assertEvent(
+            .purchaseFailed(packageType: .other, isTrial: false, reason: .sdkError),
             name: "Purchase.failed",
-            parameters: ["packageType": "other", "reason": "sdkError"]
+            parameters: ["packageType": "other", "isTrial": "false", "reason": "sdkError"]
+        )
+        assertEvent(
+            .purchasePending(packageType: .monthly, isTrial: true),
+            name: "Purchase.pending",
+            parameters: ["packageType": "monthly", "isTrial": "true"]
         )
         assertEvent(
             .purchaseRestoreCompleted(hasActiveEntitlement: true),
@@ -68,6 +91,36 @@ final class AnalyticsEventTests: XCTestCase {
         XCTAssertEqual(AnalyticsFailureReason.fromSDKDescription("futureFailure"), .unknown)
     }
 
+    func testRevenueCatPurchaseErrorDisposition() {
+        XCTAssertEqual(
+            PurchaseErrorDisposition(
+                revenueCatError: NSError(
+                    domain: ErrorCode.errorDomain,
+                    code: ErrorCode.purchaseCancelledError.rawValue
+                )
+            ),
+            .cancelled
+        )
+        XCTAssertEqual(
+            PurchaseErrorDisposition(
+                revenueCatError: NSError(
+                    domain: ErrorCode.errorDomain,
+                    code: ErrorCode.paymentPendingError.rawValue
+                )
+            ),
+            .pending
+        )
+        XCTAssertEqual(
+            PurchaseErrorDisposition(
+                revenueCatError: NSError(
+                    domain: ErrorCode.errorDomain,
+                    code: ErrorCode.networkError.rawValue
+                )
+            ),
+            .failed
+        )
+    }
+
     func testEveryEventUsesOnlyApprovedParameterKeys() {
         let events: [AnalyticsEvent] = [
             .onboardingSkipped(fromPage: .welcome),
@@ -77,9 +130,11 @@ final class AnalyticsEventTests: XCTestCase {
             .workoutCancelled(hadLoggedSets: true),
             .routineSaved(source: .duplicate),
             .paywallShown(feature: .advancedProgress),
-            .purchaseCompleted(packageType: .lifetime),
-            .purchaseCancelled(packageType: .other),
-            .purchaseFailed(packageType: .monthly, reason: .notConfigured),
+            .purchaseStarted(packageType: .monthly, isTrial: true),
+            .purchaseCompleted(packageType: .lifetime, isTrial: false),
+            .purchaseCancelled(packageType: .other, isTrial: false),
+            .purchaseFailed(packageType: .monthly, isTrial: true, reason: .notConfigured),
+            .purchasePending(packageType: .monthly, isTrial: true),
             .purchaseRestoreCompleted(hasActiveEntitlement: false),
             .purchaseRestoreFailed(reason: .sdkError),
         ]
