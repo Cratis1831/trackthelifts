@@ -86,9 +86,11 @@ enum AnalyticsEvent {
     case workoutCancelled(hadLoggedSets: Bool)
     case routineSaved(source: RoutineAnalyticsSource)
     case paywallShown(feature: AnalyticsProFeature)
-    case purchaseCompleted(packageType: AnalyticsPackageType)
-    case purchaseCancelled(packageType: AnalyticsPackageType)
-    case purchaseFailed(packageType: AnalyticsPackageType, reason: AnalyticsFailureReason)
+    case purchaseStarted(packageType: AnalyticsPackageType, isTrial: Bool)
+    case purchaseCompleted(packageType: AnalyticsPackageType, isTrial: Bool)
+    case purchaseCancelled(packageType: AnalyticsPackageType, isTrial: Bool)
+    case purchaseFailed(packageType: AnalyticsPackageType, isTrial: Bool, reason: AnalyticsFailureReason)
+    case purchasePending(packageType: AnalyticsPackageType, isTrial: Bool)
     case purchaseRestoreCompleted(hasActiveEntitlement: Bool)
     case purchaseRestoreFailed(reason: AnalyticsFailureReason)
 
@@ -101,9 +103,11 @@ enum AnalyticsEvent {
         case .workoutCancelled: return "Workout.cancelled"
         case .routineSaved: return "Routine.saved"
         case .paywallShown: return "Paywall.shown"
+        case .purchaseStarted: return "Purchase.started"
         case .purchaseCompleted: return "Purchase.completed"
         case .purchaseCancelled: return "Purchase.cancelled"
         case .purchaseFailed: return "Purchase.failed"
+        case .purchasePending: return "Purchase.pending"
         case .purchaseRestoreCompleted: return "Purchase.restoreCompleted"
         case .purchaseRestoreFailed: return "Purchase.restoreFailed"
         }
@@ -130,10 +134,17 @@ enum AnalyticsEvent {
             return ["source": source.rawValue]
         case .paywallShown(let feature):
             return ["feature": feature.rawValue]
-        case .purchaseCompleted(let packageType), .purchaseCancelled(let packageType):
-            return ["packageType": packageType.rawValue]
-        case .purchaseFailed(let packageType, let reason):
-            return ["packageType": packageType.rawValue, "reason": reason.rawValue]
+        case let .purchaseStarted(packageType, isTrial),
+             let .purchaseCompleted(packageType, isTrial),
+             let .purchaseCancelled(packageType, isTrial),
+             let .purchasePending(packageType, isTrial):
+            return ["packageType": packageType.rawValue, "isTrial": isTrial.analyticsString]
+        case let .purchaseFailed(packageType, isTrial, reason):
+            return [
+                "packageType": packageType.rawValue,
+                "isTrial": isTrial.analyticsString,
+                "reason": reason.rawValue,
+            ]
         case .purchaseRestoreCompleted(let hasActiveEntitlement):
             return ["hasActiveEntitlement": hasActiveEntitlement.analyticsString]
         case .purchaseRestoreFailed(let reason):
@@ -144,7 +155,7 @@ enum AnalyticsEvent {
     static let allowedParameterKeys: Set<String> = [
         "fromPage", "skipped", "source", "exerciseCount", "completedSetCount",
         "earnedPersonalRecord", "containsSuperset", "hadLoggedSets", "feature",
-        "packageType", "reason", "hasActiveEntitlement",
+        "packageType", "isTrial", "reason", "hasActiveEntitlement",
     ]
 }
 

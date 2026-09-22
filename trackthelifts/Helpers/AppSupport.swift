@@ -46,6 +46,12 @@ enum ReleaseCatalog {
 
     static let releases = [
         AppRelease(
+            version: "1.0.9",
+            notes: [
+                "Bug Fixes & UI Improvements"
+            ]
+        ),
+        AppRelease(
             version: "1.0.8",
             notes: [
                 "Try Pro free for 1 week on Monthly: unlimited routines, RPE and RIR, charts, supersets, and every accent theme.",

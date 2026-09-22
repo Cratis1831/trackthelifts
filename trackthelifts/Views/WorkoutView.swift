@@ -23,6 +23,8 @@ struct WorkoutView: View {
     @State private var sortBy: SortOption = .name
     @State private var resumingWorkout: Workout? = nil
     @State private var selectedProFeature: ProFeature?
+    @AppStorage("workoutView.areStarterRoutinesExpanded")
+    private var areStarterRoutinesExpanded = false
 
     private let sessionManager = WorkoutSessionManager.shared
 
@@ -127,22 +129,49 @@ struct WorkoutView: View {
                             }
 
                             if !starterTemplates.isEmpty {
-                                Text("Starter Routines")
-                                    .font(.appUtility)
-                                    .tracking(0.6)
-                                    .textCase(.uppercase)
-                                    .foregroundColor(.appTextPrimary)
-
-                                LazyVStack(spacing: 15) {
-                                    ForEach(starterTemplates) { template in
-                                        TemplateCard(template: template, onTap: {
-                                            startWorkout(from: template)
-                                        }, onEdit: {
-                                            templateToEdit = template
-                                        }, onDuplicate: {
-                                            duplicateRoutine(template)
-                                        })
+                                Button {
+                                    withAnimation(.easeInOut(duration: 0.22)) {
+                                        areStarterRoutinesExpanded.toggle()
                                     }
+                                } label: {
+                                    HStack {
+                                        Text("Starter Routines")
+                                            .font(.appUtility)
+                                            .tracking(0.6)
+                                            .textCase(.uppercase)
+                                            .foregroundColor(.appTextPrimary)
+
+                                        Spacer()
+
+                                        Image(systemName: "chevron.right")
+                                            .font(.system(size: 13, weight: .semibold))
+                                            .foregroundColor(.appAccent)
+                                            .rotationEffect(.degrees(areStarterRoutinesExpanded ? 90 : 0))
+                                    }
+                                    .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel("Starter Routines")
+                                .accessibilityValue(areStarterRoutinesExpanded ? "Expanded" : "Collapsed")
+                                .accessibilityHint(
+                                    areStarterRoutinesExpanded
+                                        ? "Hides the starter routines"
+                                        : "Shows the starter routines"
+                                )
+
+                                if areStarterRoutinesExpanded {
+                                    LazyVStack(spacing: 15) {
+                                        ForEach(starterTemplates) { template in
+                                            TemplateCard(template: template, onTap: {
+                                                startWorkout(from: template)
+                                            }, onEdit: {
+                                                templateToEdit = template
+                                            }, onDuplicate: {
+                                                duplicateRoutine(template)
+                                            })
+                                        }
+                                    }
+                                    .transition(.move(edge: .top).combined(with: .opacity))
                                 }
                             }
 
