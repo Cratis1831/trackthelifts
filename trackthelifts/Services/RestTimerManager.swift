@@ -55,10 +55,34 @@ class RestTimerManager {
 
     func markBecameActive() {
         lastBecameActiveDate = Date()
-        // A timer that elapsed (or was abandoned) while the app was away leaves a stale 0:00
-        // Live Activity behind — its staleDate has it dimmed by now; remove it on return.
-        if !isRunning {
+        if isRunning {
+            // The background transition ends the previous activity with a scheduled dismissal so
+            // iOS can remove it at the timer's end date even while the app is suspended. Recreate
+            // it when the user returns early so the Dynamic Island and timer controls stay live.
+            if liveActivity == nil, let activeExerciseName {
+                startLiveActivity(exerciseName: activeExerciseName)
+            }
+        } else {
+            // Also clean up any orphaned activity when the app returns after the timer elapsed.
             endLiveActivity()
+        }
+    }
+
+    /// Ends the active ActivityKit session as the app moves to the background, while asking the
+    /// system to keep its final countdown presentation on the Lock Screen only until `endDate`.
+    /// Unlike `staleDate`, this dismissal policy removes the presentation without requiring the
+    /// suspended app process to wake up when the timer expires.
+    func prepareLiveActivityForBackground() {
+        guard let liveActivity, let endDate else {
+            if !isRunning {
+                endLiveActivity()
+            }
+            return
+        }
+
+        self.liveActivity = nil
+        Task {
+            await liveActivity.end(liveActivity.content, dismissalPolicy: .after(endDate))
         }
     }
 
@@ -89,6 +113,7 @@ class RestTimerManager {
         endDate = Date().addingTimeInterval(duration)
         activeExerciseName = exerciseName
         completionHandled = false
+        liveActivityStartDate = Date()
         scheduleCompletionNotification()
         startLiveActivity(exerciseName: exerciseName)
     }
@@ -190,7 +215,7 @@ class RestTimerManager {
             }
         }
 
-        let startDate = Date()
+        let startDate = liveActivityStartDate ?? Date()
         liveActivityStartDate = startDate
         let content = ActivityContent(
             state: RestTimerActivityAttributes.ContentState(startDate: startDate, endDate: endDate),

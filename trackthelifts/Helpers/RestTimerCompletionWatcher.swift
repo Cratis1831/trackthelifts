@@ -25,6 +25,10 @@ private struct RestTimerCompletionWatcher: ViewModifier {
                 // "finished in the background" and doesn't replay the chime once the app is active.
                 if newPhase == .active {
                     RestTimerManager.shared.markBecameActive()
+                } else if newPhase == .background {
+                    // End with a dismissal scheduled for the timer's end date. The final countdown
+                    // remains visible while locked, then iOS removes it even though the app sleeps.
+                    RestTimerManager.shared.prepareLiveActivityForBackground()
                 }
             }
             .onReceive(ticker) { _ in
