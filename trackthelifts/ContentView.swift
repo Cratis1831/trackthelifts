@@ -5,10 +5,9 @@
 //  Created by Ashkan Sotoudeh on 2025-07-02.
 //
 
-import SwiftUI
 import StoreKit
-import CoreData
-import Combine
+import SwiftData
+import SwiftUI
 
 struct ContentView: View {
     private enum AppTab: Hashable {
