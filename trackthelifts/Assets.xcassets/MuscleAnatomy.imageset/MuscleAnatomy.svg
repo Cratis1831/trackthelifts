@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 412" width="420" height="412">
+<g id="silhouette" fill="#2C2C2E">
+<ellipse cx="100" cy="38" rx="18" ry="23"/>
+<path d="M100 62 L90 63 L90 76 C80 82 62 81 53 87 C44 93 43 110 47 124 L64 130 C66 158 70 178 69 196 C69 205 63 209 61 216 C60 226 80 238 100 242 C120 238 140 226 139 216 C137 209 131 205 131 196 C130 178 134 158 136 130 L153 124 C157 110 156 93 147 87 C138 81 120 82 110 76 L110 63 L100 62 Z"/>
+<path d="M48 116 C41 134 41 152 44 166 C37 184 41 210 48 227 L59 227 C62 205 63 182 61 166 C63 150 65 132 64 122 Z"/>
+<path d="M61 212 C57 240 59 290 69 318 C67 342 70 372 74 393 L87 393 C89 370 95 342 91 318 C95 300 99 272 99.5 238 L99.5 212 Z"/>
+<ellipse cx="53.5" cy="239" rx="6.5" ry="13"/>
+<ellipse cx="80.5" cy="399" rx="8.5" ry="8"/>
+<path d="M152 116 C159 134 159 152 156 166 C163 184 159 210 152 227 L141 227 C138 205 137 182 139 166 C137 150 135 132 136 122 Z"/>
+<path d="M139 212 C143 240 141 290 131 318 C133 342 130 372 126 393 L113 393 C111 370 105 342 109 318 C105 300 101 272 100.5 238 L100.5 212 Z"/>
+<ellipse cx="146.5" cy="239" rx="6.5" ry="13"/>
+<ellipse cx="119.5" cy="399" rx="8.5" ry="8"/>
+<ellipse cx="320" cy="38" rx="18" ry="23"/>
+<path d="M320 62 L310 63 L310 76 C300 82 282 81 273 87 C264 93 263 110 267 124 L284 130 C286 158 290 178 289 196 C289 205 283 209 281 216 C280 226 300 238 320 242 C340 238 360 226 359 216 C357 209 351 205 351 196 C350 178 354 158 356 130 L373 124 C377 110 376 93 367 87 C358 81 340 82 330 76 L330 63 L320 62 Z"/>
+<path d="M268 116 C261 134 261 152 264 166 C257 184 261 210 268 227 L279 227 C282 205 283 182 281 166 C283 150 285 132 284 122 Z"/>
+<path d="M281 212 C277 240 279 290 289 318 C287 342 290 372 294 393 L307 393 C309 370 315 342 311 318 C315 300 319 272 319.5 238 L319.5 212 Z"/>
+<ellipse cx="273.5" cy="239" rx="6.5" ry="13"/>
+<ellipse cx="300.5" cy="399" rx="8.5" ry="8"/>
+<path d="M372 116 C379 134 379 152 376 166 C383 184 379 210 372 227 L361 227 C358 205 357 182 359 166 C357 150 355 132 356 122 Z"/>
+<path d="M359 212 C363 240 361 290 351 318 C353 342 350 372 346 393 L333 393 C331 370 325 342 329 318 C325 300 321 272 320.5 238 L320.5 212 Z"/>
+<ellipse cx="366.5" cy="239" rx="6.5" ry="13"/>
+<ellipse cx="339.5" cy="399" rx="8.5" ry="8"/>
+</g>
+<g id="front">
+<path id="shoulders-trapezius-upper-right" fill="#636366" d="M90 66 L90.5 79 L64 85 Q78 77 90 66 Z"/>
+<path id="shoulders-trapezius-upper-left" fill="#636366" d="M110 66 L109.5 79 L136 85 Q122 77 110 66 Z"/>
+<path id="shoulders-deltoid-front-right" fill="#636366" d="M63 86 Q50 86 46.5 100 Q44.5 114 49.5 124 Q56 110 61.5 102 Q65 94 63 86 Z"/>
+<path id="shoulders-deltoid-front-left" fill="#636366" d="M137 86 Q150 86 153.5 100 Q155.5 114 150.5 124 Q144 110 138.5 102 Q135 94 137 86 Z"/>
+<path id="chest-pectoralis-right" fill="#636366" d="M98.5 89 L98.5 129 Q84 136 70 128 Q63 118 63.5 104 Q67 92 80 88 Q91 86 98.5 89 Z"/>
+<path id="chest-pectoralis-left" fill="#636366" d="M101.5 89 L101.5 129 Q116 136 130 128 Q137 118 136.5 104 Q133 92 120 88 Q109 86 101.5 89 Z"/>
+<path id="biceps-biceps-right" fill="#636366" d="M50.5 127 Q43.5 142 46 157 Q49 166 54.5 165 Q60.5 157 60.5 142 Q61 120 62 107 Q55 115 50.5 127 Z"/>
+<path id="biceps-biceps-left" fill="#636366" d="M149.5 127 Q156.5 142 154 157 Q151 166 145.5 165 Q139.5 157 139.5 142 Q139 120 138 107 Q145 115 149.5 127 Z"/>
+<path id="forearms-forearm-right" fill="#636366" d="M46 168 Q39 182 41 197 Q44 214 49.5 224 L57.5 224 Q60.5 206 60 190 Q60 175 57.5 168 Q52 171 46 168 Z"/>
+<path id="forearms-forearm-left" fill="#636366" d="M154 168 Q161 182 159 197 Q156 214 150.5 224 L142.5 224 Q139.5 206 140 190 Q140 175 142.5 168 Q148 171 154 168 Z"/>
+<path id="abs-rectus-abdominis-1-right" fill="#636366" d="M86 135 L98.5 133 L98.5 149 L86 150 Z"/>
+<path id="abs-rectus-abdominis-1-left" fill="#636366" d="M114 135 L101.5 133 L101.5 149 L114 150 Z"/>
+<path id="abs-rectus-abdominis-2-right" fill="#636366" d="M86 153 L98.5 152 L98.5 168 L86.5 169 Z"/>
+<path id="abs-rectus-abdominis-2-left" fill="#636366" d="M114 153 L101.5 152 L101.5 168 L113.5 169 Z"/>
+<path id="abs-rectus-abdominis-3-right" fill="#636366" d="M86.5 172 L98.5 171 L98.5 188 L87 189 Z"/>
+<path id="abs-rectus-abdominis-3-left" fill="#636366" d="M113.5 172 L101.5 171 L101.5 188 L113 189 Z"/>
+<path id="abs-rectus-abdominis-4-right" fill="#636366" d="M87 192 L98.5 191 L98.5 228 Q91 224 88 212 Z"/>
+<path id="abs-rectus-abdominis-4-left" fill="#636366" d="M113 192 L101.5 191 L101.5 228 Q109 224 112 212 Z"/>
+<path id="abs-oblique-right" fill="#636366" d="M83.5 134 L84.5 190 Q85 208 86 216 Q74 208 70 196 Q70 172 66.5 134 Q74 136 83.5 134 Z"/>
+<path id="abs-oblique-left" fill="#636366" d="M116.5 134 L115.5 190 Q115 208 114 216 Q126 208 130 196 Q130 172 133.5 134 Q126 136 116.5 134 Z"/>
+<path id="quadriceps-vastus-lateralis-right" fill="#636366" d="M65 219 Q70 238 70.5 262 Q72 288 77 307 Q70 308 67 300 Q60.5 280 60.5 255 Q61 232 65 219 Z"/>
+<path id="quadriceps-vastus-lateralis-left" fill="#636366" d="M135 219 Q130 238 129.5 262 Q128 288 123 307 Q130 308 133 300 Q139.5 280 139.5 255 Q139 232 135 219 Z"/>
+<path id="quadriceps-rectus-femoris-right" fill="#636366" d="M69 224 Q79 232 83 252 Q86 276 81.5 302 L79 304 Q73 282 72.5 258 Q71.5 236 69 224 Z"/>
+<path id="quadriceps-rectus-femoris-left" fill="#636366" d="M131 224 Q121 232 117 252 Q114 276 118.5 302 L121 304 Q127 282 127.5 258 Q128.5 236 131 224 Z"/>
+<path id="quadriceps-vastus-medialis-right" fill="#636366" d="M88 277 Q94 290 92 304 Q88.5 312 82 310 Q80.5 300 83.5 290 Q85 282 88 277 Z"/>
+<path id="quadriceps-vastus-medialis-left" fill="#636366" d="M112 277 Q106 290 108 304 Q111.5 312 118 310 Q119.5 300 116.5 290 Q115 282 112 277 Z"/>
+<path id="adductors-adductors-right" fill="#636366" d="M85 240 Q92 241 98.5 244 Q97 262 89.5 280 Q86.5 268 85 252 Z"/>
+<path id="adductors-adductors-left" fill="#636366" d="M115 240 Q108 241 101.5 244 Q103 262 110.5 280 Q113.5 268 115 252 Z"/>
+<path id="calves-tibialis-anterior-right" fill="#636366" d="M73 328 Q69.5 346 72 366 Q74 380 77 389 L80.5 389 Q80 360 81 340 Q80 330 78 326 Z"/>
+<path id="calves-tibialis-anterior-left" fill="#636366" d="M127 328 Q130.5 346 128 366 Q126 380 123 389 L119.5 389 Q120 360 119 340 Q120 330 122 326 Z"/>
+<path id="calves-gastrocnemius-medial-right" fill="#636366" d="M83.5 328 Q91 340 90 358 Q88 372 84 381 Q82 360 82.5 340 Z"/>
+<path id="calves-gastrocnemius-medial-left" fill="#636366" d="M116.5 328 Q109 340 110 358 Q112 372 116 381 Q118 360 117.5 340 Z"/>
+</g>
+<g id="back">
+<path id="back-trapezius-right" fill="#636366" d="M319.5 64 L311 66 Q308 78 284 85.5 Q300 96 308 116 Q314 134 319.5 151 Z"/>
+<path id="back-trapezius-left" fill="#636366" d="M320.5 64 L329 66 Q332 78 356 85.5 Q340 96 332 116 Q326 134 320.5 151 Z"/>
+<path id="shoulders-deltoid-rear-right" fill="#636366" d="M283 88 Q270 86 266.5 100 Q264.5 114 269.5 124 Q277 111 285.5 100 Z"/>
+<path id="shoulders-deltoid-rear-left" fill="#636366" d="M357 88 Q370 86 373.5 100 Q375.5 114 370.5 124 Q363 111 354.5 100 Z"/>
+<path id="back-infraspinatus-right" fill="#636366" d="M288 96 Q300 100 306 118 Q298 128 288.5 126 Q284.5 112 288 96 Z"/>
+<path id="back-infraspinatus-left" fill="#636366" d="M352 96 Q340 100 334 118 Q342 128 351.5 126 Q355.5 112 352 96 Z"/>
+<path id="back-latissimus-dorsi-right" fill="#636366" d="M286 129 Q297 133 308 124 Q312.5 140 310.5 160 Q307 180 307 203 Q297 204 291 196 Q290 165 286 129 Z"/>
+<path id="back-latissimus-dorsi-left" fill="#636366" d="M354 129 Q343 133 332 124 Q327.5 140 329.5 160 Q333 180 333 203 Q343 204 349 196 Q350 165 354 129 Z"/>
+<path id="back-erector-spinae-right" fill="#636366" d="M313 148 Q318.5 152 318.5 162 L318.5 210 Q312 212 309.5 205 Q309.5 180 313 148 Z"/>
+<path id="back-erector-spinae-left" fill="#636366" d="M327 148 Q321.5 152 321.5 162 L321.5 210 Q328 212 330.5 205 Q330.5 180 327 148 Z"/>
+<path id="triceps-triceps-right" fill="#636366" d="M270.5 127 Q263.5 142 266 157 Q269 166 274.5 165 Q280.5 157 280.5 142 Q281 120 282 107 Q275 115 270.5 127 Z"/>
+<path id="triceps-triceps-left" fill="#636366" d="M369.5 127 Q376.5 142 374 157 Q371 166 365.5 165 Q359.5 157 359.5 142 Q359 120 358 107 Q365 115 369.5 127 Z"/>
+<path id="forearms-forearm-extensors-right" fill="#636366" d="M266 168 Q259 182 261 197 Q264 214 269.5 224 L277.5 224 Q280.5 206 280 190 Q280 175 277.5 168 Q272 171 266 168 Z"/>
+<path id="forearms-forearm-extensors-left" fill="#636366" d="M374 168 Q381 182 379 197 Q376 214 370.5 224 L362.5 224 Q359.5 206 360 190 Q360 175 362.5 168 Q368 171 374 168 Z"/>
+<path id="glutes-gluteus-right" fill="#636366" d="M319 214 Q304 209 291 212 Q281 220 281.5 237 Q284 255 298 258 Q312 259 319 251 Z"/>
+<path id="glutes-gluteus-left" fill="#636366" d="M321 214 Q336 209 349 212 Q359 220 358.5 237 Q356 255 342 258 Q328 259 321 251 Z"/>
+<path id="hamstrings-biceps-femoris-right" fill="#636366" d="M285 261 Q294 264 302 263 Q304.5 286 302 310 Q294 311 290 300 Q283 282 285 261 Z"/>
+<path id="hamstrings-biceps-femoris-left" fill="#636366" d="M355 261 Q346 264 338 263 Q335.5 286 338 310 Q346 311 350 300 Q357 282 355 261 Z"/>
+<path id="hamstrings-semitendinosus-right" fill="#636366" d="M305 263 Q313 262 317.5 257 Q317 286 310.5 311 Q306.5 311 305 305 Q306.5 285 305 263 Z"/>
+<path id="hamstrings-semitendinosus-left" fill="#636366" d="M335 263 Q327 262 322.5 257 Q323 286 329.5 311 Q333.5 311 335 305 Q333.5 285 335 263 Z"/>
+<path id="calves-gastrocnemius-lateral-right" fill="#636366" d="M292 326 Q287.5 340 290 356 Q294 367 299.5 364 Q301.5 345 299.5 326 Z"/>
+<path id="calves-gastrocnemius-lateral-left" fill="#636366" d="M348 326 Q352.5 340 350 356 Q346 367 340.5 364 Q338.5 345 340.5 326 Z"/>
+<path id="calves-gastrocnemius-medial-right" fill="#636366" d="M302.5 326 Q312 334 311 352 Q308.5 366 302.5 366 Q301 345 302.5 326 Z"/>
+<path id="calves-gastrocnemius-medial-left" fill="#636366" d="M337.5 326 Q328 334 329 352 Q331.5 366 337.5 366 Q339 345 337.5 326 Z"/>
+<path id="calves-soleus-right" fill="#636366" d="M292.5 364 Q296 371 301 370 Q306 370 309.5 360 Q308 378 305 389 L297 389 Q294 377 292.5 364 Z"/>
+<path id="calves-soleus-left" fill="#636366" d="M347.5 364 Q344 371 339 370 Q334 370 330.5 360 Q332 378 335 389 L343 389 Q346 377 347.5 364 Z"/>
+</g>
+</svg>
