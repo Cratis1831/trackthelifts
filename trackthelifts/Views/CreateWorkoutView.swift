@@ -24,6 +24,7 @@ struct CreateWorkoutView: View {
     @State private var sessionStartDate = Date()
     @State private var isReorderingExercises = false
     @State private var completionSummary: WorkoutCompletionSummary?
+    @State private var completionShareSummary: WorkoutShareSummary?
     @State private var selectedProFeature: ProFeature?
     private let sessionManager = WorkoutSessionManager.shared
     @FocusState private var focusWorkoutName: Bool
@@ -577,7 +578,7 @@ struct CreateWorkoutView: View {
         }
         .overlay {
             if let completionSummary {
-                WorkoutCompletionView(summary: completionSummary) {
+                WorkoutCompletionView(summary: completionSummary, shareSummary: completionShareSummary) {
                     finishCompletionCelebration(completionSummary)
                 }
                 .zIndex(100)
@@ -769,6 +770,11 @@ struct CreateWorkoutView: View {
                 try? modelContext.save()
             }
             Haptics.success()
+            completionShareSummary = WorkoutShareSummary(
+                workout: workout,
+                personalRecords: PersonalRecordService.personalRecords(in: workout, context: modelContext),
+                unitLabel: WeightUnitPreference.shared.unit.label
+            )
             withAnimation(.easeOut(duration: 0.22)) {
                 completionSummary = WorkoutCompletionSummary(
                     workout: workout,

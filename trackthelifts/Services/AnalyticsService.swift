@@ -25,6 +25,11 @@ enum RoutineAnalyticsSource: String {
     case edit
 }
 
+enum ShareCardAnalyticsSource: String {
+    case completion
+    case history
+}
+
 enum AnalyticsPackageType: String {
     case weekly
     case monthly
@@ -85,6 +90,8 @@ enum AnalyticsEvent {
     )
     case workoutCancelled(hadLoggedSets: Bool)
     case routineSaved(source: RoutineAnalyticsSource)
+    case shareCardOpened(source: ShareCardAnalyticsSource, hasPersonalRecord: Bool)
+    case shareCardSaved(style: String)
     case paywallShown(feature: AnalyticsProFeature)
     case purchaseStarted(packageType: AnalyticsPackageType, isTrial: Bool)
     case purchaseCompleted(packageType: AnalyticsPackageType, isTrial: Bool)
@@ -102,6 +109,8 @@ enum AnalyticsEvent {
         case .workoutCompleted: return "Workout.completed"
         case .workoutCancelled: return "Workout.cancelled"
         case .routineSaved: return "Routine.saved"
+        case .shareCardOpened: return "ShareCard.opened"
+        case .shareCardSaved: return "ShareCard.saved"
         case .paywallShown: return "Paywall.shown"
         case .purchaseStarted: return "Purchase.started"
         case .purchaseCompleted: return "Purchase.completed"
@@ -132,6 +141,10 @@ enum AnalyticsEvent {
             return ["hadLoggedSets": hadLoggedSets.analyticsString]
         case .routineSaved(let source):
             return ["source": source.rawValue]
+        case let .shareCardOpened(source, hasPersonalRecord):
+            return ["source": source.rawValue, "hasPersonalRecord": hasPersonalRecord.analyticsString]
+        case .shareCardSaved(let style):
+            return ["style": style]
         case .paywallShown(let feature):
             return ["feature": feature.rawValue]
         case let .purchaseStarted(packageType, isTrial),
@@ -155,7 +168,7 @@ enum AnalyticsEvent {
     static let allowedParameterKeys: Set<String> = [
         "fromPage", "skipped", "source", "exerciseCount", "completedSetCount",
         "earnedPersonalRecord", "containsSuperset", "hadLoggedSets", "feature",
-        "packageType", "isTrial", "reason", "hasActiveEntitlement",
+        "packageType", "isTrial", "reason", "hasActiveEntitlement", "hasPersonalRecord", "style",
     ]
 }
 

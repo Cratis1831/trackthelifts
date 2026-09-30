@@ -34,7 +34,10 @@ struct WorkoutCompletionSummary: Identifiable {
 
 struct WorkoutCompletionView: View {
     let summary: WorkoutCompletionSummary
+    var shareSummary: WorkoutShareSummary? = nil
     let onDone: () -> Void
+
+    @State private var isSharing = false
 
     var body: some View {
         ZStack {
@@ -96,9 +99,23 @@ struct WorkoutCompletionView: View {
                 .clipShape(RoundedRectangle(cornerRadius: AppDesign.compactRadius, style: .continuous))
                 .padding(.top, 12)
 
+                if shareSummary != nil {
+                    Button {
+                        Haptics.selection()
+                        isSharing = true
+                    } label: {
+                        Label(
+                            shareSummary?.personalRecords.isEmpty == false ? "Share Your PR" : "Share Workout",
+                            systemImage: "square.and.arrow.up"
+                        )
+                    }
+                    .buttonStyle(AppSecondaryButtonStyle())
+                    .padding(.top, 22)
+                }
+
                 Button("Done", action: onDone)
                     .buttonStyle(AppPrimaryButtonStyle())
-                    .padding(.top, 22)
+                    .padding(.top, shareSummary == nil ? 22 : 10)
             }
             .padding(24)
             .background(Color.appSurface)
@@ -112,6 +129,11 @@ struct WorkoutCompletionView: View {
         }
         .transition(.opacity.combined(with: .scale(scale: 0.96)))
         .accessibilityAddTraits(.isModal)
+        .sheet(isPresented: $isSharing) {
+            if let shareSummary {
+                WorkoutShareSheet(summary: shareSummary, source: .completion)
+            }
+        }
     }
 
     private func completionStat(_ label: String, _ value: String) -> some View {
