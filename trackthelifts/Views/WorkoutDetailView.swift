@@ -16,6 +16,7 @@ struct WorkoutDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var isReorderingExercises = false
     @State private var selectedProFeature: ProFeature?
+    @State private var shareSummary: WorkoutShareSummary?
 
     /// The workout's sets grouped per exercise (sets sorted by set order), in the persisted
     /// `exerciseOrder` (drag-reorderable by the user), falling back to earliest-created-set order
@@ -353,6 +354,29 @@ struct WorkoutDetailView: View {
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.appAccent)
                 }
+            } else if workout.completedAt != nil {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        Haptics.selection()
+                        shareSummary = WorkoutShareSummary(
+                            workout: workout,
+                            personalRecords: PersonalRecordService.personalRecords(in: workout, context: modelContext),
+                            unitLabel: WeightUnitPreference.shared.unit.label
+                        )
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                    .foregroundColor(.appAccent)
+                    .accessibilityLabel("Share workout")
+                }
+            }
+        }
+        .sheet(isPresented: Binding(
+            get: { shareSummary != nil },
+            set: { if !$0 { shareSummary = nil } }
+        )) {
+            if let shareSummary {
+                WorkoutShareSheet(summary: shareSummary, source: .history)
             }
         }
         .proPaywall(feature: $selectedProFeature)

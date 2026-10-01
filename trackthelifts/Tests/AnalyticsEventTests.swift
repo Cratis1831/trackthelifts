@@ -24,6 +24,12 @@ final class AnalyticsEventTests: XCTestCase {
         )
         assertEvent(.workoutCancelled(hadLoggedSets: false), name: "Workout.cancelled", parameters: ["hadLoggedSets": "false"])
         assertEvent(.routineSaved(source: .pastWorkout), name: "Routine.saved", parameters: ["source": "pastWorkout"])
+        assertEvent(
+            .shareCardOpened(source: .completion, hasPersonalRecord: true),
+            name: "ShareCard.opened",
+            parameters: ["source": "completion", "hasPersonalRecord": "true"]
+        )
+        assertEvent(.shareCardSaved(style: "midnight"), name: "ShareCard.saved", parameters: ["style": "midnight"])
         assertEvent(.paywallShown(feature: .supersets), name: "Paywall.shown", parameters: ["feature": "supersets"])
         assertEvent(
             .purchaseStarted(packageType: .monthly, isTrial: true),
@@ -76,6 +82,8 @@ final class AnalyticsEventTests: XCTestCase {
         XCTAssertEqual(RoutineAnalyticsSource.pastWorkout.rawValue, "pastWorkout")
         XCTAssertEqual(RoutineAnalyticsSource.duplicate.rawValue, "duplicate")
         XCTAssertEqual(RoutineAnalyticsSource.edit.rawValue, "edit")
+        XCTAssertEqual(ShareCardAnalyticsSource.completion.rawValue, "completion")
+        XCTAssertEqual(ShareCardAnalyticsSource.history.rawValue, "history")
         XCTAssertEqual(AnalyticsProFeature.allRawValues, ["icloudSync", "unlimitedRoutines", "advancedProgress", "effortTracking", "supersets", "accentThemes"])
     }
 
@@ -129,6 +137,8 @@ final class AnalyticsEventTests: XCTestCase {
             .workoutCompleted(exerciseCount: 1, completedSetCount: 1, earnedPersonalRecord: false, containsSuperset: false),
             .workoutCancelled(hadLoggedSets: true),
             .routineSaved(source: .duplicate),
+            .shareCardOpened(source: .history, hasPersonalRecord: false),
+            .shareCardSaved(style: "bold"),
             .paywallShown(feature: .advancedProgress),
             .purchaseStarted(packageType: .monthly, isTrial: true),
             .purchaseCompleted(packageType: .lifetime, isTrial: false),

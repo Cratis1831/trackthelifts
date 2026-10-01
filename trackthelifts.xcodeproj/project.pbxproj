@@ -23,6 +23,7 @@
 		7A60000130F0000100000001 /* CloudSyncStoreMigratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A60000230F0000100000001 /* CloudSyncStoreMigratorTests.swift */; };
 		7A8000013100000100000001 /* HealthKitWorkoutPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A8000023100000100000001 /* HealthKitWorkoutPolicyTests.swift */; };
 		7A9000113200000100000001 /* PrebuiltRoutineCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A9000123200000100000001 /* PrebuiltRoutineCatalogTests.swift */; };
+		7AA000113300000100000001 /* WorkoutShareSummaryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AA000123300000100000001 /* WorkoutShareSummaryTests.swift */; };
 		7A40000F30D0000100000001 /* TrackTheLiftsWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 7A40000130D0000100000001 /* TrackTheLiftsWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -73,6 +74,7 @@
 		7A60000230F0000100000001 /* CloudSyncStoreMigratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudSyncStoreMigratorTests.swift; sourceTree = "<group>"; };
 		7A8000023100000100000001 /* HealthKitWorkoutPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitWorkoutPolicyTests.swift; sourceTree = "<group>"; };
 		7A9000123200000100000001 /* PrebuiltRoutineCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrebuiltRoutineCatalogTests.swift; sourceTree = "<group>"; };
+		7AA000123300000100000001 /* WorkoutShareSummaryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutShareSummaryTests.swift; sourceTree = "<group>"; };
 		7A40000B30D0000100000001 /* RestTimerActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RestTimerActivityAttributes.swift; path = TrackTheLiftsWidgets/RestTimerActivityAttributes.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -98,6 +100,7 @@
 				Tests/HealthKitWorkoutPolicyTests.swift,
 				Tests/PrebuiltRoutineCatalogTests.swift,
 				Tests/SubscriptionAccessPolicyTests.swift,
+				Tests/WorkoutShareSummaryTests.swift,
 				trackthelifts.entitlements,
 			);
 			target = 41E8F9A42E57804200D8D36F /* trackthelifts */;
@@ -187,6 +190,7 @@
 				7A30000230C0000100000001 /* ExerciseDataTests.swift */,
 				7A8000023100000100000001 /* HealthKitWorkoutPolicyTests.swift */,
 				7A9000123200000100000001 /* PrebuiltRoutineCatalogTests.swift */,
+				7AA000123300000100000001 /* WorkoutShareSummaryTests.swift */,
 			);
 			path = trackthelifts/Tests;
 			sourceTree = "<group>";
@@ -363,6 +367,7 @@
 				7A30000130C0000100000001 /* ExerciseDataTests.swift in Sources */,
 				7A8000013100000100000001 /* HealthKitWorkoutPolicyTests.swift in Sources */,
 				7A9000113200000100000001 /* PrebuiltRoutineCatalogTests.swift in Sources */,
+				7AA000113300000100000001 /* WorkoutShareSummaryTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -516,6 +521,7 @@
 		"INFOPLIST_FILE" = "trackthelifts/Info.plist";
 		"INFOPLIST_KEY_CFBundleDisplayName" = "ForgeLyte Lift";
 		"INFOPLIST_KEY_ITSAppUsesNonExemptEncryption" = NO;
+		"INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription" = "Save your workout share cards to Photos so you can post them to Instagram, TikTok, and more.";
 		"INFOPLIST_KEY_NSPhotoLibraryUsageDescription" = "Choose a profile photo. Your photo stays on this device and is never uploaded.";
 		"INFOPLIST_KEY_UIApplicationSceneManifest_Generation" = YES;
 		"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents" = YES;
@@ -554,6 +560,7 @@
 		"INFOPLIST_FILE" = "trackthelifts/Info.plist";
 		"INFOPLIST_KEY_CFBundleDisplayName" = "ForgeLyte Lift";
 		"INFOPLIST_KEY_ITSAppUsesNonExemptEncryption" = NO;
+		"INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription" = "Save your workout share cards to Photos so you can post them to Instagram, TikTok, and more.";
 		"INFOPLIST_KEY_NSPhotoLibraryUsageDescription" = "Choose a profile photo. Your photo stays on this device and is never uploaded.";
 		"INFOPLIST_KEY_UIApplicationSceneManifest_Generation" = YES;
 		"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents" = YES;
