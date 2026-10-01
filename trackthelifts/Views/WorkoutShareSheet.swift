@@ -34,6 +34,9 @@ struct WorkoutShareSheet: View {
                     let size = WorkoutShareCardView.canvasSize
                     let scale = min(proxy.size.width / size.width, proxy.size.height / size.height)
                     WorkoutShareCardView(summary: summary, style: style, theme: theme)
+                        .overlay {
+                            ShareCardShimmer()
+                        }
                         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
                         .overlay {
                             RoundedRectangle(cornerRadius: 22, style: .continuous)
@@ -153,6 +156,56 @@ struct WorkoutShareSheet: View {
             print("Failed to save share card: \(error)")
             Haptics.error()
             saveState = .failed("Your card couldn't be saved. Please try again.")
+        }
+    }
+}
+
+/// A preview-only light sweep; the exported card remains a still image.
+private struct ShareCardShimmer: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var startedAt = Date()
+
+    private let cycleDuration = 10.0
+    private let sweepDuration = 1.5
+
+    var body: some View {
+        if !reduceMotion && scenePhase == .active {
+            TimelineView(.animation) { timeline in
+                let elapsed = max(0, timeline.date.timeIntervalSince(startedAt))
+                let phase = elapsed.truncatingRemainder(dividingBy: cycleDuration)
+                let progress = min(phase / sweepDuration, 1)
+                let easedProgress = progress * progress * (3 - 2 * progress)
+
+                GeometryReader { proxy in
+                    let size = proxy.size
+                    let diagonal = hypot(size.width, size.height)
+
+                    LinearGradient(
+                        stops: [
+                            .init(color: .clear, location: 0),
+                            .init(color: .white.opacity(0.06), location: 0.2),
+                            .init(color: .white.opacity(0.22), location: 0.44),
+                            .init(color: .white.opacity(0.4), location: 0.5),
+                            .init(color: .white.opacity(0.22), location: 0.56),
+                            .init(color: .white.opacity(0.06), location: 0.8),
+                            .init(color: .clear, location: 1),
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .frame(width: size.width * 0.42, height: diagonal * 2)
+                    .rotationEffect(.radians(-atan2(size.height, size.width)))
+                    .position(
+                        x: size.width * (1.25 - 1.5 * easedProgress),
+                        y: size.height * (-0.25 + 1.5 * easedProgress)
+                    )
+                    .opacity(phase < sweepDuration ? 1 : 0)
+                    .blendMode(.screen)
+                }
+            }
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
         }
     }
 }
